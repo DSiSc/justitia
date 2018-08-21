@@ -1,0 +1,38 @@
+# Golang CircleCI 2.0 configuration file
+
+version: 2
+
+jobs:
+  build:
+
+    docker:
+      - image: circleci/golang:1.10.3
+    working_directory: /go/src/github.com/DSiSc/justitia
+
+    steps:
+      - checkout
+
+      - run:
+          name: Get tools
+          command: |
+            go get -u golang.org/x/lint/golint 
+            go get -u github.com/kardianos/govendor 
+            go get -u github.com/stretchr/testify
+
+      - run:
+          name: Get dependencies
+          command: govendor init && govendor fetch +m
+
+      - run: 
+          name: Code style check
+          command: golint $(go list ./... | grep -v vendor)
+
+      - run:
+          name: Correctness check
+          command: go build -v $(go list ./... | grep -v vendor) && go vet -v $(go list ./... | grep -v vendor)
+
+      - run:
+          name: Test with coverage
+          command: |
+            bash test/test_cov.sh
+            bash <(curl -s https://codecov.io/bash)
