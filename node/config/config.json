@@ -1,0 +1,23 @@
+{
+  "txpool":{
+    "globalSlots":"10"
+  },
+  "producer":{
+    "policy":"timer",
+    "timer":{
+      "time": "10"
+    }
+  },
+  "block":{
+    "store":"leveldb"
+  },
+  "participates":{
+    "policy":"solo"
+  },
+  "role":{
+    "policy":"solo"
+  },
+  "consensus":{
+    "policy": "solo"
+  }
+}
