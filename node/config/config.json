@@ -9,7 +9,8 @@
     }
   },
   "block":{
-    "store":"leveldb"
+    "plugin":"leveldb",
+    "path": "./config/data"
   },
   "participates":{
     "policy":"solo"

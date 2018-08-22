@@ -2,78 +2,64 @@ package config
 
 import (
 	"encoding/json"
-	"github.com/DSiSc/producer/config"
+	consensus_c "github.com/DSiSc/galaxy/consensus/config"
+	participates_c "github.com/DSiSc/galaxy/participates/config"
+	role_c "github.com/DSiSc/galaxy/role/config"
+	ledger_c "github.com/DSiSc/ledger/config"
+	producer_c "github.com/DSiSc/producer/config"
+	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/txpool/common"
 	"github.com/DSiSc/txpool/common/log"
 	"io/ioutil"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 )
 
 var ConfigName = "config.json"
 var DefaultDataDir = "./config"
 
+const (
+	Policy             = "producer.policy"
+	PolicyTimer        = "producer.timer"
+	PolicyTimerTime    = "producer.timer.time"
+	ConsensusPolicy    = "consensus.policy"
+	ParticipatesPolicy = "participates.policy"
+	RolePolicy         = "role.policy"
+	DB_STORE_PLUGIN    = "block.plugin"
+	DB_STORE_PATH      = "block.path"
+	TxPoolSlots        = "txpool.globalSlots"
+)
+
+type NodeConfig struct {
+	// default
+	Account common.Address
+	// txpool
+	TxPoolConf txpool.TxPoolConfig
+	// producer
+	ProducerConf producer_c.ProducerConfig
+	// participates
+	ParticipatesConf participates_c.ParticipateConfig
+	// role
+	RoleConf role_c.RoleConfig
+	// consensus
+	ConsensusConf consensus_c.ConsensusConfig
+	// ledger
+	LedgerConf ledger_c.LedgerConfig
+}
+
 type Config struct {
 	filePath string
 	maps     map[string]interface{}
 }
 
-type NodeConfig struct {
-	// txpool
-	GlobalSlots uint64
-
-	// default account
-	Account common.Address
-}
-
-func NewNodeConfig() NodeConfig {
-	// TODO: get account and globalSlots from genesis.json
-	var temp common.Address
-	var globalSlots uint64 = 10
-	return NodeConfig{
-		GlobalSlots: globalSlots,
-		Account:     temp,
-	}
-}
-
-func NewProducerConf() config.ProducerConf {
-	return config.ProducerConf{
-		PolicyName: "timer",
-		PolicyContext: config.ProducerPolicy{
-			Timer: uint64(10),
-			Num:   uint64(0),
-		},
-	}
-}
-
 func New(path string) Config {
-	return Config{filePath: path}
-}
-
-// Resturn absolute path of config.json
-func ConfigAbsPath() string {
-	_, file, _, ok := runtime.Caller(1)
-	if !ok {
-		log.Error("Get config path failed.")
-		return file
-	}
-	keyString := "/github.com/DSiSc/"
+	_, file, _, _ := runtime.Caller(1)
+	keyString := "/github.com/DSiSc/justitia/"
 	index := strings.LastIndex(file, keyString)
-	confAbsPath := strings.Join([]string{file[:index+len(keyString)], "producer/config/config.json"}, "")
-	return confAbsPath
-}
-
-func DBAbsPath() string {
-	_, file, _, ok := runtime.Caller(1)
-	if !ok {
-		log.Error("Get config path failed.")
-		return file
-	}
-	keyString := "/github.com/DSiSc/producer/"
-	index := strings.LastIndex(file, keyString)
-	confAbsPath := strings.Join([]string{file[:index+len(keyString)], "config/data"}, "")
-	return confAbsPath
+	confAbsPath := strings.Join([]string{file[:index+len(keyString)], "node/config/config.json"}, "")
+	return Config{filePath: confAbsPath}
 }
 
 // Read the given json file.
@@ -143,4 +129,87 @@ func (config *Config) GetConfigItem(name string) interface{} {
 		}
 	}
 	return ret
+}
+
+func NewNodeConfig() NodeConfig {
+	var temp common.Address
+	conf := New(ConfigName)
+	txPoolConf := conf.NewTxPoolConf()
+	producerConf := conf.NewProducerConf()
+	participatesConf := conf.NewParticipateConf()
+	roleConf := conf.NewRoleConf()
+	consensusConf := conf.NewConsensusConf()
+	ledgerConf := conf.NewLedgerConf()
+
+	// TODO: get account and globalSlots from genesis.json
+	return NodeConfig{
+		Account:          temp,
+		TxPoolConf:       txPoolConf,
+		ProducerConf:     producerConf,
+		ParticipatesConf: participatesConf,
+		RoleConf:         roleConf,
+		ConsensusConf:    consensusConf,
+		LedgerConf:       ledgerConf,
+	}
+}
+
+func (self *Config) NewTxPoolConf() txpool.TxPoolConfig {
+	slots, err := strconv.ParseUint(self.GetConfigItem(TxPoolSlots).(string), 10, 64)
+	if err != nil {
+		log.Error("Get slots failed.")
+	}
+	txPoolConf := txpool.TxPoolConfig{
+		GlobalSlots: slots,
+	}
+	return txPoolConf
+}
+
+func (self *Config) NewProducerConf() producer_c.ProducerConfig {
+	policy := self.GetConfigItem(Policy).(string)
+	time, err := strconv.ParseUint(self.GetConfigItem(PolicyTimerTime).(string), 10, 64)
+	if err != nil {
+		log.Error("Get time for producer failed.")
+	}
+	producerConf := producer_c.ProducerConfig{
+		PolicyName: policy,
+		PolicyContext: producer_c.ProducerPolicy{
+			Timer: time,
+			Num:   1,
+		},
+	}
+	return producerConf
+}
+
+func (self *Config) NewParticipateConf() participates_c.ParticipateConfig {
+	policy := self.GetConfigItem(ParticipatesPolicy).(string)
+	participatesConf := participates_c.ParticipateConfig{
+		PolicyName: policy,
+	}
+	return participatesConf
+}
+
+func (self *Config) NewRoleConf() role_c.RoleConfig {
+	policy := self.GetConfigItem(RolePolicy).(string)
+	roleConf := role_c.RoleConfig{
+		PolicyName: policy,
+	}
+	return roleConf
+}
+
+func (self *Config) NewConsensusConf() consensus_c.ConsensusConfig {
+	policy := self.GetConfigItem(ConsensusPolicy).(string)
+	consensusConf := consensus_c.ConsensusConfig{
+		PolicyName: policy,
+	}
+	return consensusConf
+}
+
+func (self *Config) NewLedgerConf() ledger_c.LedgerConfig {
+	policy := self.GetConfigItem(DB_STORE_PLUGIN).(string)
+	dataPath := self.GetConfigItem(DB_STORE_PATH).(string)
+	ledgerConf := ledger_c.LedgerConfig{
+		PluginName: policy,
+		DataPath:   dataPath,
+	}
+	return ledgerConf
 }

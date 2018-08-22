@@ -7,6 +7,7 @@ import (
 	"github.com/DSiSc/galaxy/role"
 	"github.com/DSiSc/gossipswitch"
 	"github.com/DSiSc/justitia/node/config"
+	"github.com/DSiSc/ledger"
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/txpool/common/log"
 )
@@ -22,15 +23,14 @@ type Node struct {
 	participates participates.Participates
 	role         role.Role
 	consensus    consensus.Consensus
+	ledger       *ledger.Ledger
 	txSwitch     *gossipswitch.GossipSwitch
 	blockSwitch  *gossipswitch.GossipSwitch
 }
 
 // init a node fimply
 func NewNode() (NodeService, error) {
-
-	nodeConfig := config.NewNodeConfig()
-
+	nodeConf := config.NewNodeConfig()
 	// gossip switch
 	txSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.TxSwitch)
 	if err != nil {
@@ -42,40 +42,40 @@ func NewNode() (NodeService, error) {
 		log.Error("Init block switch failed.")
 		return nil, fmt.Errorf("BlkSwitch failed.")
 	}
-
 	// txpool
-	txpoolConf := txpool.TxPoolConfig{
-		GlobalSlots: nodeConfig.GlobalSlots,
+	txpool := txpool.NewTxPool(nodeConf.TxPoolConf)
+	// ledger
+	ledger, err := ledger.NewLedger(nodeConf.LedgerConf)
+	if nil != err {
+		log.Error("Init leger store failed.")
+		return nil, fmt.Errorf("Ledger store failed.")
 	}
-	txpool := txpool.NewTxPool(txpoolConf)
-
 	// participate
-	participates, err := participates.NewParticipatePolicy()
+	participates, err := participates.NewParticipates(nodeConf.ParticipatesConf)
 	if nil != err {
 		log.Error("Init participate failed.")
 		return nil, fmt.Errorf("Participates failed.")
 	}
-
 	// role
-	role, err := role.NewRolePolicy(participates, nodeConfig.Account)
+	role, err := role.NewRole(participates, nodeConf.Account, nodeConf.RoleConf)
 	if nil != err {
 		log.Error("Init role failed.")
 		return nil, fmt.Errorf("Role failed.")
 	}
-
 	// consensus
-	consensus, err := consensus.NewConsensusPolicy(participates)
+	consensus, err := consensus.NewConsensus(participates, nodeConf.ConsensusConf)
 	if nil != err {
 		log.Error("Init consensus failed.")
 		return nil, fmt.Errorf("Consensus failed.")
 	}
 
 	node := &Node{
-		config:       nodeConfig,
+		config:       nodeConf,
 		txpool:       txpool,
 		participates: participates,
 		role:         role,
 		consensus:    consensus,
+		ledger:       ledger,
 		txSwitch:     txSwitch,
 		blockSwitch:  blkSwitch,
 	}
