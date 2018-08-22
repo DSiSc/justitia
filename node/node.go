@@ -11,6 +11,10 @@ import (
 	"github.com/DSiSc/txpool/common/log"
 )
 
+type NodeService interface {
+	Start() error
+}
+
 // node struct with all service
 type Node struct {
 	config       config.NodeConfig
@@ -23,7 +27,7 @@ type Node struct {
 }
 
 // init a node fimply
-func NewNode() (*Node, error) {
+func NewNode() (NodeService, error) {
 
 	nodeConfig := config.NewNodeConfig()
 
