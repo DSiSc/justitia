@@ -5,16 +5,16 @@ import (
 	"github.com/DSiSc/galaxy/consensus"
 	"github.com/DSiSc/galaxy/participates"
 	"github.com/DSiSc/galaxy/role"
-	"github.com/DSiSc/gossipswitch/gossipswitch"
+	"github.com/DSiSc/gossipswitch"
 	"github.com/DSiSc/justitia/node/config"
+	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/txpool/common/log"
-	"github.com/DSiSc/txpool/core"
 )
 
 // node struct with all service
 type Node struct {
 	config       config.NodeConfig
-	txpool       core.TxsPool
+	txpool       txpool.TxsPool
 	participates participates.Participates
 	role         role.Role
 	consensus    consensus.Consensus
@@ -40,10 +40,10 @@ func NewNode() (*Node, error) {
 	}
 
 	// txpool
-	txpoolConf := core.TxPoolConfig{
+	txpoolConf := txpool.TxPoolConfig{
 		GlobalSlots: nodeConfig.GlobalSlots,
 	}
-	txpool := core.NewTxPool(txpoolConf)
+	txpool := txpool.NewTxPool(txpoolConf)
 
 	// participate
 	participates, err := participates.NewParticipatePolicy()
