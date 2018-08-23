@@ -2,12 +2,12 @@ package config
 
 import (
 	"encoding/json"
+	"github.com/DSiSc/craft/types"
 	consensus_c "github.com/DSiSc/galaxy/consensus/config"
 	participates_c "github.com/DSiSc/galaxy/participates/config"
 	role_c "github.com/DSiSc/galaxy/role/config"
 	ledger_c "github.com/DSiSc/ledger/config"
 	"github.com/DSiSc/txpool"
-	"github.com/DSiSc/txpool/common"
 	"github.com/DSiSc/txpool/common/log"
 	"io/ioutil"
 	"path/filepath"
@@ -33,7 +33,7 @@ const (
 
 type NodeConfig struct {
 	// default
-	Account common.Address
+	Account types.Address
 	// txpool
 	TxPoolConf txpool.TxPoolConfig
 	// participates
@@ -129,7 +129,7 @@ func (config *Config) GetConfigItem(name string) interface{} {
 }
 
 func NewNodeConfig() NodeConfig {
-	var temp common.Address
+	var temp types.Address
 	conf := New(ConfigName)
 	txPoolConf := conf.NewTxPoolConf()
 	participatesConf := conf.NewParticipateConf()
