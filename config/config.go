@@ -21,16 +21,20 @@ var ConfigName = "config.json"
 var DefaultDataDir = "./config"
 
 const (
-	PRODUCER_TIMER     = "timer"
-	Policy             = "producer.policy"
-	PolicyTimer        = "producer.timer"
-	PolicyTimerTime    = "producer.timer.time"
-	ConsensusPolicy    = "consensus.policy"
-	ParticipatesPolicy = "participates.policy"
-	RolePolicy         = "role.policy"
-	DB_STORE_PLUGIN    = "block.plugin"
-	DB_STORE_PATH      = "block.path"
-	TxPoolSlots        = "txpool.globalSlots"
+	// txpool setting
+	TXPOOL_SLOTS = "txpool.globalSlots"
+	// producer setting
+	PRODUCER_TIMER             = "timer"
+	PRODUCER_POLICY            = "producer.policy"
+	PRODUCER_POLICY_TIMER      = "producer.timer"
+	PRODUCER_POLICY_TIMER_TIME = "producer.timer.time"
+	// consensus policy setting
+	CONSENSUS_POLICY    = "consensus.policy"
+	PARTICIPATES_POLICY = "participates.policy"
+	ROLE_POLICY         = "role.policy"
+	// ledger store setting
+	DB_STORE_PLUGIN = "block.plugin"
+	DB_STORE_PATH   = "block.path"
 )
 
 type NodeConfig struct {
@@ -155,7 +159,7 @@ func NewNodeConfig() NodeConfig {
 }
 
 func (self *Config) NewTxPoolConf() txpool.TxPoolConfig {
-	slots, err := strconv.ParseUint(self.GetConfigItem(TxPoolSlots).(string), 10, 64)
+	slots, err := strconv.ParseUint(self.GetConfigItem(TXPOOL_SLOTS).(string), 10, 64)
 	if err != nil {
 		log.Error("Get slots failed.")
 	}
@@ -166,8 +170,8 @@ func (self *Config) NewTxPoolConf() txpool.TxPoolConfig {
 }
 
 func (self *Config) NewProducerConf() producer_c.ProducerConfig {
-	policy := self.GetConfigItem(Policy).(string)
-	time, err := strconv.ParseUint(self.GetConfigItem(PolicyTimerTime).(string), 10, 64)
+	policy := self.GetConfigItem(PRODUCER_POLICY).(string)
+	time, err := strconv.ParseUint(self.GetConfigItem(PRODUCER_POLICY_TIMER_TIME).(string), 10, 64)
 	if err != nil {
 		log.Error("Get time for producer failed.")
 	}
@@ -182,7 +186,7 @@ func (self *Config) NewProducerConf() producer_c.ProducerConfig {
 }
 
 func (self *Config) NewParticipateConf() participates_c.ParticipateConfig {
-	policy := self.GetConfigItem(ParticipatesPolicy).(string)
+	policy := self.GetConfigItem(PARTICIPATES_POLICY).(string)
 	participatesConf := participates_c.ParticipateConfig{
 		PolicyName: policy,
 	}
@@ -190,7 +194,7 @@ func (self *Config) NewParticipateConf() participates_c.ParticipateConfig {
 }
 
 func (self *Config) NewRoleConf() role_c.RoleConfig {
-	policy := self.GetConfigItem(RolePolicy).(string)
+	policy := self.GetConfigItem(ROLE_POLICY).(string)
 	roleConf := role_c.RoleConfig{
 		PolicyName: policy,
 	}
@@ -198,7 +202,7 @@ func (self *Config) NewRoleConf() role_c.RoleConfig {
 }
 
 func (self *Config) NewConsensusConf() consensus_c.ConsensusConfig {
-	policy := self.GetConfigItem(ConsensusPolicy).(string)
+	policy := self.GetConfigItem(CONSENSUS_POLICY).(string)
 	consensusConf := consensus_c.ConsensusConfig{
 		PolicyName: policy,
 	}
