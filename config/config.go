@@ -6,7 +6,6 @@ import (
 	participates_c "github.com/DSiSc/galaxy/participates/config"
 	role_c "github.com/DSiSc/galaxy/role/config"
 	ledger_c "github.com/DSiSc/ledger/config"
-	producer_c "github.com/DSiSc/producer/config"
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/txpool/common"
 	"github.com/DSiSc/txpool/common/log"
@@ -23,11 +22,6 @@ var DefaultDataDir = "./config"
 const (
 	// txpool setting
 	TXPOOL_SLOTS = "txpool.globalSlots"
-	// producer setting
-	PRODUCER_TIMER             = "timer"
-	PRODUCER_POLICY            = "producer.policy"
-	PRODUCER_POLICY_TIMER      = "producer.timer"
-	PRODUCER_POLICY_TIMER_TIME = "producer.timer.time"
 	// consensus policy setting
 	CONSENSUS_POLICY    = "consensus.policy"
 	PARTICIPATES_POLICY = "participates.policy"
@@ -42,8 +36,6 @@ type NodeConfig struct {
 	Account common.Address
 	// txpool
 	TxPoolConf txpool.TxPoolConfig
-	// producer
-	ProducerConf producer_c.ProducerConfig
 	// participates
 	ParticipatesConf participates_c.ParticipateConfig
 	// role
@@ -140,7 +132,6 @@ func NewNodeConfig() NodeConfig {
 	var temp common.Address
 	conf := New(ConfigName)
 	txPoolConf := conf.NewTxPoolConf()
-	producerConf := conf.NewProducerConf()
 	participatesConf := conf.NewParticipateConf()
 	roleConf := conf.NewRoleConf()
 	consensusConf := conf.NewConsensusConf()
@@ -150,7 +141,6 @@ func NewNodeConfig() NodeConfig {
 	return NodeConfig{
 		Account:          temp,
 		TxPoolConf:       txPoolConf,
-		ProducerConf:     producerConf,
 		ParticipatesConf: participatesConf,
 		RoleConf:         roleConf,
 		ConsensusConf:    consensusConf,
@@ -167,22 +157,6 @@ func (self *Config) NewTxPoolConf() txpool.TxPoolConfig {
 		GlobalSlots: slots,
 	}
 	return txPoolConf
-}
-
-func (self *Config) NewProducerConf() producer_c.ProducerConfig {
-	policy := self.GetConfigItem(PRODUCER_POLICY).(string)
-	time, err := strconv.ParseUint(self.GetConfigItem(PRODUCER_POLICY_TIMER_TIME).(string), 10, 64)
-	if err != nil {
-		log.Error("Get time for producer failed.")
-	}
-	producerConf := producer_c.ProducerConfig{
-		PolicyName: policy,
-		PolicyContext: producer_c.ProducerPolicy{
-			Timer: time,
-			Num:   1,
-		},
-	}
-	return producerConf
 }
 
 func (self *Config) NewParticipateConf() participates_c.ParticipateConfig {
