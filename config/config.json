@@ -10,7 +10,7 @@
   },
   "block":{
     "plugin":"leveldb",
-    "path": "./config/data"
+    "path": "./../data"
   },
   "participates":{
     "policy":"solo"

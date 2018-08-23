@@ -21,6 +21,7 @@ var ConfigName = "config.json"
 var DefaultDataDir = "./config"
 
 const (
+	PRODUCER_TIMER     = "timer"
 	Policy             = "producer.policy"
 	PolicyTimer        = "producer.timer"
 	PolicyTimerTime    = "producer.timer.time"
@@ -58,7 +59,7 @@ func New(path string) Config {
 	_, file, _, _ := runtime.Caller(1)
 	keyString := "/github.com/DSiSc/justitia/"
 	index := strings.LastIndex(file, keyString)
-	confAbsPath := strings.Join([]string{file[:index+len(keyString)], "node/config/config.json"}, "")
+	confAbsPath := strings.Join([]string{file[:index+len(keyString)], "config/config.json"}, "")
 	return Config{filePath: confAbsPath}
 }
 

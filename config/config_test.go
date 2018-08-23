@@ -21,6 +21,6 @@ func Test_New(t *testing.T) {
 	conf := New("config.json")
 	assert.NotNil(conf)
 	path := conf.filePath
-	ok := strings.Contains(path, "node/config/config.json")
+	ok := strings.Contains(path, "/config/config.json")
 	assert.True(ok)
 }

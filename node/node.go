@@ -6,7 +6,7 @@ import (
 	"github.com/DSiSc/galaxy/participates"
 	"github.com/DSiSc/galaxy/role"
 	"github.com/DSiSc/gossipswitch"
-	"github.com/DSiSc/justitia/node/config"
+	"github.com/DSiSc/justitia/config"
 	"github.com/DSiSc/ledger"
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/txpool/common/log"
