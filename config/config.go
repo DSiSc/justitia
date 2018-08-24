@@ -8,7 +8,7 @@ import (
 	role_c "github.com/DSiSc/galaxy/role/config"
 	ledger_c "github.com/DSiSc/ledger/config"
 	"github.com/DSiSc/txpool"
-	"github.com/DSiSc/txpool/common/log"
+	"github.com/DSiSc/txpool/log"
 	"io/ioutil"
 	"path/filepath"
 	"runtime"

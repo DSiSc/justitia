@@ -9,7 +9,7 @@ import (
 	"github.com/DSiSc/justitia/config"
 	"github.com/DSiSc/ledger"
 	"github.com/DSiSc/txpool"
-	"github.com/DSiSc/txpool/common/log"
+	"github.com/DSiSc/txpool/log"
 )
 
 type NodeService interface {
@@ -53,7 +53,7 @@ func NewNode() (NodeService, error) {
 	// participate
 	participates, err := participates.NewParticipates(nodeConf.ParticipatesConf)
 	if nil != err {
-		log.Error("Init participate failed.")
+		log.Error("Init participates failed.")
 		return nil, fmt.Errorf("Participates failed.")
 	}
 	// role
