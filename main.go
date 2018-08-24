@@ -2,7 +2,7 @@ package justitia
 
 import (
 	"github.com/DSiSc/justitia/node"
-	"github.com/DSiSc/txpool/common/log"
+	"github.com/DSiSc/txpool/log"
 )
 
 func main() {

@@ -22,3 +22,6 @@ build/bin/
 profile.tmp
 profile.cov
 coverage.txt
+
+# tmp
+*.sw?
