@@ -13,26 +13,19 @@ jobs:
       - checkout
 
       - run:
-          name: Get tools
-          command: |
-            go get -u golang.org/x/lint/golint 
-            go get -u github.com/kardianos/govendor 
-            go get -u github.com/stretchr/testify
+          name: Get dependencies
+          command: make fetch-deps
 
       - run:
-          name: Get dependencies
-          command: govendor init && govendor fetch +m
-
-      - run: 
-          name: Code style check
-          command: golint $(go list ./... | grep -v vendor)
+          name: Static checks
+          command: make static-check
 
       - run:
           name: Correctness check
-          command: go build -v $(go list ./... | grep -v vendor) && go vet -v $(go list ./... | grep -v vendor)
+          command: make build && make vet
 
       - run:
           name: Test with coverage
           command: |
-            bash test/test_cov.sh
+            make unit-test
             bash <(curl -s https://codecov.io/bash)
