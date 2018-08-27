@@ -20,5 +20,8 @@
   },
   "consensus":{
     "policy": "solo"
+  },
+  "node": {
+    "id": "solo_node"
   }
 }

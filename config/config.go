@@ -2,7 +2,7 @@ package config
 
 import (
 	"encoding/json"
-	"github.com/DSiSc/craft/types"
+	"fmt"
 	consensus_c "github.com/DSiSc/galaxy/consensus/config"
 	participates_c "github.com/DSiSc/galaxy/participates/config"
 	role_c "github.com/DSiSc/galaxy/role/config"
@@ -20,6 +20,8 @@ var ConfigName = "config.json"
 var DefaultDataDir = "./config"
 
 const (
+	// json file relative path
+	CONFIG_DIR = "config/"
 	// txpool setting
 	TXPOOL_SLOTS = "txpool.globalSlots"
 	// consensus policy setting
@@ -29,11 +31,13 @@ const (
 	// ledger store setting
 	DB_STORE_PLUGIN = "block.plugin"
 	DB_STORE_PATH   = "block.path"
+	// node info
+	NODE_ID = "node.id"
 )
 
 type NodeConfig struct {
 	// default
-	Account types.Address
+	Account string
 	// txpool
 	TxPoolConf txpool.TxPoolConfig
 	// participates
@@ -55,7 +59,8 @@ func New(path string) Config {
 	_, file, _, _ := runtime.Caller(1)
 	keyString := "/github.com/DSiSc/justitia/"
 	index := strings.LastIndex(file, keyString)
-	confAbsPath := strings.Join([]string{file[:index+len(keyString)], "config/config.json"}, "")
+	relPath := CONFIG_DIR + ConfigName
+	confAbsPath := strings.Join([]string{file[:index+len(keyString)], relPath}, "")
 	return Config{filePath: confAbsPath}
 }
 
@@ -129,8 +134,9 @@ func (config *Config) GetConfigItem(name string) interface{} {
 }
 
 func NewNodeConfig() NodeConfig {
-	var temp types.Address
+	//var temp types.Address
 	conf := New(ConfigName)
+	nodeId, _ := conf.GetNodeId()
 	txPoolConf := conf.NewTxPoolConf()
 	participatesConf := conf.NewParticipateConf()
 	roleConf := conf.NewRoleConf()
@@ -139,13 +145,22 @@ func NewNodeConfig() NodeConfig {
 
 	// TODO: get account and globalSlots from genesis.json
 	return NodeConfig{
-		Account:          temp,
+		Account:          nodeId,
 		TxPoolConf:       txPoolConf,
 		ParticipatesConf: participatesConf,
 		RoleConf:         roleConf,
 		ConsensusConf:    consensusConf,
 		LedgerConf:       ledgerConf,
 	}
+}
+
+func (self *Config) GetNodeId() (string, error) {
+	nodeId, exist := self.GetConfigItem(NODE_ID).(string)
+	if exist {
+		return nodeId, nil
+	}
+	log.Error("Node id not assigned in config.")
+	return nodeId, fmt.Errorf("node id not exists.")
 }
 
 func (self *Config) NewTxPoolConf() txpool.TxPoolConfig {

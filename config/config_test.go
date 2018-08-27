@@ -6,6 +6,15 @@ import (
 	"testing"
 )
 
+func Test_New(t *testing.T) {
+	assert := assert.New(t)
+	conf := New("config.json")
+	assert.NotNil(conf)
+	path := conf.filePath
+	ok := strings.Contains(path, "/config/config.json")
+	assert.True(ok)
+}
+
 func Test_NewNodeConfig(t *testing.T) {
 	assert := assert.New(t)
 	nodeConf := NewNodeConfig()
@@ -14,13 +23,5 @@ func Test_NewNodeConfig(t *testing.T) {
 	assert.NotNil("leveldb", nodeConf.LedgerConf.PluginName)
 	assert.NotNil("./data", nodeConf.LedgerConf.DataPath)
 	assert.NotNil("solo", nodeConf.ParticipatesConf.PolicyName)
-}
-
-func Test_New(t *testing.T) {
-	assert := assert.New(t)
-	conf := New("config.json")
-	assert.NotNil(conf)
-	path := conf.filePath
-	ok := strings.Contains(path, "/config/config.json")
-	assert.True(ok)
+	assert.NotNil("solo_node", nodeConf.Account)
 }
