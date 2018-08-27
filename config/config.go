@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/DSiSc/craft/types"
 	consensus_c "github.com/DSiSc/galaxy/consensus/config"
 	participates_c "github.com/DSiSc/galaxy/participates/config"
 	role_c "github.com/DSiSc/galaxy/role/config"
@@ -33,11 +34,13 @@ const (
 	DB_STORE_PATH   = "block.path"
 	// node info
 	NODE_ID = "node.id"
+	// node name in solo moderm
+	SINGLE_NODE_NAME = "singleNode"
 )
 
 type NodeConfig struct {
 	// default
-	Account string
+	Account types.NodeAddress
 	// txpool
 	TxPoolConf txpool.TxPoolConfig
 	// participates
@@ -134,7 +137,6 @@ func (config *Config) GetConfigItem(name string) interface{} {
 }
 
 func NewNodeConfig() NodeConfig {
-	//var temp types.Address
 	conf := New(ConfigName)
 	nodeId, _ := conf.GetNodeId()
 	txPoolConf := conf.NewTxPoolConf()
@@ -154,8 +156,8 @@ func NewNodeConfig() NodeConfig {
 	}
 }
 
-func (self *Config) GetNodeId() (string, error) {
-	nodeId, exist := self.GetConfigItem(NODE_ID).(string)
+func (self *Config) GetNodeId() (types.NodeAddress, error) {
+	nodeId, exist := self.GetConfigItem(NODE_ID).(types.NodeAddress)
 	if exist {
 		return nodeId, nil
 	}
