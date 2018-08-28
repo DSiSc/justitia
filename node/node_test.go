@@ -3,6 +3,7 @@ package node
 import (
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 var service NodeService
@@ -16,7 +17,7 @@ func Test_NewNode(t *testing.T) {
 }
 
 func Test_Start(t *testing.T) {
-	assert := assert.New(t)
-	err := service.Start()
-	assert.Nil(err)
+	go service.Start()
+	time.Sleep(10 * time.Nanosecond)
+	service.Stop()
 }

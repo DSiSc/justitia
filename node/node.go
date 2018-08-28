@@ -2,20 +2,24 @@ package node
 
 import (
 	"fmt"
+	"github.com/DSiSc/blockstore"
 	"github.com/DSiSc/galaxy/consensus"
 	"github.com/DSiSc/galaxy/participates"
 	"github.com/DSiSc/galaxy/role"
 	"github.com/DSiSc/galaxy/role/common"
 	"github.com/DSiSc/gossipswitch"
 	"github.com/DSiSc/justitia/config"
-	"github.com/DSiSc/ledger"
 	"github.com/DSiSc/producer"
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/txpool/log"
+	"time"
 )
 
+var complete chan int
+
 type NodeService interface {
-	Start() error
+	Start()
+	Stop()
 }
 
 // node struct with all service
@@ -25,13 +29,14 @@ type Node struct {
 	participates participates.Participates
 	role         role.Role
 	consensus    consensus.Consensus
-	ledger       *ledger.Ledger
+	blockstore   blockstore.BlockStoreAPI
 	producer     *producer.Producer
 	txSwitch     *gossipswitch.GossipSwitch
 	blockSwitch  *gossipswitch.GossipSwitch
 }
 
 func NewNode() (NodeService, error) {
+	complete = make(chan int)
 	nodeConf := config.NewNodeConfig()
 	txSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.TxSwitch)
 	if err != nil {
@@ -46,10 +51,10 @@ func NewNode() (NodeService, error) {
 
 	txpool := txpool.NewTxPool(nodeConf.TxPoolConf)
 
-	ledger, err := ledger.NewLedger(nodeConf.LedgerConf)
+	blockstore, err := blockstore.NewBlockStore(&nodeConf.BlockstoreConf)
 	if nil != err {
-		log.Error("Init leger store failed.")
-		return nil, fmt.Errorf("Ledger store failed.")
+		log.Error("Init blockstore store failed.")
+		return nil, fmt.Errorf("Blockstore store failed.")
 	}
 
 	participates, err := participates.NewParticipates(nodeConf.ParticipatesConf)
@@ -76,7 +81,7 @@ func NewNode() (NodeService, error) {
 		participates: participates,
 		role:         role,
 		consensus:    consensus,
-		ledger:       ledger,
+		blockstore:   blockstore,
 		txSwitch:     txSwitch,
 		blockSwitch:  blkSwitch,
 	}
@@ -84,28 +89,43 @@ func NewNode() (NodeService, error) {
 	return node, nil
 }
 
-func (self *Node) Start() error {
-	// TODO: execute it every round
-	assigments, err := self.role.RoleAssignments()
-	if nil != err {
-		log.Error("Role assignments failed.")
-		return fmt.Errorf("Role assignments failed.")
-	}
-
-	if common.Master == assigments[self.config.Account] {
-		if nil == self.producer {
-			producer, err1 := producer.NewProducer(self.txpool, self.ledger)
-			if nil != err1 {
-				log.Error("New producer failed.")
-				return fmt.Errorf("Init producer failed.")
+func (self *Node) Start() {
+	for {
+		select {
+		case <-complete:
+			log.Warn("Stop node service.")
+			return
+		default:
+			// Waiting time is consistent.
+			time.Sleep(10 * time.Nanosecond)
+			log.Info("begin produce block.")
+			assigments, err := self.role.RoleAssignments()
+			if nil != err {
+				log.Error("Role assignments failed.")
+				break
 			}
-			self.producer = producer
-		}
-		_, err2 := self.producer.MakeBlock()
-		if nil != err2 {
-			log.Error("Make block failed.")
-			return fmt.Errorf("Make block failed.")
+			if common.Master == assigments[self.config.Account] {
+				if nil == self.producer {
+					producer, err1 := producer.NewProducer(self.txpool, self.blockstore)
+					if nil != err1 {
+						log.Error("New producer failed.")
+						break
+					}
+					self.producer = producer
+				}
+				// TODO: send to consensus and save block
+				_, err2 := self.producer.MakeBlock()
+				if nil != err2 {
+					log.Error("Make block failed.")
+					break
+				}
+			}
 		}
 	}
-	return nil
+}
+
+func (self *Node) Stop() {
+	log.Warn("Set node service stop.")
+	complete <- 1
+	return
 }

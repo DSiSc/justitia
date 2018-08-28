@@ -11,8 +11,5 @@ func main() {
 		log.Error("Failed to instance a node.")
 	}
 
-	err = node.Start()
-	if nil != err {
-		log.Error("Failed to start node service.")
-	}
+	node.Start()
 }

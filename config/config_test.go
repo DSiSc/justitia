@@ -20,8 +20,8 @@ func Test_NewNodeConfig(t *testing.T) {
 	nodeConf := NewNodeConfig()
 	assert.NotNil(nodeConf)
 	assert.Equal(uint64(10), nodeConf.TxPoolConf.GlobalSlots)
-	assert.NotNil("leveldb", nodeConf.LedgerConf.PluginName)
-	assert.NotNil("./data", nodeConf.LedgerConf.DataPath)
+	assert.NotNil("leveldb", nodeConf.BlockstoreConf.PluginName)
+	assert.NotNil("./data", nodeConf.BlockstoreConf.DataPath)
 	assert.NotNil("solo", nodeConf.ParticipatesConf.PolicyName)
 	assert.NotNil("solo_node", nodeConf.Account)
 }

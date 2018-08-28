@@ -3,11 +3,11 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	blockstore_c "github.com/DSiSc/blockstore/config"
 	"github.com/DSiSc/craft/types"
 	consensus_c "github.com/DSiSc/galaxy/consensus/config"
 	participates_c "github.com/DSiSc/galaxy/participates/config"
 	role_c "github.com/DSiSc/galaxy/role/config"
-	ledger_c "github.com/DSiSc/ledger/config"
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/txpool/log"
 	"io/ioutil"
@@ -29,7 +29,7 @@ const (
 	CONSENSUS_POLICY    = "consensus.policy"
 	PARTICIPATES_POLICY = "participates.policy"
 	ROLE_POLICY         = "role.policy"
-	// ledger store setting
+	// blockstore setting
 	DB_STORE_PLUGIN = "block.plugin"
 	DB_STORE_PATH   = "block.path"
 	// node info
@@ -49,8 +49,8 @@ type NodeConfig struct {
 	RoleConf role_c.RoleConfig
 	// consensus
 	ConsensusConf consensus_c.ConsensusConfig
-	// ledger
-	LedgerConf ledger_c.LedgerConfig
+	// blockstore
+	BlockstoreConf blockstore_c.BlockStoreConfig
 }
 
 type Config struct {
@@ -143,26 +143,27 @@ func NewNodeConfig() NodeConfig {
 	participatesConf := conf.NewParticipateConf()
 	roleConf := conf.NewRoleConf()
 	consensusConf := conf.NewConsensusConf()
-	ledgerConf := conf.NewLedgerConf()
+	blockstoreConf := conf.NewBlockstoreConf()
 
-	// TODO: get account and globalSlots from genesis.json
 	return NodeConfig{
 		Account:          nodeId,
 		TxPoolConf:       txPoolConf,
 		ParticipatesConf: participatesConf,
 		RoleConf:         roleConf,
 		ConsensusConf:    consensusConf,
-		LedgerConf:       ledgerConf,
+		BlockstoreConf:   blockstoreConf,
 	}
 }
 
 func (self *Config) GetNodeId() (types.NodeAddress, error) {
-	nodeId, exist := self.GetConfigItem(NODE_ID).(types.NodeAddress)
+	var temp types.NodeAddress
+	nodeId, exist := self.GetConfigItem(NODE_ID).(string)
 	if exist {
-		return nodeId, nil
+		temp = types.NodeAddress(nodeId)
+		return temp, nil
 	}
 	log.Error("Node id not assigned in config.")
-	return nodeId, fmt.Errorf("node id not exists.")
+	return temp, fmt.Errorf("node id not exists.")
 }
 
 func (self *Config) NewTxPoolConf() txpool.TxPoolConfig {
@@ -200,12 +201,12 @@ func (self *Config) NewConsensusConf() consensus_c.ConsensusConfig {
 	return consensusConf
 }
 
-func (self *Config) NewLedgerConf() ledger_c.LedgerConfig {
+func (self *Config) NewBlockstoreConf() blockstore_c.BlockStoreConfig {
 	policy := self.GetConfigItem(DB_STORE_PLUGIN).(string)
 	dataPath := self.GetConfigItem(DB_STORE_PATH).(string)
-	ledgerConf := ledger_c.LedgerConfig{
+	blockstoreConf := blockstore_c.BlockStoreConfig{
 		PluginName: policy,
 		DataPath:   dataPath,
 	}
-	return ledgerConf
+	return blockstoreConf
 }
