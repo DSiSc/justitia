@@ -23,5 +23,10 @@
   },
   "node": {
     "id": "solo_node"
+  },
+  "blockchain": {
+    "plugin": "leveldb",
+    "statePath": "./../state",
+    "dataPath": "./../block"
   }
 }

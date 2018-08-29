@@ -80,14 +80,16 @@ get-tools:
 	@# go get -u golang.org/x/tools/cmd/gomvpkg
 
         # thirdparty tools
-	go get -u github.com/kardianos/govendor
 	go get -u github.com/stretchr/testify
 	@# go get -u github.com/axw/gocov/...
 	@# go get -u github.com/client9/misspell/cmd/misspell
 
 fetch-deps: get-tools
-	@echo "Run govendor fetch for deps..."
-	govendor init && govendor fetch +m 
+	go get -u github.com/DSiSc/blockchain
+	go get -u github.com/DSiSc/producer
+	go get -u github.com/DSiSc/statedb-NG
+	go get -u github.com/DSiSc/gossipswitch
+	go get -u github.com/DSiSc/galaxy
 
 ## tools & deps
 devenv: get-tools fetch-deps

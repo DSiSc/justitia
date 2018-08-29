@@ -2,7 +2,6 @@ package node
 
 import (
 	"fmt"
-	"github.com/DSiSc/blockstore"
 	"github.com/DSiSc/galaxy/consensus"
 	"github.com/DSiSc/galaxy/participates"
 	"github.com/DSiSc/galaxy/role"
@@ -29,7 +28,6 @@ type Node struct {
 	participates participates.Participates
 	role         role.Role
 	consensus    consensus.Consensus
-	blockstore   blockstore.BlockStoreAPI
 	producer     *producer.Producer
 	txSwitch     *gossipswitch.GossipSwitch
 	blockSwitch  *gossipswitch.GossipSwitch
@@ -38,6 +36,7 @@ type Node struct {
 func NewNode() (NodeService, error) {
 	complete = make(chan int)
 	nodeConf := config.NewNodeConfig()
+
 	txSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.TxSwitch)
 	if err != nil {
 		log.Error("Init txSwitch failed.")
@@ -50,12 +49,6 @@ func NewNode() (NodeService, error) {
 	}
 
 	txpool := txpool.NewTxPool(nodeConf.TxPoolConf)
-
-	blockstore, err := blockstore.NewBlockStore(&nodeConf.BlockstoreConf)
-	if nil != err {
-		log.Error("Init blockstore store failed.")
-		return nil, fmt.Errorf("Blockstore store failed.")
-	}
 
 	participates, err := participates.NewParticipates(nodeConf.ParticipatesConf)
 	if nil != err {
@@ -81,7 +74,6 @@ func NewNode() (NodeService, error) {
 		participates: participates,
 		role:         role,
 		consensus:    consensus,
-		blockstore:   blockstore,
 		txSwitch:     txSwitch,
 		blockSwitch:  blkSwitch,
 	}
@@ -106,7 +98,7 @@ func (self *Node) Start() {
 			}
 			if common.Master == assigments[self.config.Account] {
 				if nil == self.producer {
-					producer, err1 := producer.NewProducer(self.txpool, self.blockstore)
+					producer, err1 := producer.NewProducer(self.txpool, nil)
 					if nil != err1 {
 						log.Error("New producer failed.")
 						break

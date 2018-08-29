@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	blockchain_c "github.com/DSiSc/blockchain/config"
 	blockstore_c "github.com/DSiSc/blockstore/config"
 	"github.com/DSiSc/craft/types"
 	consensus_c "github.com/DSiSc/galaxy/consensus/config"
@@ -36,6 +37,10 @@ const (
 	NODE_ID = "node.id"
 	// node name in solo moderm
 	SINGLE_NODE_NAME = "singleNode"
+	// block chain
+	BLOCK_CHAIN_PLUGIN     = "blockchain.plugin"
+	BLOCK_CHAIN_STATE_PATH = "blockchain.statePath"
+	BLOCK_CHAIN_DATA_PATH  = "blockchain.dataPath"
 )
 
 type NodeConfig struct {
@@ -51,6 +56,8 @@ type NodeConfig struct {
 	ConsensusConf consensus_c.ConsensusConfig
 	// blockstore
 	BlockstoreConf blockstore_c.BlockStoreConfig
+	// BlockChainConfig
+	BlockChainConf blockchain_c.BlockChainConfig
 }
 
 type Config struct {
@@ -144,6 +151,7 @@ func NewNodeConfig() NodeConfig {
 	roleConf := conf.NewRoleConf()
 	consensusConf := conf.NewConsensusConf()
 	blockstoreConf := conf.NewBlockstoreConf()
+	blockChainConf := conf.NewBlockChainConf()
 
 	return NodeConfig{
 		Account:          nodeId,
@@ -152,6 +160,7 @@ func NewNodeConfig() NodeConfig {
 		RoleConf:         roleConf,
 		ConsensusConf:    consensusConf,
 		BlockstoreConf:   blockstoreConf,
+		BlockChainConf:   blockChainConf,
 	}
 }
 
@@ -209,4 +218,16 @@ func (self *Config) NewBlockstoreConf() blockstore_c.BlockStoreConfig {
 		DataPath:   dataPath,
 	}
 	return blockstoreConf
+}
+
+func (self *Config) NewBlockChainConf() blockchain_c.BlockChainConfig {
+	policy := self.GetConfigItem(BLOCK_CHAIN_PLUGIN).(string)
+	dataPath := self.GetConfigItem(BLOCK_CHAIN_DATA_PATH).(string)
+	statePath := self.GetConfigItem(BLOCK_CHAIN_STATE_PATH).(string)
+	blockChainConf := blockchain_c.BlockChainConfig{
+		PluginName:    policy,
+		StateDataPath: statePath,
+		BlockDataPath: dataPath,
+	}
+	return blockChainConf
 }
