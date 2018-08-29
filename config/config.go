@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	blockchain_c "github.com/DSiSc/blockchain/config"
-	blockstore_c "github.com/DSiSc/blockstore/config"
 	"github.com/DSiSc/craft/types"
 	consensus_c "github.com/DSiSc/galaxy/consensus/config"
 	participates_c "github.com/DSiSc/galaxy/participates/config"
@@ -54,8 +53,6 @@ type NodeConfig struct {
 	RoleConf role_c.RoleConfig
 	// consensus
 	ConsensusConf consensus_c.ConsensusConfig
-	// blockstore
-	BlockstoreConf blockstore_c.BlockStoreConfig
 	// BlockChainConfig
 	BlockChainConf blockchain_c.BlockChainConfig
 }
@@ -150,7 +147,6 @@ func NewNodeConfig() NodeConfig {
 	participatesConf := conf.NewParticipateConf()
 	roleConf := conf.NewRoleConf()
 	consensusConf := conf.NewConsensusConf()
-	blockstoreConf := conf.NewBlockstoreConf()
 	blockChainConf := conf.NewBlockChainConf()
 
 	return NodeConfig{
@@ -159,7 +155,6 @@ func NewNodeConfig() NodeConfig {
 		ParticipatesConf: participatesConf,
 		RoleConf:         roleConf,
 		ConsensusConf:    consensusConf,
-		BlockstoreConf:   blockstoreConf,
 		BlockChainConf:   blockChainConf,
 	}
 }
@@ -208,16 +203,6 @@ func (self *Config) NewConsensusConf() consensus_c.ConsensusConfig {
 		PolicyName: policy,
 	}
 	return consensusConf
-}
-
-func (self *Config) NewBlockstoreConf() blockstore_c.BlockStoreConfig {
-	policy := self.GetConfigItem(DB_STORE_PLUGIN).(string)
-	dataPath := self.GetConfigItem(DB_STORE_PATH).(string)
-	blockstoreConf := blockstore_c.BlockStoreConfig{
-		PluginName: policy,
-		DataPath:   dataPath,
-	}
-	return blockstoreConf
 }
 
 func (self *Config) NewBlockChainConf() blockchain_c.BlockChainConfig {
