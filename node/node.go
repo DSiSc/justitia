@@ -2,6 +2,7 @@ package node
 
 import (
 	"fmt"
+	"github.com/DSiSc/blockchain"
 	"github.com/DSiSc/galaxy/consensus"
 	"github.com/DSiSc/galaxy/participates"
 	"github.com/DSiSc/galaxy/role"
@@ -48,8 +49,13 @@ func NewNode() (NodeService, error) {
 		return nil, fmt.Errorf("BlkSwitch failed.")
 	}
 
-	txpool := txpool.NewTxPool(nodeConf.TxPoolConf)
+	err = blockchain.InitBlockChain(nodeConf.BlockChainConf)
+	if err != nil {
+		log.Error("Init blockchain failed.")
+		return nil, fmt.Errorf("Blockchain failed.")
+	}
 
+	txpool := txpool.NewTxPool(nodeConf.TxPoolConf)
 	participates, err := participates.NewParticipates(nodeConf.ParticipatesConf)
 	if nil != err {
 		log.Error("Init participates failed.")

@@ -25,7 +25,7 @@
     "id": "solo_node"
   },
   "blockchain": {
-    "plugin": "leveldb",
+    "plugin": "memorydb",
     "statePath": "./../state",
     "dataPath": "./../block"
   }
