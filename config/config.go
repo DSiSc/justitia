@@ -40,11 +40,15 @@ const (
 	BLOCK_CHAIN_PLUGIN     = "blockchain.plugin"
 	BLOCK_CHAIN_STATE_PATH = "blockchain.statePath"
 	BLOCK_CHAIN_DATA_PATH  = "blockchain.dataPath"
+	// api gateway
+	API_GATEWAY_TCP_ADDR = "apigateway.tcpAddr"
 )
 
 type NodeConfig struct {
 	// default
 	Account types.NodeAddress
+	// api gateway
+	ApiGatewayAddr string
 	// txpool
 	TxPoolConf txpool.TxPoolConfig
 	// participates
@@ -143,6 +147,7 @@ func (config *Config) GetConfigItem(name string) interface{} {
 func NewNodeConfig() NodeConfig {
 	conf := New(ConfigName)
 	nodeId, _ := conf.GetNodeId()
+	apiGatewayTcpAddr := conf.GetApiGatewayTcpAddr()
 	txPoolConf := conf.NewTxPoolConf()
 	participatesConf := conf.NewParticipateConf()
 	roleConf := conf.NewRoleConf()
@@ -151,6 +156,7 @@ func NewNodeConfig() NodeConfig {
 
 	return NodeConfig{
 		Account:          nodeId,
+		ApiGatewayAddr:   apiGatewayTcpAddr,
 		TxPoolConf:       txPoolConf,
 		ParticipatesConf: participatesConf,
 		RoleConf:         roleConf,
@@ -215,4 +221,9 @@ func (self *Config) NewBlockChainConf() blockchain_c.BlockChainConfig {
 		BlockDataPath: dataPath,
 	}
 	return blockChainConf
+}
+
+func (self *Config) GetApiGatewayTcpAddr() string {
+	apiGatewayAddr := self.GetConfigItem(API_GATEWAY_TCP_ADDR).(string)
+	return apiGatewayAddr
 }

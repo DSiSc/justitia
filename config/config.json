@@ -28,5 +28,8 @@
     "plugin": "memorydb",
     "statePath": "./../state",
     "dataPath": "./../block"
+  },
+  "apigateway": {
+    "tcpAddr": "tcp://0.0.0.0:47768"
   }
 }
