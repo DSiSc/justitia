@@ -18,6 +18,6 @@ func Test_NewNode(t *testing.T) {
 
 func Test_Start(t *testing.T) {
 	go service.Start()
-	time.Sleep(10 * time.Nanosecond)
+	time.Sleep(time.Duration(1) * time.Microsecond)
 	service.Stop()
 }

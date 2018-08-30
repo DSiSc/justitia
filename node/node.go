@@ -12,6 +12,7 @@ import (
 	"github.com/DSiSc/producer"
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/txpool/log"
+	"sync"
 	"time"
 )
 
@@ -24,6 +25,7 @@ type NodeService interface {
 
 // node struct with all service
 type Node struct {
+	nodeWg       sync.WaitGroup
 	config       config.NodeConfig
 	txpool       txpool.TxsPool
 	participates participates.Participates
@@ -87,11 +89,12 @@ func NewNode() (NodeService, error) {
 	return node, nil
 }
 
-func (self *Node) Start() {
+func (self *Node) Round() {
 	for {
 		select {
 		case <-complete:
 			log.Warn("Stop node service.")
+			self.nodeWg.Done()
 			return
 		default:
 			// Waiting time is consistent.
@@ -100,14 +103,16 @@ func (self *Node) Start() {
 			assigments, err := self.role.RoleAssignments()
 			if nil != err {
 				log.Error("Role assignments failed.")
-				break
+				self.nodeWg.Done()
+				return
 			}
 			if common.Master == assigments[self.config.Account] {
 				if nil == self.producer {
 					producer, err1 := producer.NewProducer(self.txpool, nil)
 					if nil != err1 {
 						log.Error("New producer failed.")
-						break
+						self.nodeWg.Done()
+						return
 					}
 					self.producer = producer
 				}
@@ -115,11 +120,20 @@ func (self *Node) Start() {
 				_, err2 := self.producer.MakeBlock()
 				if nil != err2 {
 					log.Error("Make block failed.")
-					break
+					self.nodeWg.Done()
+					return
 				}
 			}
 		}
 	}
+}
+
+func (self *Node) Start() {
+	self.nodeWg.Add(1)
+	// TODO: start rpc service
+	go self.Round()
+	self.nodeWg.Wait()
+	log.Warn("End start.")
 }
 
 func (self *Node) Stop() {
