@@ -2,6 +2,8 @@ package node
 
 import (
 	"fmt"
+	"github.com/DSiSc/apigateway"
+	rpc "github.com/DSiSc/apigateway/rpc/core"
 	"github.com/DSiSc/blockchain"
 	"github.com/DSiSc/galaxy/consensus"
 	"github.com/DSiSc/galaxy/participates"
@@ -50,6 +52,9 @@ func NewNode() (NodeService, error) {
 		log.Error("Init block switch failed.")
 		return nil, fmt.Errorf("BlkSwitch failed.")
 	}
+
+	swCh := txSwitch.InPort(gossipswitch.LocalInPortId).Channel()
+	rpc.SetSwCh(swCh)
 
 	err = blockchain.InitBlockChain(nodeConf.BlockChainConf)
 	if err != nil {
@@ -130,6 +135,11 @@ func (self *Node) Round() {
 
 func (self *Node) Start() {
 	self.nodeWg.Add(1)
+	_, err := apigateway.StartRPC(self.config.ApiGatewayAddr)
+	if nil != err {
+		log.Warn("Start rpc failed.")
+		return
+	}
 	// TODO: start rpc service
 	go self.Round()
 	self.nodeWg.Wait()
