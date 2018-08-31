@@ -1,7 +1,11 @@
 #
-# Copyright(c) 2018 justitia Group. All Rights Reserved.
+# Copyright(c) 2018 DSiSc Group. All Rights Reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-obc-peer
 .git
+.circleci
+.github
+.codecov.yml
+.mailmap
+.travis.yml

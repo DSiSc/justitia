@@ -1,0 +1,15 @@
+# Imported packages that does not exsit under "vendor" folder.
+# The following lines listed by git repositories(each line for one git repo) 
+# alone with compatible version(branch/tag/commit-id).
+
+github.com/DSiSc/apigateway:master
+github.com/DSiSc/blockchain:master
+github.com/DSiSc/blockstore:master
+github.com/DSiSc/craft:master
+github.com/DSiSc/evm-NG:master
+github.com/DSiSc/galaxy:master
+github.com/DSiSc/gossipswitch:master
+github.com/DSiSc/producer:master
+github.com/DSiSc/statedb-NG:master
+github.com/DSiSc/txpool:master
+github.com/DSiSc/validator:master

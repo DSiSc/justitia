@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-.PHONY: default help all build test devenv gotools clean
-
 VERSION=$(shell grep "const Version" version/version.go | sed -E 's/.*"(.+)"$$/\1/')
 GIT_COMMIT=$(shell git rev-parse HEAD)
 GIT_DIRTY=$(shell test -n "`git status --porcelain`" && echo "+CHANGES" || true)
 BUILD_DATE=$(shell date '+%Y-%m-%d-%H:%M:%S')
+
+.PHONY: default help all build test unit-test devenv gotools clean coverage
 
 default: all
 
@@ -62,16 +62,18 @@ vet:
 	@echo "Examine source code and reports suspicious constructs..."
 	go vet `go list ./...`
 
-.PHONY: unit-test
 unit-test:
+	@echo "Run unit tests without coverage report..."
+	go test -v -count=1 -race ./...
+
+coverage:
 	@echo "Run unit tests with coverage report..."
 	bash scripts/unit_test_cov.sh
 
-.PHONY: test
 test: vet unit-test
 
 get-tools:
-        # official tools
+	# official tools
 	go get -u golang.org/x/lint/golint
 	@# go get -u golang.org/x/tools/cmd/gotype
 	@# go get -u golang.org/x/tools/cmd/goimports
@@ -79,20 +81,15 @@ get-tools:
 	@# go get -u golang.org/x/tools/cmd/gorename
 	@# go get -u golang.org/x/tools/cmd/gomvpkg
 
-        # thirdparty tools
+	# thirdparty tools
 	go get -u github.com/stretchr/testify
+	@# go get -u github.com/kardianos/govendor
 	@# go get -u github.com/axw/gocov/...
 	@# go get -u github.com/client9/misspell/cmd/misspell
 
 fetch-deps: get-tools
-	go get -u github.com/DSiSc/blockchain
-	go get -u github.com/DSiSc/producer
-	go get -u github.com/DSiSc/statedb-NG
-	go get -u github.com/DSiSc/gossipswitch
-	go get -u github.com/DSiSc/galaxy
-	go get -u github.com/DSiSc/validator
-	go get -u github.com/DSiSc/apigateway
+	@echo "Run go get to fetch dependencies as described in dependencies.txt ..."
+	@bash scripts/ensure_deps.sh
 
 ## tools & deps
 devenv: get-tools fetch-deps
-
