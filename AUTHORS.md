@@ -2,7 +2,7 @@
 
 ## Development Lead
 
-- walterkangluo [DSiSc](https://github.com/DSiSc)
+- DSiSc [DSiSc](https://github.com/DSiSc)
 
 ## Contributors
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright(c) 2018 justitia Group. All Rights Reserved.
+# Copyright(c) 2018 DSiSc Group. All Rights Reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #

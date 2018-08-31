@@ -27,5 +27,5 @@ jobs:
       - run:
           name: Test with coverage
           command: |
-            make unit-test
+            make coverage
             bash <(curl -s https://codecov.io/bash)
