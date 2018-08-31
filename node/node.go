@@ -5,6 +5,7 @@ import (
 	"github.com/DSiSc/apigateway"
 	rpc "github.com/DSiSc/apigateway/rpc/core"
 	"github.com/DSiSc/blockchain"
+	"github.com/DSiSc/craft/types"
 	"github.com/DSiSc/galaxy/consensus"
 	"github.com/DSiSc/galaxy/participates"
 	"github.com/DSiSc/galaxy/role"
@@ -14,6 +15,7 @@ import (
 	"github.com/DSiSc/producer"
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/txpool/log"
+	"github.com/DSiSc/validator"
 	"sync"
 	"time"
 )
@@ -27,6 +29,7 @@ type NodeService interface {
 
 // node struct with all service
 type Node struct {
+	account      *types.Account
 	nodeWg       sync.WaitGroup
 	config       config.NodeConfig
 	txpool       txpool.TxsPool
@@ -36,6 +39,7 @@ type Node struct {
 	producer     *producer.Producer
 	txSwitch     *gossipswitch.GossipSwitch
 	blockSwitch  *gossipswitch.GossipSwitch
+	validator    *validator.Validator
 }
 
 func NewNode() (NodeService, error) {
@@ -80,7 +84,6 @@ func NewNode() (NodeService, error) {
 		log.Error("Init consensus failed.")
 		return nil, fmt.Errorf("Consensus failed.")
 	}
-
 	node := &Node{
 		config:       nodeConf,
 		txpool:       txpool,
@@ -102,16 +105,19 @@ func (self *Node) Round() {
 			self.nodeWg.Done()
 			return
 		default:
-			// Waiting time is consistent.
+			// Waiting time in consistent.
 			time.Sleep(10 * time.Nanosecond)
 			log.Info("begin produce block.")
+			// get role
 			assigments, err := self.role.RoleAssignments()
 			if nil != err {
 				log.Error("Role assignments failed.")
 				self.nodeWg.Done()
 				return
 			}
+			// new object based role
 			if common.Master == assigments[self.config.Account] {
+				log.Info("I am master this round.")
 				if nil == self.producer {
 					producer, err1 := producer.NewProducer(self.txpool, nil)
 					if nil != err1 {
@@ -120,13 +126,11 @@ func (self *Node) Round() {
 						return
 					}
 					self.producer = producer
-				}
-				// TODO: send to consensus and save block
-				_, err2 := self.producer.MakeBlock()
-				if nil != err2 {
-					log.Error("Make block failed.")
-					self.nodeWg.Done()
-					return
+				} else {
+					log.Info("I am slave this round.")
+					if nil == self.validator {
+						self.validator = validator.NewValidator(self.account)
+					}
 				}
 			}
 		}

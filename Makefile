@@ -90,6 +90,8 @@ fetch-deps: get-tools
 	go get -u github.com/DSiSc/statedb-NG
 	go get -u github.com/DSiSc/gossipswitch
 	go get -u github.com/DSiSc/galaxy
+	go get -u github.com/DSiSc/validator
+	go get -u github.com/DSiSc/apigateway
 
 ## tools & deps
 devenv: get-tools fetch-deps
