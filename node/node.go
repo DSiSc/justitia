@@ -5,7 +5,6 @@ import (
 	"github.com/DSiSc/apigateway"
 	rpc "github.com/DSiSc/apigateway/rpc/core"
 	"github.com/DSiSc/blockchain"
-	"github.com/DSiSc/craft/types"
 	"github.com/DSiSc/galaxy/consensus"
 	"github.com/DSiSc/galaxy/participates"
 	"github.com/DSiSc/galaxy/role"
@@ -16,6 +15,7 @@ import (
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/txpool/log"
 	"github.com/DSiSc/validator"
+	"github.com/DSiSc/validator/tools/account"
 	"sync"
 	"time"
 )
@@ -29,7 +29,7 @@ type NodeService interface {
 
 // node struct with all service
 type Node struct {
-	account      *types.Account
+	account      *account.Account
 	nodeWg       sync.WaitGroup
 	config       config.NodeConfig
 	txpool       txpool.TxsPool
