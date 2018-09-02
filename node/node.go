@@ -5,7 +5,9 @@ import (
 	"github.com/DSiSc/apigateway"
 	rpc "github.com/DSiSc/apigateway/rpc/core"
 	"github.com/DSiSc/blockchain"
+	"github.com/DSiSc/craft/types"
 	"github.com/DSiSc/galaxy/consensus"
+	consensusc "github.com/DSiSc/galaxy/consensus/common"
 	"github.com/DSiSc/galaxy/participates"
 	"github.com/DSiSc/galaxy/role"
 	"github.com/DSiSc/galaxy/role/common"
@@ -15,7 +17,6 @@ import (
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/txpool/log"
 	"github.com/DSiSc/validator"
-	"github.com/DSiSc/validator/tools/account"
 	"sync"
 	"time"
 )
@@ -29,7 +30,6 @@ type NodeService interface {
 
 // node struct with all service
 type Node struct {
-	account      *account.Account
 	nodeWg       sync.WaitGroup
 	config       config.NodeConfig
 	txpool       txpool.TxsPool
@@ -56,9 +56,21 @@ func NewNode() (NodeService, error) {
 		log.Error("Init block switch failed.")
 		return nil, fmt.Errorf("BlkSwitch failed.")
 	}
-
-	swCh := txSwitch.InPort(gossipswitch.LocalInPortId).Channel()
-	rpc.SetSwCh(swCh)
+	txpool := txpool.NewTxPool(nodeConf.TxPoolConf)
+	swChIn := txSwitch.InPort(gossipswitch.LocalInPortId).Channel()
+	rpc.SetSwCh(swChIn)
+	err = txSwitch.OutPort(gossipswitch.LocalInPortId).BindToPort(func(msg gossipswitch.SwitchMsg) error {
+		switch tx := msg.(type) {
+		case *types.Transaction:
+			return txpool.AddTx(tx)
+		default:
+			return fmt.Errorf("Not support msg type.")
+		}
+	})
+	if err != nil {
+		log.Error("Registe txpool failed.")
+		return nil, fmt.Errorf("Registe txpool failed.")
+	}
 
 	err = blockchain.InitBlockChain(nodeConf.BlockChainConf)
 	if err != nil {
@@ -66,14 +78,13 @@ func NewNode() (NodeService, error) {
 		return nil, fmt.Errorf("Blockchain failed.")
 	}
 
-	txpool := txpool.NewTxPool(nodeConf.TxPoolConf)
 	participates, err := participates.NewParticipates(nodeConf.ParticipatesConf)
 	if nil != err {
 		log.Error("Init participates failed.")
 		return nil, fmt.Errorf("Participates failed.")
 	}
 
-	role, err := role.NewRole(participates, nodeConf.Account, nodeConf.RoleConf)
+	role, err := role.NewRole(participates, *nodeConf.Account, nodeConf.RoleConf)
 	if nil != err {
 		log.Error("Init role failed.")
 		return nil, fmt.Errorf("Role failed.")
@@ -113,25 +124,32 @@ func (self *Node) Round() {
 			if nil != err {
 				log.Error("Role assignments failed.")
 				self.nodeWg.Done()
-				return
+				continue
 			}
 			// new object based role
-			if common.Master == assigments[self.config.Account] {
+			if common.Master == assigments[*self.config.Account] {
 				log.Info("I am master this round.")
 				if nil == self.producer {
-					producer, err1 := producer.NewProducer(self.txpool, nil)
-					if nil != err1 {
-						log.Error("New producer failed.")
-						self.nodeWg.Done()
-						return
-					}
-					self.producer = producer
-				} else {
-					log.Info("I am slave this round.")
-					if nil == self.validator {
-						self.validator = validator.NewValidator(self.account)
-					}
+					self.producer = producer.NewProducer(self.txpool, self.config.Account)
 				}
+				// make block
+				block, err := self.producer.MakeBlock()
+				if err != nil {
+					log.Error("Make block failed.")
+					continue
+				}
+				// to consensus
+				proposal := &consensusc.Proposal{
+					Block: block,
+				}
+				err = self.consensus.ToConsensus(proposal)
+				if err != nil {
+					log.Error("Not to consensus.")
+					continue
+				}
+				// broadcast block
+				swChIn := self.blockSwitch.InPort(gossipswitch.LocalInPortId).Channel()
+				swChIn <- proposal.Block
 			}
 		}
 	}
@@ -139,12 +157,19 @@ func (self *Node) Round() {
 
 func (self *Node) Start() {
 	self.nodeWg.Add(1)
-	_, err := apigateway.StartRPC(self.config.ApiGatewayAddr)
+	err := self.txSwitch.Start()
 	if nil != err {
-		log.Warn("Start rpc failed.")
-		return
+		panic("TxSwitch Start Failed.")
 	}
-	// TODO: start rpc service
+	err = self.blockSwitch.Start()
+	if nil != err {
+		panic("TxSwitch Start Failed.")
+	}
+	_, err = apigateway.StartRPC(self.config.ApiGatewayAddr)
+	if nil != err {
+		panic("Start rpc failed.")
+	}
+
 	go self.Round()
 	self.nodeWg.Wait()
 	log.Warn("End start.")

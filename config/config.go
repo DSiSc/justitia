@@ -2,14 +2,14 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
-	blockchain_c "github.com/DSiSc/blockchain/config"
-	"github.com/DSiSc/craft/types"
-	consensus_c "github.com/DSiSc/galaxy/consensus/config"
-	participates_c "github.com/DSiSc/galaxy/participates/config"
-	role_c "github.com/DSiSc/galaxy/role/config"
+	blockchainc "github.com/DSiSc/blockchain/config"
+	consensusc "github.com/DSiSc/galaxy/consensus/config"
+	participatesc "github.com/DSiSc/galaxy/participates/config"
+	rolec "github.com/DSiSc/galaxy/role/config"
+	"github.com/DSiSc/justitia/tools"
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/txpool/log"
+	"github.com/DSiSc/validator/tools/account"
 	"io/ioutil"
 	"path/filepath"
 	"runtime"
@@ -29,13 +29,8 @@ const (
 	CONSENSUS_POLICY    = "consensus.policy"
 	PARTICIPATES_POLICY = "participates.policy"
 	ROLE_POLICY         = "role.policy"
-	// blockstore setting
-	DB_STORE_PLUGIN = "block.plugin"
-	DB_STORE_PATH   = "block.path"
 	// node info
-	NODE_ID = "node.id"
-	// node name in solo moderm
-	SINGLE_NODE_NAME = "singleNode"
+	NODE_ADDRESS = "node.address"
 	// block chain
 	BLOCK_CHAIN_PLUGIN     = "blockchain.plugin"
 	BLOCK_CHAIN_STATE_PATH = "blockchain.statePath"
@@ -46,19 +41,19 @@ const (
 
 type NodeConfig struct {
 	// default
-	Account types.NodeAddress
+	Account *account.Account
 	// api gateway
 	ApiGatewayAddr string
 	// txpool
 	TxPoolConf txpool.TxPoolConfig
 	// participates
-	ParticipatesConf participates_c.ParticipateConfig
+	ParticipatesConf participatesc.ParticipateConfig
 	// role
-	RoleConf role_c.RoleConfig
+	RoleConf rolec.RoleConfig
 	// consensus
-	ConsensusConf consensus_c.ConsensusConfig
+	ConsensusConf consensusc.ConsensusConfig
 	// BlockChainConfig
-	BlockChainConf blockchain_c.BlockChainConfig
+	BlockChainConf blockchainc.BlockChainConfig
 }
 
 type Config struct {
@@ -146,7 +141,7 @@ func (config *Config) GetConfigItem(name string) interface{} {
 
 func NewNodeConfig() NodeConfig {
 	conf := New(ConfigName)
-	nodeId, _ := conf.GetNodeId()
+	nodeAccount := conf.GetNodeAccount()
 	apiGatewayTcpAddr := conf.GetApiGatewayTcpAddr()
 	txPoolConf := conf.NewTxPoolConf()
 	participatesConf := conf.NewParticipateConf()
@@ -155,7 +150,7 @@ func NewNodeConfig() NodeConfig {
 	blockChainConf := conf.NewBlockChainConf()
 
 	return NodeConfig{
-		Account:          nodeId,
+		Account:          nodeAccount,
 		ApiGatewayAddr:   apiGatewayTcpAddr,
 		TxPoolConf:       txPoolConf,
 		ParticipatesConf: participatesConf,
@@ -163,17 +158,6 @@ func NewNodeConfig() NodeConfig {
 		ConsensusConf:    consensusConf,
 		BlockChainConf:   blockChainConf,
 	}
-}
-
-func (self *Config) GetNodeId() (types.NodeAddress, error) {
-	var temp types.NodeAddress
-	nodeId, exist := self.GetConfigItem(NODE_ID).(string)
-	if exist {
-		temp = types.NodeAddress(nodeId)
-		return temp, nil
-	}
-	log.Error("Node id not assigned in config.")
-	return temp, fmt.Errorf("node id not exists.")
 }
 
 func (self *Config) NewTxPoolConf() txpool.TxPoolConfig {
@@ -187,35 +171,35 @@ func (self *Config) NewTxPoolConf() txpool.TxPoolConfig {
 	return txPoolConf
 }
 
-func (self *Config) NewParticipateConf() participates_c.ParticipateConfig {
+func (self *Config) NewParticipateConf() participatesc.ParticipateConfig {
 	policy := self.GetConfigItem(PARTICIPATES_POLICY).(string)
-	participatesConf := participates_c.ParticipateConfig{
+	participatesConf := participatesc.ParticipateConfig{
 		PolicyName: policy,
 	}
 	return participatesConf
 }
 
-func (self *Config) NewRoleConf() role_c.RoleConfig {
+func (self *Config) NewRoleConf() rolec.RoleConfig {
 	policy := self.GetConfigItem(ROLE_POLICY).(string)
-	roleConf := role_c.RoleConfig{
+	roleConf := rolec.RoleConfig{
 		PolicyName: policy,
 	}
 	return roleConf
 }
 
-func (self *Config) NewConsensusConf() consensus_c.ConsensusConfig {
+func (self *Config) NewConsensusConf() consensusc.ConsensusConfig {
 	policy := self.GetConfigItem(CONSENSUS_POLICY).(string)
-	consensusConf := consensus_c.ConsensusConfig{
+	consensusConf := consensusc.ConsensusConfig{
 		PolicyName: policy,
 	}
 	return consensusConf
 }
 
-func (self *Config) NewBlockChainConf() blockchain_c.BlockChainConfig {
+func (self *Config) NewBlockChainConf() blockchainc.BlockChainConfig {
 	policy := self.GetConfigItem(BLOCK_CHAIN_PLUGIN).(string)
 	dataPath := self.GetConfigItem(BLOCK_CHAIN_DATA_PATH).(string)
 	statePath := self.GetConfigItem(BLOCK_CHAIN_STATE_PATH).(string)
-	blockChainConf := blockchain_c.BlockChainConfig{
+	blockChainConf := blockchainc.BlockChainConfig{
 		PluginName:    policy,
 		StateDataPath: statePath,
 		BlockDataPath: dataPath,
@@ -226,4 +210,12 @@ func (self *Config) NewBlockChainConf() blockchain_c.BlockChainConfig {
 func (self *Config) GetApiGatewayTcpAddr() string {
 	apiGatewayAddr := self.GetConfigItem(API_GATEWAY_TCP_ADDR).(string)
 	return apiGatewayAddr
+}
+
+func (self *Config) GetNodeAccount() *account.Account {
+	nodeAddr := self.GetConfigItem(NODE_ADDRESS).(string)
+	address := tools.HexToAddress(nodeAddr)
+	return &account.Account{
+		Address: address,
+	}
 }

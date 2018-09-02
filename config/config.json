@@ -22,7 +22,7 @@
     "policy": "solo"
   },
   "node": {
-    "id": "solo_node"
+    "address": "333c3310824b7c685133f2bedb2ca4b8b4df633d"
   },
   "blockchain": {
     "plugin": "memorydb",
