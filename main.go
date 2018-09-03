@@ -10,6 +10,5 @@ func main() {
 	if nil != err {
 		log.Error("Failed to instance a node.")
 	}
-
 	node.Start()
 }
