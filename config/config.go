@@ -24,7 +24,8 @@ const (
 	// json file relative path
 	CONFIG_DIR = "config/"
 	// txpool setting
-	TXPOOL_SLOTS = "txpool.globalSlots"
+	TXPOOL_SLOTS  = "txpool.globalSlots"
+	MAX_TXS_BLOCK = "txpool.txsPerBlock"
 	// consensus policy setting
 	CONSENSUS_POLICY    = "consensus.policy"
 	PARTICIPATES_POLICY = "participates.policy"
@@ -164,9 +165,16 @@ func (self *Config) NewTxPoolConf() txpool.TxPoolConfig {
 	slots, err := strconv.ParseUint(self.GetConfigItem(TXPOOL_SLOTS).(string), 10, 64)
 	if err != nil {
 		log.Error("Get slots failed.")
+		slots = 0
+	}
+	txs, err1 := strconv.ParseUint(self.GetConfigItem(MAX_TXS_BLOCK).(string), 10, 64)
+	if nil != err1 {
+		log.Error("Get slots failed.")
+		txs = 0
 	}
 	txPoolConf := txpool.TxPoolConfig{
-		GlobalSlots: slots,
+		GlobalSlots:    slots,
+		MaxTrxPerBlock: txs,
 	}
 	return txPoolConf
 }

@@ -11,7 +11,7 @@ type Event struct {
 	subscribers map[types.EventType]map[types.Subscriber]types.EventFunc
 }
 
-func NewEvent() *Event {
+func NewEvent() types.EventCenter {
 	return &Event{
 		subscribers: make(map[types.EventType]map[types.Subscriber]types.EventFunc),
 	}

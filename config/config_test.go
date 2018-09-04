@@ -20,7 +20,7 @@ func Test_NewNodeConfig(t *testing.T) {
 	assert := assert.New(t)
 	nodeConf := NewNodeConfig()
 	assert.NotNil(nodeConf)
-	assert.Equal(uint64(10), nodeConf.TxPoolConf.GlobalSlots)
+	assert.Equal(uint64(4096), nodeConf.TxPoolConf.GlobalSlots)
 	assert.NotNil("solo", nodeConf.ParticipatesConf.PolicyName)
 	assert.NotNil("solo_node", nodeConf.Account)
 	assert.Equal("tcp://0.0.0.0:47768", nodeConf.ApiGatewayAddr)

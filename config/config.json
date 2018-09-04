@@ -1,6 +1,7 @@
 {
   "txpool":{
-    "globalSlots":"10"
+    "globalSlots":"4096",
+    "txsPerBlock": "512"
   },
   "producer":{
     "policy":"timer",

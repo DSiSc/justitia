@@ -1,4 +1,4 @@
-package justitia
+package main
 
 import (
 	"github.com/DSiSc/justitia/node"
