@@ -89,3 +89,18 @@ func (e *Event) NotifyAll() (errs []error) {
 
 	return errs
 }
+
+// unsubscribe all event and subscriber elegant
+func (e *Event) UnSubscribeAll() {
+	for eventtype, _ := range e.subscribers {
+		subs, ok := e.subscribers[eventtype]
+		if !ok {
+			continue
+		}
+		for subscriber, _ := range subs {
+			delete(subs, subscriber)
+			close(subscriber)
+		}
+	}
+	return
+}

@@ -3,12 +3,14 @@ package events
 import (
 	"fmt"
 	"github.com/DSiSc/craft/types"
+	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 func TestNewEvent(t *testing.T) {
 	event := NewEvent()
-
+	assert := assert.New(t)
 	var EventSaveBlock types.EventType = 1
 	var EventReplyTx types.EventType = 2
 
@@ -23,17 +25,32 @@ func TestNewEvent(t *testing.T) {
 	fmt.Println("Subscribe...")
 	// sub1 := event.Subscribe(EventReplyTx, subscriber1)
 	sub1 := event.Subscribe(EventReplyTx, subscriber1)
+	assert.NotNil(sub1)
+	sub2 := event.Subscribe(EventReplyTx, subscriber1)
+	assert.NotEqual(sub1, sub2)
 	event.Subscribe(EventSaveBlock, subscriber2)
 	event.Subscribe(EventReplyTx, subscriber2)
-
+	time.Sleep(100000000)
 	fmt.Println("Notify...")
-	event.Notify(EventSaveBlock, nil)
-
+	err := event.Notify(EventSaveBlock, nil)
+	assert.Nil(err)
+	time.Sleep(100000000)
 	fmt.Println("Notify All...")
-	event.NotifyAll()
-
-	event.UnSubscribe(EventReplyTx, sub1)
+	errs := event.NotifyAll()
+	assert.Equal(0, len(errs))
+	time.Sleep(100000000)
+	err = event.UnSubscribe(EventReplyTx, sub1)
+	assert.Nil(err)
 	fmt.Println("Notify All after unsubscribe sub1...")
+	errs = event.NotifyAll()
+	assert.Equal(0, len(errs))
+	time.Sleep(100000000)
+	fmt.Println("Notify All after unsubscribeall...")
+	event.UnSubscribeAll()
+	errs = event.NotifyAll()
+	assert.Equal(0, len(errs))
+	time.Sleep(100000000)
+	fmt.Println("Notify All after subscribeall...")
+	event.Subscribe(EventReplyTx, subscriber1)
 	event.NotifyAll()
-
 }

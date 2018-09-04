@@ -12,7 +12,6 @@ import (
 	"github.com/DSiSc/galaxy/role"
 	rolec "github.com/DSiSc/galaxy/role/common"
 	"github.com/DSiSc/gossipswitch"
-	gossipswitchc "github.com/DSiSc/gossipswitch/common"
 	"github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/justitia/config"
 	"github.com/DSiSc/justitia/tools/events"
@@ -54,7 +53,6 @@ type Node struct {
 }
 
 func NewNode() (NodeService, error) {
-	Complete.Store(false)
 	nodeConf := config.NewNodeConfig()
 	types.GlobalEventCenter = events.NewEvent()
 
@@ -63,11 +61,11 @@ func NewNode() (NodeService, error) {
 	txSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.TxSwitch)
 	if err != nil {
 		log.Error("Init txSwitch failed.")
-		return nil, fmt.Errorf("TxSwitch failed.")
+		return nil, fmt.Errorf("TxSwitch init failed.")
 	}
 	swChIn := txSwitch.InPort(gossipswitch.LocalInPortId).Channel()
 	rpc.SetSwCh(swChIn)
-	err = txSwitch.OutPort(gossipswitch.LocalInPortId).BindToPort(func(msg gossipswitchc.SwitchMsg) error {
+	err = txSwitch.OutPort(gossipswitch.LocalInPortId).BindToPort(func(msg interface{}) error {
 		return txpool.AddTx(msg.(*types.Transaction))
 	})
 	if err != nil {
@@ -78,31 +76,31 @@ func NewNode() (NodeService, error) {
 	blkSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.BlockSwitch)
 	if err != nil {
 		log.Error("Init block switch failed.")
-		return nil, fmt.Errorf("BlkSwitch failed.")
+		return nil, fmt.Errorf("BlkSwitch init failed.")
 	}
 
 	err = blockchain.InitBlockChain(nodeConf.BlockChainConf)
 	if err != nil {
 		log.Error("Init blockchain failed.")
-		return nil, fmt.Errorf("Blockchain failed.")
+		return nil, fmt.Errorf("Blockchain init failed.")
 	}
 
 	participates, err := participates.NewParticipates(nodeConf.ParticipatesConf)
 	if nil != err {
 		log.Error("Init participates failed.")
-		return nil, fmt.Errorf("Participates failed.")
+		return nil, fmt.Errorf("Participates init failed.")
 	}
 
 	role, err := role.NewRole(participates, *nodeConf.Account, nodeConf.RoleConf)
 	if nil != err {
 		log.Error("Init role failed.")
-		return nil, fmt.Errorf("Role failed.")
+		return nil, fmt.Errorf("Role init failed.")
 	}
 
 	consensus, err := consensus.NewConsensus(participates, nodeConf.ConsensusConf)
 	if nil != err {
 		log.Error("Init consensus failed.")
-		return nil, fmt.Errorf("Consensus failed.")
+		return nil, fmt.Errorf("Consensus init failed.")
 	}
 	EventRegister()
 	node := &Node{
@@ -131,10 +129,7 @@ func EventRegister() {
 }
 
 func EventUnregister() {
-	// TODO: Add unregister all func
-	types.GlobalEventCenter.UnSubscribe(types.EventBlockCommitted, blockCommittedSub)
-	types.GlobalEventCenter.UnSubscribe(types.EventBlockVerifyFailed, blockVerifyFaileddSub)
-	types.GlobalEventCenter.UnSubscribe(types.EventBlockCommitFailed, blockCommittedFailedSub)
+	types.GlobalEventCenter.UnSubscribeAll()
 }
 
 func (self *Node) Round() error {
@@ -211,7 +206,8 @@ func (self *Node) Start() {
 	if nil != err {
 		panic("Start rpc failed.")
 	}
-	log.Warn("End start.")
+	Complete.Store(false)
+	log.Info("start loop")
 	go self.mainLoop()
 	self.nodeWg.Wait()
 }
@@ -219,5 +215,6 @@ func (self *Node) Start() {
 func (self *Node) Stop() {
 	log.Warn("Stop node service.")
 	Complete.Store(true)
+	EventUnregister()
 	return
 }
