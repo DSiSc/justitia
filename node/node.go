@@ -10,9 +10,10 @@ import (
 	consensusc "github.com/DSiSc/galaxy/consensus/common"
 	"github.com/DSiSc/galaxy/participates"
 	"github.com/DSiSc/galaxy/role"
-	"github.com/DSiSc/galaxy/role/common"
+	rolec "github.com/DSiSc/galaxy/role/common"
 	"github.com/DSiSc/gossipswitch"
 	gossipswitchc "github.com/DSiSc/gossipswitch/common"
+	"github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/justitia/config"
 	"github.com/DSiSc/justitia/tools/events"
 	"github.com/DSiSc/producer"
@@ -20,11 +21,18 @@ import (
 	"github.com/DSiSc/txpool/log"
 	"github.com/DSiSc/validator"
 	"sync"
+	"sync/atomic"
 )
 
-var complete chan int
+var Complete atomic.Value
 
-var blockCommitSub types.Subscriber
+var MsgChannel = make(chan common.MsgType)
+
+var (
+	blockCommittedSub       types.Subscriber
+	blockVerifyFaileddSub   types.Subscriber
+	blockCommittedFailedSub types.Subscriber
+)
 
 type NodeService interface {
 	Start()
@@ -46,7 +54,7 @@ type Node struct {
 }
 
 func NewNode() (NodeService, error) {
-	complete = make(chan int)
+	Complete.Store(false)
 	nodeConf := config.NewNodeConfig()
 	types.GlobalEventCenter = events.NewEvent()
 
@@ -96,7 +104,7 @@ func NewNode() (NodeService, error) {
 		log.Error("Init consensus failed.")
 		return nil, fmt.Errorf("Consensus failed.")
 	}
-
+	EventRegister()
 	node := &Node{
 		config:       nodeConf,
 		txpool:       txpool,
@@ -110,46 +118,81 @@ func NewNode() (NodeService, error) {
 	return node, nil
 }
 
-func (self *Node) Round() {
-ROUND:
-	select {
-	case <-complete:
-		log.Warn("Stop node service.")
-		self.nodeWg.Done()
-		return
-	default:
-		log.Info("begin produce block.")
-		// get role
-		assigments, err := self.role.RoleAssignments()
-		if nil != err {
-			log.Error("Role assignments failed.")
-			self.nodeWg.Done()
-			goto ROUND
+func EventRegister() {
+	blockCommittedSub = types.GlobalEventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
+		MsgChannel <- common.MsgBlockCommitSuccess
+	})
+	blockVerifyFaileddSub = types.GlobalEventCenter.Subscribe(types.EventBlockVerifyFailed, func(v interface{}) {
+		MsgChannel <- common.MsgBlockVerifyFailed
+	})
+	blockCommittedFailedSub = types.GlobalEventCenter.Subscribe(types.EventBlockCommitFailed, func(v interface{}) {
+		MsgChannel <- common.MsgBlockCommitFailed
+	})
+}
+
+func EventUnregister() {
+	// TODO: Add unregister all func
+	types.GlobalEventCenter.UnSubscribe(types.EventBlockCommitted, blockCommittedSub)
+	types.GlobalEventCenter.UnSubscribe(types.EventBlockVerifyFailed, blockVerifyFaileddSub)
+	types.GlobalEventCenter.UnSubscribe(types.EventBlockCommitFailed, blockCommittedFailedSub)
+}
+
+func (self *Node) Round() error {
+	log.Info("begin produce block.")
+	assigments, err := self.role.RoleAssignments()
+	if nil != err {
+		log.Error("Role assignments failed.")
+		return fmt.Errorf("Role assignments failed.")
+	}
+	if rolec.Master == assigments[*self.config.Account] {
+		log.Info("I am master this round.")
+		if nil == self.producer {
+			self.producer = producer.NewProducer(self.txpool, self.config.Account)
 		}
-		// new object based role
-		if common.Master == assigments[*self.config.Account] {
-			log.Info("I am master this round.")
-			if nil == self.producer {
-				self.producer = producer.NewProducer(self.txpool, self.config.Account)
-			}
-			// make block
-			block, err := self.producer.MakeBlock()
-			if err != nil {
-				log.Error("Make block failed.")
-				goto ROUND
-			}
-			// to consensus
-			proposal := &consensusc.Proposal{
-				Block: block,
-			}
-			err = self.consensus.ToConsensus(proposal)
-			if err != nil {
-				log.Error("Not to consensus.")
-				goto ROUND
-			}
-			// broadcast block
-			swChIn := self.blockSwitch.InPort(gossipswitch.LocalInPortId).Channel()
-			swChIn <- proposal.Block
+		block, err := self.producer.MakeBlock()
+		if err != nil {
+			log.Error("Make block failed.")
+			return fmt.Errorf("Make block failed.")
+		}
+		proposal := &consensusc.Proposal{
+			Block: block,
+		}
+		err = self.consensus.ToConsensus(proposal)
+		if err != nil {
+			log.Error("Not to consensus.")
+			return fmt.Errorf("Not to consensus.")
+		}
+		swChIn := self.blockSwitch.InPort(gossipswitch.LocalInPortId).Channel()
+		swChIn <- proposal.Block
+	} else {
+		if self.validator == nil {
+			// TODO: attach validator to consensus
+			self.validator = validator.NewValidator(self.config.Account)
+		}
+	}
+	return nil
+}
+
+func (self *Node) mainLoop() {
+	for {
+		if Complete.Load() == true {
+			log.Info("Stop node service.")
+			break
+		}
+		err := self.Round()
+		if nil != err {
+			// if block make failed, then start a new round
+			continue
+		}
+		msg := <-MsgChannel
+		switch msg {
+		case common.MsgBlockCommitSuccess:
+		case common.MsgBlockCommitFailed:
+		case common.MsgBlockVerifyFailed:
+			continue
+		default:
+			log.Info("Not support msg type.")
+			continue
 		}
 	}
 }
@@ -168,17 +211,13 @@ func (self *Node) Start() {
 	if nil != err {
 		panic("Start rpc failed.")
 	}
-	blockCommitSub = types.GlobalEventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
-		self.Round()
-	})
-	go self.Round()
-	self.nodeWg.Wait()
 	log.Warn("End start.")
+	go self.mainLoop()
+	self.nodeWg.Wait()
 }
 
 func (self *Node) Stop() {
-	log.Warn("Set node service stop.")
-	complete <- 1
-	types.GlobalEventCenter.UnSubscribe(types.EventBlockCommitted, blockCommitSub)
+	log.Warn("Stop node service.")
+	Complete.Store(true)
 	return
 }

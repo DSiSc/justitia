@@ -61,3 +61,11 @@ func newTransaction(nonce uint64, to *types.Address, amount *big.Int, gasLimit u
 func NewTransaction(nonce uint64, to types.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte, from types.Address) *types.Transaction {
 	return newTransaction(nonce, &to, amount, gasLimit, gasPrice, data, &from)
 }
+
+type MsgType uint8
+
+const (
+	MsgBlockCommitSuccess MsgType = iota
+	MsgBlockCommitFailed
+	MsgBlockVerifyFailed
+)
