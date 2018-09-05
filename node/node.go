@@ -2,7 +2,6 @@ package node
 
 import (
 	"fmt"
-	"github.com/DSiSc/apigateway"
 	rpc "github.com/DSiSc/apigateway/rpc/core"
 	"github.com/DSiSc/blockchain"
 	"github.com/DSiSc/craft/types"
@@ -19,20 +18,13 @@ import (
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/txpool/log"
 	"github.com/DSiSc/validator"
+	"net"
 	"sync"
-	"sync/atomic"
 	"time"
+	"github.com/DSiSc/apigateway"
 )
-
-var Complete atomic.Value
 
 var MsgChannel chan common.MsgType
-
-var (
-	blockCommittedSub       types.Subscriber
-	blockVerifyFailedSub    types.Subscriber
-	blockCommittedFailedSub types.Subscriber
-)
 
 type NodeService interface {
 	Start()
@@ -51,12 +43,24 @@ type Node struct {
 	txSwitch     *gossipswitch.GossipSwitch
 	blockSwitch  *gossipswitch.GossipSwitch
 	validator    *validator.Validator
+	rpcListeners []net.Listener
+}
+
+func EventRegister() {
+	types.GlobalEventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
+		MsgChannel <- common.MsgBlockCommitSuccess
+	})
+	types.GlobalEventCenter.Subscribe(types.EventBlockVerifyFailed, func(v interface{}) {
+		MsgChannel <- common.MsgBlockVerifyFailed
+	})
+	types.GlobalEventCenter.Subscribe(types.EventBlockCommitFailed, func(v interface{}) {
+		MsgChannel <- common.MsgBlockCommitFailed
+	})
 }
 
 func NewNode() (NodeService, error) {
 	nodeConf := config.NewNodeConfig()
 	types.GlobalEventCenter = events.NewEvent()
-
 	txpool := txpool.NewTxPool(nodeConf.TxPoolConf)
 	MsgChannel = make(chan common.MsgType)
 	txSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.TxSwitch)
@@ -117,18 +121,6 @@ func NewNode() (NodeService, error) {
 	return node, nil
 }
 
-func EventRegister() {
-	blockCommittedSub = types.GlobalEventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
-		MsgChannel <- common.MsgBlockCommitSuccess
-	})
-	blockVerifyFailedSub = types.GlobalEventCenter.Subscribe(types.EventBlockVerifyFailed, func(v interface{}) {
-		MsgChannel <- common.MsgBlockVerifyFailed
-	})
-	blockCommittedFailedSub = types.GlobalEventCenter.Subscribe(types.EventBlockCommitFailed, func(v interface{}) {
-		MsgChannel <- common.MsgBlockCommitFailed
-	})
-}
-
 func EventUnregister() {
 	types.GlobalEventCenter.UnSubscribeAll()
 }
@@ -154,8 +146,7 @@ func (self *Node) Round() error {
 		proposal := &consensusc.Proposal{
 			Block: block,
 		}
-		err = self.consensus.ToConsensus(proposal)
-		if err != nil {
+		if err = self.consensus.ToConsensus(proposal); err != nil {
 			log.Error("Not to consensus.")
 			return fmt.Errorf("Not to consensus.")
 		}
@@ -172,13 +163,7 @@ func (self *Node) Round() error {
 
 func (self *Node) mainLoop() {
 	for {
-		if Complete.Load() == true {
-			log.Info("Stop node service.")
-			break
-		}
-
-		err := self.Round()
-		if nil != err {
+		if err := self.Round(); nil != err {
 			// if block make failed, then start a new round
 			continue
 		}
@@ -192,32 +177,38 @@ func (self *Node) mainLoop() {
 	}
 }
 
-func (self *Node) Start() {
-	self.nodeWg.Add(1)
-	err := self.txSwitch.Start()
-	if nil != err {
-		panic("TxSwitch Start Failed.")
-	}
-	err = self.blockSwitch.Start()
-	if nil != err {
-		panic("TxSwitch Start Failed.")
-	}
-
-	_, err = apigateway.StartRPC(self.config.ApiGatewayAddr)
-	if nil != err {
+func (self *Node) stratRpc(){
+	var ok error
+	if self.rpcListeners, ok = apigateway.StartRPC(self.config.ApiGatewayAddr); nil != ok {
+		fmt.Print(ok)
 		panic("Start rpc failed.")
 	}
+}
 
-	Complete.Store(false)
-	log.Info("start loop")
+func (self *Node) startSwitch() {
+	if err := self.txSwitch.Start(); nil != err {
+		panic("TxSwitch Start Failed.")
+	}
+	if err := self.blockSwitch.Start(); nil != err {
+		panic("TxSwitch Start Failed.")
+	}
+}
+
+func (self *Node) Start() {
+	self.stratRpc()
+	self.startSwitch()
 	go self.mainLoop()
-	self.nodeWg.Wait()
 }
 
 func (self *Node) Stop() {
 	log.Warn("Stop node service.")
-	Complete.Store(true)
 	EventUnregister()
 	close(MsgChannel)
+	for _, l := range self.rpcListeners {
+		log.Info("Closing rpc listener")
+		if err := l.Close(); err != nil {
+			log.Error("Error closing listener")
+		}
+	}
 	return
 }
