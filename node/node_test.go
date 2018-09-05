@@ -14,10 +14,7 @@ func Test_NewNode(t *testing.T) {
 	service, err = NewNode()
 	assert.NotNil(service)
 	assert.Nil(err)
-}
-
-func Test_Start(t *testing.T) {
 	go service.Start()
-	time.Sleep(time.Duration(1) * time.Microsecond)
-	service.Stop()
+	time.Sleep(time.Duration(10) * time.Microsecond)
+	go service.Stop()
 }

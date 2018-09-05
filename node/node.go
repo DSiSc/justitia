@@ -21,15 +21,16 @@ import (
 	"github.com/DSiSc/validator"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 var Complete atomic.Value
 
-var MsgChannel = make(chan common.MsgType)
+var MsgChannel chan common.MsgType
 
 var (
 	blockCommittedSub       types.Subscriber
-	blockVerifyFaileddSub   types.Subscriber
+	blockVerifyFailedSub    types.Subscriber
 	blockCommittedFailedSub types.Subscriber
 )
 
@@ -57,7 +58,7 @@ func NewNode() (NodeService, error) {
 	types.GlobalEventCenter = events.NewEvent()
 
 	txpool := txpool.NewTxPool(nodeConf.TxPoolConf)
-
+	MsgChannel = make(chan common.MsgType)
 	txSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.TxSwitch)
 	if err != nil {
 		log.Error("Init txSwitch failed.")
@@ -120,7 +121,7 @@ func EventRegister() {
 	blockCommittedSub = types.GlobalEventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
 		MsgChannel <- common.MsgBlockCommitSuccess
 	})
-	blockVerifyFaileddSub = types.GlobalEventCenter.Subscribe(types.EventBlockVerifyFailed, func(v interface{}) {
+	blockVerifyFailedSub = types.GlobalEventCenter.Subscribe(types.EventBlockVerifyFailed, func(v interface{}) {
 		MsgChannel <- common.MsgBlockVerifyFailed
 	})
 	blockCommittedFailedSub = types.GlobalEventCenter.Subscribe(types.EventBlockCommitFailed, func(v interface{}) {
@@ -133,6 +134,7 @@ func EventUnregister() {
 }
 
 func (self *Node) Round() error {
+	time.Sleep(time.Duration(5) * time.Second)
 	log.Info("begin produce block.")
 	assigments, err := self.role.RoleAssignments()
 	if nil != err {
@@ -174,6 +176,7 @@ func (self *Node) mainLoop() {
 			log.Info("Stop node service.")
 			break
 		}
+
 		err := self.Round()
 		if nil != err {
 			// if block make failed, then start a new round
@@ -184,9 +187,6 @@ func (self *Node) mainLoop() {
 		case common.MsgBlockCommitSuccess:
 		case common.MsgBlockCommitFailed:
 		case common.MsgBlockVerifyFailed:
-			continue
-		default:
-			log.Info("Not support msg type.")
 			continue
 		}
 	}
@@ -202,10 +202,12 @@ func (self *Node) Start() {
 	if nil != err {
 		panic("TxSwitch Start Failed.")
 	}
+
 	_, err = apigateway.StartRPC(self.config.ApiGatewayAddr)
 	if nil != err {
 		panic("Start rpc failed.")
 	}
+
 	Complete.Store(false)
 	log.Info("start loop")
 	go self.mainLoop()
@@ -216,5 +218,6 @@ func (self *Node) Stop() {
 	log.Warn("Stop node service.")
 	Complete.Store(true)
 	EventUnregister()
+	close(MsgChannel)
 	return
 }
