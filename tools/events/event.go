@@ -52,6 +52,7 @@ func (e *Event) UnSubscribe(eventType types.EventType, subscriber types.Subscrib
 
 // Notify subscribers that Subscribe specified event
 func (e *Event) Notify(eventType types.EventType, value interface{}) (err error) {
+
 	e.m.RLock()
 	defer e.m.RUnlock()
 
@@ -65,7 +66,7 @@ func (e *Event) Notify(eventType types.EventType, value interface{}) (err error)
 	case error:
 		fmt.Printf("Reveive errors is [%v].\n", value)
 	}
-
+	fmt.Printf("eventType is [%d].", eventType)
 	for _, event := range subs {
 		go e.NotifySubscriber(event, value)
 	}
@@ -108,6 +109,6 @@ func (e *Event) UnSubscribeAll() {
 			close(subscriber)
 		}
 	}
-	e.Subscribers = make(map[types.EventType]map[types.Subscriber]types.EventFunc)
+	//e.Subscribers = make(map[types.EventType]map[types.Subscriber]types.EventFunc)
 	return
 }

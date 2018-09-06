@@ -21,7 +21,6 @@ import (
 	"github.com/DSiSc/validator"
 	"net"
 	"sync"
-	"time"
 )
 
 var MsgChannel chan common.MsgType
@@ -131,7 +130,6 @@ func EventUnregister() {
 }
 
 func (self *Node) Round() error {
-	time.Sleep(time.Duration(5) * time.Second)
 	log.Info("begin produce block.")
 	assigments, err := self.role.RoleAssignments()
 	if nil != err {
@@ -157,6 +155,7 @@ func (self *Node) Round() error {
 		}
 		swChIn := self.blockSwitch.InPort(gossipswitch.LocalInPortId).Channel()
 		swChIn <- proposal.Block
+		fmt.Printf("New block height is: %v.\n", block.Header.Height)
 	} else {
 		if self.validator == nil {
 			// TODO: attach validator to consensus
@@ -170,6 +169,7 @@ func (self *Node) mainLoop() {
 	for {
 		if err := self.Round(); nil != err {
 			// if block make failed, then start a new round
+			fmt.Printf("Round Failed.")
 			continue
 		}
 		msg := <-MsgChannel
@@ -180,7 +180,8 @@ func (self *Node) mainLoop() {
 			fmt.Printf("Receive from switch commit failed.\n")
 		case common.MsgBlockVerifyFailed:
 			fmt.Printf("Receive from switch verify failed.\n")
-			continue
+		case common.MsgNodeServiceStopped:
+			return
 		}
 	}
 }
@@ -210,8 +211,8 @@ func (self *Node) Start() {
 
 func (self *Node) Stop() error {
 	log.Warn("Stop node service.")
-	EventUnregister()
-	close(MsgChannel)
+	close(StopSignal)
+	MsgChannel <- common.MsgNodeServiceStopped
 	for _, l := range self.rpcListeners {
 		log.Info("Closing rpc listener")
 		if err := l.Close(); err != nil {
@@ -219,7 +220,9 @@ func (self *Node) Stop() error {
 			return fmt.Errorf("Error closing listener")
 		}
 	}
-	close(StopSignal)
+	self.blockSwitch.Stop()
+	self.txSwitch.Stop()
+	EventUnregister()
 	return nil
 }
 
