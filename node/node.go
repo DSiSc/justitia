@@ -170,8 +170,11 @@ func (self *Node) mainLoop() {
 		msg := <-MsgChannel
 		switch msg {
 		case common.MsgBlockCommitSuccess:
+			fmt.Printf("Receive from switch succsess.\n")
 		case common.MsgBlockCommitFailed:
+			fmt.Printf("Receive from switch commit failed.\n")
 		case common.MsgBlockVerifyFailed:
+			fmt.Printf("Receive from switch verify failed.\n")
 			continue
 		}
 	}
