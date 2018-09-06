@@ -3,13 +3,12 @@ package node
 import (
 	"github.com/DSiSc/craft/types"
 	"github.com/DSiSc/justitia/common"
+	"github.com/DSiSc/justitia/tools/events"
 	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
-	"github.com/DSiSc/justitia/tools/events"
-	)
-
-var service NodeService
+	"time"
+)
 
 // mock a transaction
 func mock_transactions(num int) []*types.Transaction {
@@ -29,10 +28,9 @@ func mock_transactions(num int) []*types.Transaction {
 }
 
 func TestNewNode(t *testing.T) {
-	var err error
 	assert := assert.New(t)
 
-	service, err = NewNode()
+	service, err := NewNode()
 	assert.Nil(err)
 	assert.NotNil(service)
 
@@ -52,15 +50,25 @@ func TestNewNode(t *testing.T) {
 
 func TestNode_Start(t *testing.T) {
 	assert := assert.New(t)
+	service, err := NewNode()
+	assert.Nil(err)
+	assert.NotNil(service)
 	service.Start()
 	nodeService := service.(*Node)
 	assert.NotNil(nodeService.rpcListeners)
 	assert.Equal(1, len(nodeService.rpcListeners))
+	err = service.Stop()
+	assert.Nil(err)
 }
 
 func TestNode_Stop(t *testing.T) {
 	assert := assert.New(t)
-	service.Stop()
+	service, err := NewNode()
+	assert.Nil(err)
+	assert.NotNil(service)
+	service.Start()
+	err = service.Stop()
+	assert.Nil(err)
 	event := types.GlobalEventCenter.(*events.Event)
 	assert.Equal(0, len(event.Subscribers))
 }
@@ -68,7 +76,7 @@ func TestNode_Stop(t *testing.T) {
 func TestEventRegister(t *testing.T) {
 	EventRegister()
 	event := types.GlobalEventCenter.(*events.Event)
-	assert.Equal(t,3, len(event.Subscribers))
+	assert.Equal(t, 3, len(event.Subscribers))
 }
 
 func TestNode_Round(t *testing.T) {
@@ -80,4 +88,15 @@ func TestNode_Round(t *testing.T) {
 		err = nodeService.Round()
 	}()
 	assert.Nil(err)
+}
+
+func TestNode_Wait(t *testing.T) {
+	assert := assert.New(t)
+	service, err := NewNode()
+	assert.Nil(err)
+	go service.Wait()
+	time.Sleep(1 * time.Second)
+	close(StopSignal)
+	_, ok := <-StopSignal
+	assert.Equal(false, ok)
 }

@@ -2,6 +2,7 @@ package node
 
 import (
 	"fmt"
+	"github.com/DSiSc/apigateway"
 	rpc "github.com/DSiSc/apigateway/rpc/core"
 	"github.com/DSiSc/blockchain"
 	"github.com/DSiSc/craft/types"
@@ -21,14 +22,17 @@ import (
 	"net"
 	"sync"
 	"time"
-	"github.com/DSiSc/apigateway"
 )
 
 var MsgChannel chan common.MsgType
 
+var StopSignal chan interface{}
+
 type NodeService interface {
 	Start()
-	Stop()
+	Stop() error
+	Wait()
+	Restart() error
 }
 
 // node struct with all service
@@ -63,6 +67,7 @@ func NewNode() (NodeService, error) {
 	types.GlobalEventCenter = events.NewEvent()
 	txpool := txpool.NewTxPool(nodeConf.TxPoolConf)
 	MsgChannel = make(chan common.MsgType)
+	StopSignal = make(chan interface{})
 	txSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.TxSwitch)
 	if err != nil {
 		log.Error("Init txSwitch failed.")
@@ -180,16 +185,16 @@ func (self *Node) mainLoop() {
 	}
 }
 
-func (self *Node) stratRpc(){
-	var ok error
-	if self.rpcListeners, ok = apigateway.StartRPC(self.config.ApiGatewayAddr); nil != ok {
-		fmt.Print(ok)
+func (self *Node) stratRpc() {
+	var err error
+	if self.rpcListeners, err = apigateway.StartRPC(self.config.ApiGatewayAddr); nil != err {
 		panic("Start rpc failed.")
 	}
 }
 
 func (self *Node) startSwitch() {
 	if err := self.txSwitch.Start(); nil != err {
+		fmt.Print(err)
 		panic("TxSwitch Start Failed.")
 	}
 	if err := self.blockSwitch.Start(); nil != err {
@@ -203,7 +208,7 @@ func (self *Node) Start() {
 	go self.mainLoop()
 }
 
-func (self *Node) Stop() {
+func (self *Node) Stop() error {
 	log.Warn("Stop node service.")
 	EventUnregister()
 	close(MsgChannel)
@@ -211,7 +216,21 @@ func (self *Node) Stop() {
 		log.Info("Closing rpc listener")
 		if err := l.Close(); err != nil {
 			log.Error("Error closing listener")
+			return fmt.Errorf("Error closing listener")
 		}
 	}
-	return
+	close(StopSignal)
+	return nil
+}
+
+func (self *Node) Wait() {
+	<-StopSignal
+}
+
+func (self *Node) Restart() error {
+	if err := self.Stop(); err != nil {
+		return err
+	}
+	self.Start()
+	return nil
 }
