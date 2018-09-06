@@ -8,12 +8,12 @@ import (
 
 type Event struct {
 	m           sync.RWMutex
-	subscribers map[types.EventType]map[types.Subscriber]types.EventFunc
+	Subscribers map[types.EventType]map[types.Subscriber]types.EventFunc
 }
 
 func NewEvent() types.EventCenter {
 	return &Event{
-		subscribers: make(map[types.EventType]map[types.Subscriber]types.EventFunc),
+		Subscribers: make(map[types.EventType]map[types.Subscriber]types.EventFunc),
 	}
 }
 
@@ -23,11 +23,11 @@ func (e *Event) Subscribe(eventType types.EventType, eventFunc types.EventFunc) 
 	defer e.m.Unlock()
 
 	sub := make(chan interface{})
-	_, ok := e.subscribers[eventType]
+	_, ok := e.Subscribers[eventType]
 	if !ok {
-		e.subscribers[eventType] = make(map[types.Subscriber]types.EventFunc)
+		e.Subscribers[eventType] = make(map[types.Subscriber]types.EventFunc)
 	}
-	e.subscribers[eventType][sub] = eventFunc
+	e.Subscribers[eventType][sub] = eventFunc
 
 	return sub
 }
@@ -37,7 +37,7 @@ func (e *Event) UnSubscribe(eventType types.EventType, subscriber types.Subscrib
 	e.m.Lock()
 	defer e.m.Unlock()
 
-	subEvent, ok := e.subscribers[eventType]
+	subEvent, ok := e.Subscribers[eventType]
 	if !ok {
 		err = errors.New("No event type.")
 		return
@@ -54,7 +54,7 @@ func (e *Event) Notify(eventType types.EventType, value interface{}) (err error)
 	e.m.RLock()
 	defer e.m.RUnlock()
 
-	subs, ok := e.subscribers[eventType]
+	subs, ok := e.Subscribers[eventType]
 	if !ok {
 		err = errors.New("No event type.")
 		return
@@ -81,7 +81,7 @@ func (e *Event) NotifyAll() (errs []error) {
 	e.m.RLock()
 	defer e.m.RUnlock()
 
-	for eventType, _ := range e.subscribers {
+	for eventType, _ := range e.Subscribers {
 		if err := e.Notify(eventType, nil); err != nil {
 			errs = append(errs, err)
 		}
@@ -92,8 +92,8 @@ func (e *Event) NotifyAll() (errs []error) {
 
 // unsubscribe all event and subscriber elegant
 func (e *Event) UnSubscribeAll() {
-	for eventtype, _ := range e.subscribers {
-		subs, ok := e.subscribers[eventtype]
+	for eventtype, _ := range e.Subscribers {
+		subs, ok := e.Subscribers[eventtype]
 		if !ok {
 			continue
 		}
@@ -102,5 +102,6 @@ func (e *Event) UnSubscribeAll() {
 			close(subscriber)
 		}
 	}
+	e.Subscribers = make(map[types.EventType]map[types.Subscriber]types.EventFunc)
 	return
 }

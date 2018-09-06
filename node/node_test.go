@@ -7,8 +7,7 @@ import (
 	"math/big"
 	"testing"
 	"github.com/DSiSc/justitia/tools/events"
-	"time"
-)
+	)
 
 var service NodeService
 
@@ -64,13 +63,11 @@ func TestNode_Stop(t *testing.T) {
 	service.Stop()
 	event := types.GlobalEventCenter.(*events.Event)
 	assert.Equal(0, len(event.Subscribers))
-
 }
 
 func TestEventRegister(t *testing.T) {
 	EventRegister()
 	event := types.GlobalEventCenter.(*events.Event)
-	time.Sleep(1000000)
 	assert.Equal(t,3, len(event.Subscribers))
 }
 
