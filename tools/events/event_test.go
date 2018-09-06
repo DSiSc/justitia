@@ -5,7 +5,7 @@ import (
 	"github.com/DSiSc/craft/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
-	)
+)
 
 func TestNewEvent(t *testing.T) {
 	event := NewEvent()
@@ -30,6 +30,8 @@ func TestNewEvent(t *testing.T) {
 	event.Subscribe(EventReplyTx, subscriber2)
 	fmt.Println("Notify...")
 	err := event.Notify(EventSaveBlock, nil)
+	assert.Nil(err)
+	err = event.Notify(EventSaveBlock, fmt.Errorf("Failed"))
 	assert.Nil(err)
 	fmt.Println("Notify All...")
 	errs := event.NotifyAll()

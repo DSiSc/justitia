@@ -2,6 +2,7 @@ package events
 
 import (
 	"errors"
+	"fmt"
 	"github.com/DSiSc/craft/types"
 	"sync"
 )
@@ -58,6 +59,11 @@ func (e *Event) Notify(eventType types.EventType, value interface{}) (err error)
 	if !ok {
 		err = errors.New("No event type.")
 		return
+	}
+
+	switch value.(type) {
+	case error:
+		fmt.Printf("Reveive errors is [%v].\n", value)
 	}
 
 	for _, event := range subs {
