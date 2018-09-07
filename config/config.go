@@ -3,12 +3,12 @@ package config
 import (
 	"encoding/json"
 	blockchainc "github.com/DSiSc/blockchain/config"
+	"github.com/DSiSc/craft/log"
 	consensusc "github.com/DSiSc/galaxy/consensus/config"
 	participatesc "github.com/DSiSc/galaxy/participates/config"
 	rolec "github.com/DSiSc/galaxy/role/config"
 	"github.com/DSiSc/justitia/tools"
 	"github.com/DSiSc/txpool"
-	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/validator/tools/account"
 	"io/ioutil"
 	"path/filepath"
@@ -164,12 +164,12 @@ func NewNodeConfig() NodeConfig {
 func (self *Config) NewTxPoolConf() txpool.TxPoolConfig {
 	slots, err := strconv.ParseUint(self.GetConfigItem(TXPOOL_SLOTS).(string), 10, 64)
 	if err != nil {
-		log.Error("Get slots failed.")
+		log.Error("Get TXPOOL_SLOTS failed with err %v.", err)
 		slots = 0
 	}
 	txs, err1 := strconv.ParseUint(self.GetConfigItem(MAX_TXS_BLOCK).(string), 10, 64)
 	if nil != err1 {
-		log.Error("Get slots failed.")
+		log.Error("Get MAX_TXS_BLOCK failed with err %v.", err)
 		txs = 0
 	}
 	txPoolConf := txpool.TxPoolConfig{

@@ -2,7 +2,7 @@ package events
 
 import (
 	"errors"
-	"fmt"
+	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/types"
 	"sync"
 )
@@ -40,7 +40,7 @@ func (e *Event) UnSubscribe(eventType types.EventType, subscriber types.Subscrib
 
 	subEvent, ok := e.Subscribers[eventType]
 	if !ok {
-		err = errors.New("No event type.")
+		err = errors.New("event type not exist")
 		return
 	}
 
@@ -58,19 +58,20 @@ func (e *Event) Notify(eventType types.EventType, value interface{}) (err error)
 
 	subs, ok := e.Subscribers[eventType]
 	if !ok {
-		err = errors.New("No event type.")
-		return
+		err = errors.New("event type not register")
+		return nil
 	}
 
 	switch value.(type) {
 	case error:
-		fmt.Printf("Reveive errors is [%v].\n", value)
+		log.Error("Receive errors is [%v].", value)
 	}
-	fmt.Printf("eventType is [%d].", eventType)
+	log.Info("Receive eventType is [%d].", eventType)
+
 	for _, event := range subs {
 		go e.NotifySubscriber(event, value)
 	}
-	return
+	return nil
 }
 
 func (e *Event) NotifySubscriber(eventFunc types.EventFunc, value interface{}) {
@@ -109,6 +110,7 @@ func (e *Event) UnSubscribeAll() {
 			close(subscriber)
 		}
 	}
+	// TODO: open it when txswitch and blkswith stop complete
 	//e.Subscribers = make(map[types.EventType]map[types.Subscriber]types.EventFunc)
 	return
 }

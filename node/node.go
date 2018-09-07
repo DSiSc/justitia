@@ -5,6 +5,7 @@ import (
 	"github.com/DSiSc/apigateway"
 	rpc "github.com/DSiSc/apigateway/rpc/core"
 	"github.com/DSiSc/blockchain"
+	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/types"
 	"github.com/DSiSc/galaxy/consensus"
 	consensusc "github.com/DSiSc/galaxy/consensus/common"
@@ -17,7 +18,6 @@ import (
 	"github.com/DSiSc/justitia/tools/events"
 	"github.com/DSiSc/producer"
 	"github.com/DSiSc/txpool"
-	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/validator"
 	"net"
 	"sync"
@@ -70,7 +70,7 @@ func NewNode() (NodeService, error) {
 	txSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.TxSwitch)
 	if err != nil {
 		log.Error("Init txSwitch failed.")
-		return nil, fmt.Errorf("TxSwitch init failed.")
+		return nil, fmt.Errorf("txswitch init failed")
 	}
 	swChIn := txSwitch.InPort(gossipswitch.LocalInPortId).Channel()
 	rpc.SetSwCh(swChIn)
@@ -78,38 +78,38 @@ func NewNode() (NodeService, error) {
 		return txpool.AddTx(msg.(*types.Transaction))
 	})
 	if err != nil {
-		log.Error("Registe txpool failed.")
-		return nil, fmt.Errorf("Registe txpool failed.")
+		log.Error("Register txpool failed.")
+		return nil, fmt.Errorf("registe txpool failed")
 	}
 
 	blkSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.BlockSwitch)
 	if err != nil {
 		log.Error("Init block switch failed.")
-		return nil, fmt.Errorf("BlkSwitch init failed.")
+		return nil, fmt.Errorf("blkSwitch init failed")
 	}
 
 	err = blockchain.InitBlockChain(nodeConf.BlockChainConf)
 	if err != nil {
 		log.Error("Init blockchain failed.")
-		return nil, fmt.Errorf("Blockchain init failed.")
+		return nil, fmt.Errorf("blockchain init failed")
 	}
 
 	participates, err := participates.NewParticipates(nodeConf.ParticipatesConf)
 	if nil != err {
 		log.Error("Init participates failed.")
-		return nil, fmt.Errorf("Participates init failed.")
+		return nil, fmt.Errorf("participates init failed")
 	}
 
 	role, err := role.NewRole(participates, *nodeConf.Account, nodeConf.RoleConf)
 	if nil != err {
 		log.Error("Init role failed.")
-		return nil, fmt.Errorf("Role init failed.")
+		return nil, fmt.Errorf("role init failed")
 	}
 
 	consensus, err := consensus.NewConsensus(participates, nodeConf.ConsensusConf)
 	if nil != err {
 		log.Error("Init consensus failed.")
-		return nil, fmt.Errorf("Consensus init failed.")
+		return nil, fmt.Errorf("consensus init failed")
 	}
 	EventRegister()
 	node := &Node{
@@ -130,11 +130,11 @@ func EventUnregister() {
 }
 
 func (self *Node) Round() error {
-	log.Info("begin produce block.")
+	log.Info("Begin to produce block.")
 	assigments, err := self.role.RoleAssignments()
 	if nil != err {
 		log.Error("Role assignments failed.")
-		return fmt.Errorf("Role assignments failed.")
+		return fmt.Errorf("role assignments failed")
 	}
 	if rolec.Master == assigments[*self.config.Account] {
 		log.Info("I am master this round.")
@@ -144,18 +144,18 @@ func (self *Node) Round() error {
 		block, err := self.producer.MakeBlock()
 		if err != nil {
 			log.Error("Make block failed.")
-			return fmt.Errorf("Make block failed.")
+			return fmt.Errorf("make block failed")
 		}
 		proposal := &consensusc.Proposal{
 			Block: block,
 		}
 		if err = self.consensus.ToConsensus(proposal); err != nil {
 			log.Error("Not to consensus.")
-			return fmt.Errorf("Not to consensus.")
+			return fmt.Errorf("consensus failed")
 		}
 		swChIn := self.blockSwitch.InPort(gossipswitch.LocalInPortId).Channel()
 		swChIn <- proposal.Block
-		fmt.Printf("New block height is: %v.\n", block.Header.Height)
+		log.Info("New block height is: %d.", block.Header.Height)
 	} else {
 		if self.validator == nil {
 			// TODO: attach validator to consensus
@@ -169,17 +169,17 @@ func (self *Node) mainLoop() {
 	for {
 		if err := self.Round(); nil != err {
 			// if block make failed, then start a new round
-			fmt.Printf("Round Failed.")
+			log.Error("This round failed with err %v.", nil)
 			continue
 		}
 		msg := <-MsgChannel
 		switch msg {
 		case common.MsgBlockCommitSuccess:
-			fmt.Printf("Receive from switch succsess.\n")
+			log.Info("Receive msg from switch is success.")
 		case common.MsgBlockCommitFailed:
-			fmt.Printf("Receive from switch commit failed.\n")
+			log.Info("Receive msg from switch is commit failed.")
 		case common.MsgBlockVerifyFailed:
-			fmt.Printf("Receive from switch verify failed.\n")
+			log.Info("Receive msg from switch is verify failed.")
 		case common.MsgNodeServiceStopped:
 			return
 		}
@@ -189,17 +189,19 @@ func (self *Node) mainLoop() {
 func (self *Node) stratRpc() {
 	var err error
 	if self.rpcListeners, err = apigateway.StartRPC(self.config.ApiGatewayAddr); nil != err {
-		panic("Start rpc failed.")
+		log.Error("Start rpc failed with error %v.", err)
+		panic("Rpc start failed.")
 	}
 }
 
 func (self *Node) startSwitch() {
 	if err := self.txSwitch.Start(); nil != err {
-		fmt.Print(err)
-		panic("TxSwitch Start Failed.")
+		log.Error("Start txswitch failed with error %v.", err)
+		panic("TxSwitch start failed.")
 	}
 	if err := self.blockSwitch.Start(); nil != err {
-		panic("TxSwitch Start Failed.")
+		log.Error("Start blockswitch failed with error %v.", err)
+		panic("BlockSwitch start failed.")
 	}
 }
 
@@ -216,8 +218,8 @@ func (self *Node) Stop() error {
 	for _, l := range self.rpcListeners {
 		log.Info("Closing rpc listener")
 		if err := l.Close(); err != nil {
-			log.Error("Error closing listener")
-			return fmt.Errorf("Error closing listener")
+			log.Error("Stop rpc listeners failed with error %v.", err)
+			return fmt.Errorf("closing listener error")
 		}
 	}
 	self.blockSwitch.Stop()
