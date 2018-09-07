@@ -26,9 +26,6 @@ func mock_transactions(num int) []*types.Transaction {
 	return txList
 }
 
-var service NodeService
-var err error
-
 func TestNewNode(t *testing.T) {
 	assert := assert.New(t)
 

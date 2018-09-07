@@ -17,7 +17,7 @@ import (
 	"github.com/DSiSc/justitia/tools/events"
 	"github.com/DSiSc/producer"
 	"github.com/DSiSc/txpool"
-	"github.com/DSiSc/txpool/log"
+	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/validator"
 	"net"
 	"sync"

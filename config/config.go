@@ -8,7 +8,7 @@ import (
 	rolec "github.com/DSiSc/galaxy/role/config"
 	"github.com/DSiSc/justitia/tools"
 	"github.com/DSiSc/txpool"
-	"github.com/DSiSc/txpool/log"
+	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/validator/tools/account"
 	"io/ioutil"
 	"path/filepath"

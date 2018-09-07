@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/DSiSc/justitia/node"
-	"github.com/DSiSc/txpool/log"
+	"github.com/DSiSc/craft/log"
 )
 
 func main() {

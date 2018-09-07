@@ -65,8 +65,8 @@ func NewTransaction(nonce uint64, to types.Address, amount *big.Int, gasLimit ui
 type MsgType uint8
 
 const (
-	MsgBlockCommitSuccess MsgType = 5
-	MsgBlockCommitFailed  MsgType = 6
-	MsgBlockVerifyFailed  MsgType = 7
-	MsgNodeServiceStopped MsgType = 8
+	MsgBlockCommitSuccess MsgType = iota
+	MsgBlockCommitFailed
+	MsgBlockVerifyFailed
+	MsgNodeServiceStopped
 )
