@@ -63,7 +63,7 @@ func EventRegister() {
 
 func NewNode() (NodeService, error) {
 	log.AddFileAppender(
-		"/tmp/DSiSc/justitia.log", log.InfoLevel, log.TextFmt, true, true)
+		"filelog","/tmp/DSiSc/justitia.log", log.InfoLevel, log.TextFmt, true, true)
 	nodeConf := config.NewNodeConfig()
 	types.GlobalEventCenter = events.NewEvent()
 	txpool := txpool.NewTxPool(nodeConf.TxPoolConf)

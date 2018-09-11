@@ -17,6 +17,7 @@
 build/_workspace/
 build/_vendor/pkg
 build/bin/
+justitia
 
 # travis, codecov
 profile.tmp
