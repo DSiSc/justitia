@@ -48,19 +48,24 @@ If you are proposing a feature:
 Ready to contribute? Here's how to set up `justitia` for local development.
 
 1. Fork the `justitia` repo on GitHub.
-2. Clone your fork locally::
+2. Clone your fork locally, and fetch all dependencies:
 
         $ git clone git@github.com:your_name_here/justitia.git
+        $ make fetch-deps
 
-3. Create a branch for local development::
+3. Create a branch for local development:
 
         $ git checkout -b name-of-your-bugfix-or-feature
 
    Now you can make your changes locally.
 
-4. When you're done making changes, check that your changes pass the tests::
+4. When you're done making changes, check that your changes pass the tests:
 
         $ make test
+        
+5. Or directly run justitia with the following command:
+
+        $ go run main.go
 
 6. Commit your changes and push your branch to GitHub, We use [Angular Commit Guidelines](https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines), Thanks for Angular good job.::
 
