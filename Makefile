@@ -35,7 +35,7 @@ help:
 	@echo '    make test            Run unit tests with coverage report.'
 	@echo '    make devenv          Prepare devenv for test or build.'
 	@echo '    make fetch-deps      Run govendor fetch for deps.'
-	@echo '    make gotools         Prepare go tools depended.'
+	@echo '    make get-tools         Prepare go tools depended.'
 	@echo '    make clean           Clean the directory tree.'
 	@echo
 
