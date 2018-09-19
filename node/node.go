@@ -21,6 +21,7 @@ import (
 	"github.com/DSiSc/validator"
 	"net"
 	"sync"
+	"time"
 )
 
 var MsgChannel chan common.MsgType
@@ -132,13 +133,14 @@ func EventUnregister() {
 }
 
 func (self *Node) Round() error {
+	time.Sleep(time.Duration(self.config.BlockInterval) * time.Second)
 	log.Info("Begin to produce block.")
-	assigments, err := self.role.RoleAssignments()
+	assignments, err := self.role.RoleAssignments()
 	if nil != err {
 		log.Error("Role assignments failed.")
 		return fmt.Errorf("role assignments failed")
 	}
-	if rolec.Master == assigments[*self.config.Account] {
+	if rolec.Master == assignments[*self.config.Account] {
 		log.Info("I am master this round.")
 		if nil == self.producer {
 			self.producer = producer.NewProducer(self.txpool, self.config.Account)
