@@ -38,6 +38,8 @@ const (
 	BLOCK_CHAIN_DATA_PATH  = "blockchain.dataPath"
 	// api gateway
 	API_GATEWAY_TCP_ADDR = "apigateway.tcpAddr"
+	// Default parameter for solo block producer
+	SOLO_TEST_BLOCK_PRODUCER_INTERVAL = "soloTestBlockInterval.time"
 )
 
 type NodeConfig struct {
@@ -55,6 +57,8 @@ type NodeConfig struct {
 	ConsensusConf consensusc.ConsensusConfig
 	// BlockChainConfig
 	BlockChainConf blockchainc.BlockChainConfig
+	// Block Produce Interval
+	BlockInterval uint8
 }
 
 type Config struct {
@@ -149,6 +153,7 @@ func NewNodeConfig() NodeConfig {
 	roleConf := conf.NewRoleConf()
 	consensusConf := conf.NewConsensusConf()
 	blockChainConf := conf.NewBlockChainConf()
+	blockIntervalTime := conf.GetBlockProducerInterval()
 
 	return NodeConfig{
 		Account:          nodeAccount,
@@ -158,6 +163,7 @@ func NewNodeConfig() NodeConfig {
 		RoleConf:         roleConf,
 		ConsensusConf:    consensusConf,
 		BlockChainConf:   blockChainConf,
+		BlockInterval:    blockIntervalTime,
 	}
 }
 
@@ -226,4 +232,9 @@ func (self *Config) GetNodeAccount() *account.Account {
 	return &account.Account{
 		Address: address,
 	}
+}
+
+func (self *Config) GetBlockProducerInterval() uint8 {
+	blockInterval, _ := strconv.Atoi(self.GetConfigItem(SOLO_TEST_BLOCK_PRODUCER_INTERVAL).(string))
+	return uint8(blockInterval)
 }

@@ -24,6 +24,7 @@ func Test_NewNodeConfig(t *testing.T) {
 	assert.NotNil("solo", nodeConf.ParticipatesConf.PolicyName)
 	assert.NotNil("solo_node", nodeConf.Account)
 	assert.Equal("tcp://0.0.0.0:47768", nodeConf.ApiGatewayAddr)
+	assert.Equal(uint8(2), nodeConf.BlockInterval)
 
 	var address = types.Address{
 		0x33, 0x3c, 0x33, 0x10, 0x82, 0x4b, 0x7c, 0x68, 0x51, 0x33,
