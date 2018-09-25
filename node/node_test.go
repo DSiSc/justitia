@@ -123,6 +123,7 @@ func TestNode_Start(t *testing.T) {
 }
 
 func TestEventRegister(t *testing.T) {
+	types.GlobalEventCenter = events.NewEvent()
 	EventRegister()
 	event := types.GlobalEventCenter.(*events.Event)
 	assert.Equal(t, 3, len(event.Subscribers))
