@@ -10,7 +10,7 @@ import (
 )
 
 // TODO: Hash algorithm will support configurable later
-// Sum returns the first 20 bytes of SHA256 of the bz.
+// Sum returns the first 32 bytes of SHA256 of the bz.
 func Sum(bz []byte) []byte {
 	hash := sha256.Sum256(bz)
 	return hash[:types.HashLength]
