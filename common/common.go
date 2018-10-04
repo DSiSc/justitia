@@ -37,12 +37,13 @@ func HeaderHash(block *types.Block) (hash types.Hash) {
 }
 
 func CopyBytes(b []byte) (copiedBytes []byte) {
-	if b == nil {
-		return nil
+	var temp []byte
+	if bytes.Equal(b, temp) {
+		log.Error("src byte is nil, please confirm.")
+		return
 	}
 	copiedBytes = make([]byte, len(b))
 	copy(copiedBytes, b)
-
 	return
 }
 
