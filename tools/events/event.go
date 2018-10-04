@@ -59,7 +59,7 @@ func (e *Event) Notify(eventType types.EventType, value interface{}) (err error)
 	subs, ok := e.Subscribers[eventType]
 	if !ok {
 		err = errors.New("event type not register")
-		return nil
+		return
 	}
 
 	switch value.(type) {

@@ -46,6 +46,10 @@ func TestNewEvent(t *testing.T) {
 	err = event.UnSubscribe(EventReplyTx, sub1)
 	assert.Nil(err)
 
+	err = event.Notify(EventNoneTx, nil)
+	errExpect := errors.New("event type not register")
+	assert.Equal(errExpect, err)
+
 	log.Info("TEST: Unsubscribe who has not subscrib...")
 	err = event.UnSubscribe(EventNoneTx, nil)
 	assert.Equal(err, errors.New("event type not exist"))
@@ -53,11 +57,11 @@ func TestNewEvent(t *testing.T) {
 	log.Info("TEST: Notify All after unsubscribe sub1...")
 	errs = event.NotifyAll()
 	assert.Equal(0, len(errs))
-	log.Info("TEST: Notify All after unsubscribeall...")
+	log.Info("TEST: Notify All after unsubscribe all...")
 	event.UnSubscribeAll()
 	errs = event.NotifyAll()
 	assert.Equal(0, len(errs))
-	log.Info("TEST: Notify All after subscribeall...")
+	log.Info("TEST: Notify All after subscribe all...")
 	event.Subscribe(EventReplyTx, subscriber1)
 	event.NotifyAll()
 }
