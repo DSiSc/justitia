@@ -64,4 +64,7 @@ func TestNewEvent(t *testing.T) {
 	log.Info("TEST: Notify All after subscribe all...")
 	event.Subscribe(EventReplyTx, subscriber1)
 	event.NotifyAll()
+
+	// test nil eventFunc
+	event.NotifySubscriber(nil, nil)
 }
