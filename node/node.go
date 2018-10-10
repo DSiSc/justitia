@@ -24,9 +24,10 @@ import (
 	"time"
 )
 
-var MsgChannel chan common.MsgType
-
-var StopSignal chan interface{}
+var (
+	MsgChannel chan common.MsgType
+	StopSignal chan interface{}
+)
 
 type NodeService interface {
 	Start()
