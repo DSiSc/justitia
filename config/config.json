@@ -3,10 +3,6 @@
     "globalSlots":"4096",
     "txsPerBlock": "512"
   },
-  "block":{
-    "plugin":"leveldb",
-    "path": "./../data"
-  },
   "participates":{
     "policy":"solo"
   },
