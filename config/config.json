@@ -1,4 +1,7 @@
 {
+  "algorithm":{
+    "hashAlgorithm":"SHA256"
+  },
   "txpool":{
     "globalSlots":"4096",
     "txsPerBlock": "512"
