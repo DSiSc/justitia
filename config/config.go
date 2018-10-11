@@ -42,6 +42,11 @@ const (
 	API_GATEWAY_TCP_ADDR = "apigateway.tcpAddr"
 	// Default parameter for solo block producer
 	SOLO_TEST_BLOCK_PRODUCER_INTERVAL = "soloTestBlockInterval.time"
+
+	// prometheus
+	PROMETHEUS_ENABLED  = "prometheus.enabled"
+	PROMETHEUS_PORT     = "prometheus.port"
+	PROMETHEUS_MAX_CONN = "prometheus.maxOpenConnections"
 )
 
 type AlgorithmConfig struct {
@@ -70,6 +75,11 @@ type NodeConfig struct {
 	BlockInterval uint8
 	//algorithm config
 	AlgorithmConf AlgorithmConfig
+
+	// prometheus
+	PrometheusEnabled bool
+	PrometheusPort    string
+	PrometheusMaxConn int
 }
 
 type Config struct {
@@ -166,17 +176,23 @@ func NewNodeConfig() NodeConfig {
 	consensusConf := conf.NewConsensusConf()
 	blockChainConf := conf.NewBlockChainConf()
 	blockIntervalTime := conf.GetBlockProducerInterval()
+	prometheusEnabled := conf.IsPrometheusEnabled()
+	prometheusPort := conf.GetPrometheusPort()
+	prometheusMaxConn := conf.GetPrometheusMaxOpenConn()
 
 	return NodeConfig{
-		Account:          nodeAccount,
-		ApiGatewayAddr:   apiGatewayTcpAddr,
-		TxPoolConf:       txPoolConf,
-		ParticipatesConf: participatesConf,
-		RoleConf:         roleConf,
-		ConsensusConf:    consensusConf,
-		BlockChainConf:   blockChainConf,
-		BlockInterval:    blockIntervalTime,
-		AlgorithmConf:    algorithmConf,
+		Account:           nodeAccount,
+		ApiGatewayAddr:    apiGatewayTcpAddr,
+		TxPoolConf:        txPoolConf,
+		ParticipatesConf:  participatesConf,
+		RoleConf:          roleConf,
+		ConsensusConf:     consensusConf,
+		BlockChainConf:    blockChainConf,
+		BlockInterval:     blockIntervalTime,
+		AlgorithmConf:     algorithmConf,
+		PrometheusEnabled: prometheusEnabled,
+		PrometheusPort:    prometheusPort,
+		PrometheusMaxConn: prometheusMaxConn,
 	}
 }
 
@@ -259,4 +275,21 @@ func (self *Config) GetNodeAccount() *account.Account {
 func (self *Config) GetBlockProducerInterval() uint8 {
 	blockInterval, _ := strconv.Atoi(self.GetConfigItem(SOLO_TEST_BLOCK_PRODUCER_INTERVAL).(string))
 	return uint8(blockInterval)
+}
+
+func (self *Config) IsPrometheusEnabled() bool {
+	prometheusEnabled := self.GetConfigItem(PROMETHEUS_ENABLED).(string)
+	if "true" == prometheusEnabled {
+		return true
+	}
+	return false
+}
+
+func (self *Config) GetPrometheusPort() string {
+	return self.GetConfigItem(PROMETHEUS_PORT).(string)
+}
+
+func (self *Config) GetPrometheusMaxOpenConn() int {
+	prometheusMaxConn, _ := strconv.Atoi(self.GetConfigItem(PROMETHEUS_MAX_CONN).(string))
+	return prometheusMaxConn
 }

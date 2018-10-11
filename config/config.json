@@ -28,5 +28,10 @@
   },
   "soloTestBlockInterval": {
     "time": "2"
+  },
+  "prometheus": {
+    "enabled": "true",
+    "port": "47780",
+    "maxOpenConnections": "3"
   }
 }

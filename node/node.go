@@ -1,7 +1,16 @@
 package node
 
 import (
+	"context"
 	"fmt"
+	"net"
+	"net/http"
+	"sync"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/DSiSc/apigateway"
 	rpc "github.com/DSiSc/apigateway/rpc/core"
 	"github.com/DSiSc/blockchain"
@@ -20,14 +29,13 @@ import (
 	"github.com/DSiSc/producer"
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/validator"
-	"net"
-	"sync"
-	"time"
 )
 
 var (
-	MsgChannel chan common.MsgType
-	StopSignal chan interface{}
+	MsgChannel        chan common.MsgType
+	StopSignal        chan interface{}
+	prometheusEnabled bool
+	metrics           *types.JTMetrics
 )
 
 type NodeService interface {
@@ -39,17 +47,18 @@ type NodeService interface {
 
 // node struct with all service
 type Node struct {
-	nodeWg       sync.WaitGroup
-	config       config.NodeConfig
-	txpool       txpool.TxsPool
-	participates participates.Participates
-	role         role.Role
-	consensus    consensus.Consensus
-	producer     *producer.Producer
-	txSwitch     *gossipswitch.GossipSwitch
-	blockSwitch  *gossipswitch.GossipSwitch
-	validator    *validator.Validator
-	rpcListeners []net.Listener
+	nodeWg        sync.WaitGroup
+	config        config.NodeConfig
+	txpool        txpool.TxsPool
+	participates  participates.Participates
+	role          role.Role
+	consensus     consensus.Consensus
+	producer      *producer.Producer
+	txSwitch      *gossipswitch.GossipSwitch
+	blockSwitch   *gossipswitch.GossipSwitch
+	validator     *validator.Validator
+	rpcListeners  []net.Listener
+	prometheusSrv *http.Server
 }
 
 func EventRegister() {
@@ -62,11 +71,26 @@ func EventRegister() {
 	types.GlobalEventCenter.Subscribe(types.EventBlockCommitFailed, func(v interface{}) {
 		MsgChannel <- common.MsgBlockCommitFailed
 	})
+
+	if prometheusEnabled {
+		types.GlobalEventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
+			blockStore, _ := blockchain.NewLatestStateBlockChain()
+			// Record metrics of block height.
+			currentHeight := blockStore.GetCurrentBlockHeight()
+			metrics.Height.Set(float64(currentHeight))
+			// Record metrics of block size.
+			block, _ := blockStore.GetBlockByHeight(currentHeight)
+			currentBlockSize := len(block.Transactions)
+			metrics.NumTx.Set(float64(currentBlockSize))
+			// Record metrics of total tx.
+			metrics.TotalTx.Add(float64(currentBlockSize))
+		})
+	}
 }
 
 func NewNode() (NodeService, error) {
 	log.AddFileAppender(
-		"filelog", "/tmp/DSiSc/justitia.log", log.InfoLevel, log.TextFmt, true, true)
+		"filelog", "/tmp/DSiSc/justitia.log", log.InfoLevel, log.JsonFmt, true, true)
 	nodeConf := config.NewNodeConfig()
 	// record global hash algorithm
 	gconf.GlobalConfig.Store(gconf.HashAlgName, nodeConf.AlgorithmConf.HashAlgorithm)
@@ -119,6 +143,13 @@ func NewNode() (NodeService, error) {
 		log.Error("Init consensus failed.")
 		return nil, fmt.Errorf("consensus init failed")
 	}
+	if nodeConf.PrometheusEnabled {
+		prometheusEnabled = true
+		metrics = types.PromJTMetrics()
+	} else {
+		prometheusEnabled = false
+		metrics = types.NopJTMetrics()
+	}
 	EventRegister()
 	node := &Node{
 		config:       nodeConf,
@@ -131,6 +162,27 @@ func NewNode() (NodeService, error) {
 	}
 
 	return node, nil
+}
+
+// startPrometheusServer starts a Prometheus HTTP server, listening for metrics
+// collectors on addr.
+func (node *Node) startPrometheusServer() *http.Server {
+	srv := &http.Server{
+		Addr: ":" + node.config.PrometheusPort,
+		Handler: promhttp.InstrumentMetricHandler(
+			prometheus.DefaultRegisterer, promhttp.HandlerFor(
+				prometheus.DefaultGatherer,
+				promhttp.HandlerOpts{MaxRequestsInFlight: node.config.PrometheusMaxConn},
+			),
+		),
+	}
+	go func() {
+		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			// Error starting or closing listener:
+			log.Fatal("Prometheus HTTP server ListenAndServe", "err", err)
+		}
+	}()
+	return srv
 }
 
 func EventUnregister() {
@@ -218,6 +270,11 @@ func (self *Node) startSwitch() {
 func (self *Node) Start() {
 	self.stratRpc()
 	self.startSwitch()
+
+	if self.config.PrometheusEnabled {
+		self.prometheusSrv = self.startPrometheusServer()
+	}
+
 	go self.mainLoop()
 }
 
@@ -232,6 +289,14 @@ func (self *Node) Stop() error {
 			return fmt.Errorf("closing listener error")
 		}
 	}
+
+	if self.prometheusSrv != nil {
+		if err := self.prometheusSrv.Shutdown(context.Background()); err != nil {
+			// Error from closing listeners, or context timeout:
+			log.ErrorKV("Prometheus HTTP server Shutdown", map[string]interface{}{"err": err})
+		}
+	}
+
 	self.blockSwitch.Stop()
 	self.txSwitch.Stop()
 	EventUnregister()
