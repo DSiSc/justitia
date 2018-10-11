@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/justitia/node"
+
+	_ "net/http/pprof"
 )
 
 func main() {
