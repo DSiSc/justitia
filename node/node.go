@@ -5,6 +5,7 @@ import (
 	"github.com/DSiSc/apigateway"
 	rpc "github.com/DSiSc/apigateway/rpc/core"
 	"github.com/DSiSc/blockchain"
+	gconf "github.com/DSiSc/craft/config"
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/types"
 	"github.com/DSiSc/galaxy/consensus"
@@ -67,6 +68,9 @@ func NewNode() (NodeService, error) {
 	log.AddFileAppender(
 		"filelog", "/tmp/DSiSc/justitia.log", log.InfoLevel, log.TextFmt, true, true)
 	nodeConf := config.NewNodeConfig()
+	// record global hash algorithm
+	gconf.GlobalConfig.Store(gconf.HashAlgName, nodeConf.AlgorithmConf.HashAlgorithm)
+
 	types.GlobalEventCenter = events.NewEvent()
 	txpool := txpool.NewTxPool(nodeConf.TxPoolConf)
 	MsgChannel = make(chan common.MsgType)

@@ -23,6 +23,8 @@ var DefaultDataDir = "./config"
 const (
 	// json file relative path
 	CONFIG_DIR = "config/"
+	// algorithm setting
+	HASH_ALGORITHM = "algorithm.hashAlgorithm"
 	// txpool setting
 	TXPOOL_SLOTS  = "txpool.globalSlots"
 	MAX_TXS_BLOCK = "txpool.txsPerBlock"
@@ -42,6 +44,13 @@ const (
 	SOLO_TEST_BLOCK_PRODUCER_INTERVAL = "soloTestBlockInterval.time"
 )
 
+type AlgorithmConfig struct {
+	//hash algorithm
+	HashAlgorithm string
+	//signature algorithm
+	SignAlgorithm string
+}
+
 type NodeConfig struct {
 	// default
 	Account *account.Account
@@ -59,6 +68,8 @@ type NodeConfig struct {
 	BlockChainConf blockchainc.BlockChainConfig
 	// Block Produce Interval
 	BlockInterval uint8
+	//algorithm config
+	AlgorithmConf AlgorithmConfig
 }
 
 type Config struct {
@@ -146,6 +157,7 @@ func (config *Config) GetConfigItem(name string) interface{} {
 
 func NewNodeConfig() NodeConfig {
 	conf := New(ConfigName)
+	algorithmConf := conf.GetAlgorithmConf()
 	nodeAccount := conf.GetNodeAccount()
 	apiGatewayTcpAddr := conf.GetApiGatewayTcpAddr()
 	txPoolConf := conf.NewTxPoolConf()
@@ -164,6 +176,16 @@ func NewNodeConfig() NodeConfig {
 		ConsensusConf:    consensusConf,
 		BlockChainConf:   blockChainConf,
 		BlockInterval:    blockIntervalTime,
+		AlgorithmConf:    algorithmConf,
+	}
+}
+
+// GetAlgorithmConf get algorithm config
+func (self *Config) GetAlgorithmConf() AlgorithmConfig {
+	policy := self.GetConfigItem(HASH_ALGORITHM).(string)
+	//TODO get sigure algotihm config
+	return AlgorithmConfig{
+		HashAlgorithm: policy,
 	}
 }
 

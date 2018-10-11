@@ -20,6 +20,8 @@ func Test_NewNodeConfig(t *testing.T) {
 	assert := assert.New(t)
 	nodeConf := NewNodeConfig()
 	assert.NotNil(nodeConf)
+	assert.NotNil(nodeConf.AlgorithmConf)
+	assert.Equal("SHA256", nodeConf.AlgorithmConf.HashAlgorithm)
 	assert.Equal(uint64(4096), nodeConf.TxPoolConf.GlobalSlots)
 	assert.NotNil("solo", nodeConf.ParticipatesConf.PolicyName)
 	assert.NotNil("solo_node", nodeConf.Account)
