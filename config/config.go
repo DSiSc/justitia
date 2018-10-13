@@ -213,7 +213,7 @@ func (self *Config) NewTxPoolConf() txpool.TxPoolConfig {
 	}
 	txPoolConf := txpool.TxPoolConfig{
 		GlobalSlots:    slots,
-		MaxTrxPerBlock: txs,
+		MaxTrsPerBlock: txs,
 	}
 	return txPoolConf
 }
