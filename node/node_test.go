@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 
+	"github.com/DSiSc/apigateway"
 	"github.com/DSiSc/blockchain"
 	blockchainc "github.com/DSiSc/blockchain/config"
 	"github.com/DSiSc/galaxy/consensus"
@@ -18,6 +19,7 @@ import (
 	rolec "github.com/DSiSc/galaxy/role/config"
 	"github.com/DSiSc/justitia/tools/events"
 	"github.com/DSiSc/validator/tools/account"
+	"net"
 	"reflect"
 )
 
@@ -112,11 +114,14 @@ func TestNode_Start(t *testing.T) {
 	service, err := NewNode()
 	assert.Nil(err)
 	assert.NotNil(service)
+	monkey.Patch(apigateway.StartRPC, func(string) ([]net.Listener, error) {
+		return make([]net.Listener, 0), nil
+	})
 	go func() {
 		service.Start()
 		nodeService := service.(*Node)
 		assert.NotNil(nodeService.rpcListeners)
-		assert.Equal(1, len(nodeService.rpcListeners))
+		assert.Equal(0, len(nodeService.rpcListeners))
 		service.Wait()
 	}()
 	service.Stop()

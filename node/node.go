@@ -167,6 +167,7 @@ func (self *Node) Round() error {
 		block.HeaderHash = common.HeaderHash(block)
 		swChIn := self.blockSwitch.InPort(gossipswitch.LocalInPortId).Channel()
 		swChIn <- proposal.Block
+		self.txpool.DelTxs(block.Transactions)
 		log.Info("New block height is: %d.", block.Header.Height)
 	} else {
 		if self.validator == nil {
