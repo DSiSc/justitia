@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	blockchainc "github.com/DSiSc/blockchain/config"
 	"github.com/DSiSc/craft/log"
+	"github.com/DSiSc/craft/monitor"
 	consensusc "github.com/DSiSc/galaxy/consensus/config"
 	participatesc "github.com/DSiSc/galaxy/participates/config"
 	rolec "github.com/DSiSc/galaxy/role/config"
@@ -42,6 +43,11 @@ const (
 	API_GATEWAY_TCP_ADDR = "apigateway.tcpAddr"
 	// Default parameter for solo block producer
 	SOLO_TEST_BLOCK_PRODUCER_INTERVAL = "soloTestBlockInterval.time"
+
+	// prometheus
+	PROMETHEUS_ENABLED  = "prometheus.enabled"
+	PROMETHEUS_PORT     = "prometheus.port"
+	PROMETHEUS_MAX_CONN = "prometheus.maxOpenConnections"
 )
 
 type AlgorithmConfig struct {
@@ -70,6 +76,9 @@ type NodeConfig struct {
 	BlockInterval uint8
 	//algorithm config
 	AlgorithmConf AlgorithmConfig
+
+	// prometheus
+	PrometheusConf monitor.PrometheusConfig
 }
 
 type Config struct {
@@ -166,6 +175,7 @@ func NewNodeConfig() NodeConfig {
 	consensusConf := conf.NewConsensusConf()
 	blockChainConf := conf.NewBlockChainConf()
 	blockIntervalTime := conf.GetBlockProducerInterval()
+	prometheusConf := conf.GetPrometheusConf()
 
 	return NodeConfig{
 		Account:          nodeAccount,
@@ -177,6 +187,7 @@ func NewNodeConfig() NodeConfig {
 		BlockChainConf:   blockChainConf,
 		BlockInterval:    blockIntervalTime,
 		AlgorithmConf:    algorithmConf,
+		PrometheusConf:   prometheusConf,
 	}
 }
 
@@ -259,4 +270,19 @@ func (self *Config) GetNodeAccount() *account.Account {
 func (self *Config) GetBlockProducerInterval() uint8 {
 	blockInterval, _ := strconv.Atoi(self.GetConfigItem(SOLO_TEST_BLOCK_PRODUCER_INTERVAL).(string))
 	return uint8(blockInterval)
+}
+
+func (self *Config) GetPrometheusConf() monitor.PrometheusConfig {
+	prometheusEnabled := false
+	enabled := self.GetConfigItem(PROMETHEUS_ENABLED).(string)
+	if "true" == enabled {
+		prometheusEnabled = true
+	}
+	prometheusPort := self.GetConfigItem(PROMETHEUS_PORT).(string)
+	prometheusMaxConn, _ := strconv.Atoi(self.GetConfigItem(PROMETHEUS_MAX_CONN).(string))
+	return monitor.PrometheusConfig{
+		PrometheusEnabled: prometheusEnabled,
+		PrometheusPort:    prometheusPort,
+		PrometheusMaxConn: prometheusMaxConn,
+	}
 }

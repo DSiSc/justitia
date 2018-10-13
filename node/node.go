@@ -2,11 +2,16 @@ package node
 
 import (
 	"fmt"
+	"net"
+	"sync"
+	"time"
+
 	"github.com/DSiSc/apigateway"
 	rpc "github.com/DSiSc/apigateway/rpc/core"
 	"github.com/DSiSc/blockchain"
 	gconf "github.com/DSiSc/craft/config"
 	"github.com/DSiSc/craft/log"
+	"github.com/DSiSc/craft/monitor"
 	"github.com/DSiSc/craft/types"
 	"github.com/DSiSc/galaxy/consensus"
 	consensusc "github.com/DSiSc/galaxy/consensus/common"
@@ -20,9 +25,6 @@ import (
 	"github.com/DSiSc/producer"
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/validator"
-	"net"
-	"sync"
-	"time"
 )
 
 var (
@@ -218,6 +220,9 @@ func (self *Node) startSwitch() {
 func (self *Node) Start() {
 	self.stratRpc()
 	self.startSwitch()
+
+	monitor.StartPrometheusServer(self.config.PrometheusConf)
+
 	go self.mainLoop()
 }
 
@@ -232,6 +237,9 @@ func (self *Node) Stop() error {
 			return fmt.Errorf("closing listener error")
 		}
 	}
+
+	monitor.StopPrometheusServer()
+
 	self.blockSwitch.Stop()
 	self.txSwitch.Stop()
 	EventUnregister()
