@@ -66,7 +66,7 @@ func (e *Event) Notify(eventType types.EventType, value interface{}) (err error)
 	case error:
 		log.Error("Receive errors is [%v].", value)
 	}
-	log.Info("Receive eventType is [%d].", eventType)
+	log.Debug("Receive eventType is [%d].", eventType)
 
 	for _, event := range subs {
 		go e.NotifySubscriber(event, value)

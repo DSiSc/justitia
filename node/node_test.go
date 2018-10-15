@@ -106,7 +106,6 @@ func TestNewNode(t *testing.T) {
 	assert.Nil(nodeService.validator)
 	event := types.GlobalEventCenter.(*events.Event)
 	assert.Equal(3, len(event.Subscribers))
-
 }
 
 func TestNode_Start(t *testing.T) {
@@ -153,10 +152,10 @@ func TestNode_Restart(t *testing.T) {
 	assert.Equal(t, err, fmt.Errorf("node stop error"))
 	monkey.UnpatchInstanceMethod(reflect.TypeOf(node), "Stop")
 
-	monkey.PatchInstanceMethod(reflect.TypeOf(node), "Stop", func(_ *Node) error {
+	monkey.PatchInstanceMethod(reflect.TypeOf(node), "Stop", func(*Node) error {
 		return nil
 	})
-	monkey.PatchInstanceMethod(reflect.TypeOf(node), "Start", func(_ *Node) {
+	monkey.PatchInstanceMethod(reflect.TypeOf(node), "Start", func(*Node) {
 		return
 	})
 	err = nodeService.Restart()

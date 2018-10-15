@@ -141,14 +141,13 @@ func EventUnregister() {
 
 func (self *Node) Round() error {
 	time.Sleep(time.Duration(self.config.BlockInterval) * time.Second)
-	log.Info("Begin to produce block.")
 	assignments, err := self.role.RoleAssignments()
 	if nil != err {
 		log.Error("Role assignments failed.")
 		return fmt.Errorf("role assignments failed")
 	}
 	if rolec.Master == assignments[*self.config.Account] {
-		log.Info("I am master this round.")
+		log.Debug("Master of this round..")
 		if nil == self.producer {
 			self.producer = producer.NewProducer(self.txpool, self.config.Account)
 		}
@@ -168,7 +167,7 @@ func (self *Node) Round() error {
 		swChIn := self.blockSwitch.InPort(gossipswitch.LocalInPortId).Channel()
 		swChIn <- proposal.Block
 		self.txpool.DelTxs(block.Transactions)
-		log.Info("New block height is: %d.", block.Header.Height)
+		log.Info("New block has been produced with height is: %d.", block.Header.Height)
 	} else {
 		if self.validator == nil {
 			// TODO: attach validator to consensus
@@ -232,15 +231,12 @@ func (self *Node) Stop() error {
 	close(StopSignal)
 	MsgChannel <- common.MsgNodeServiceStopped
 	for _, l := range self.rpcListeners {
-		log.Info("Closing rpc listener")
 		if err := l.Close(); err != nil {
 			log.Error("Stop rpc listeners failed with error %v.", err)
 			return fmt.Errorf("closing listener error")
 		}
 	}
-
 	monitor.StopPrometheusServer()
-
 	self.blockSwitch.Stop()
 	self.txSwitch.Stop()
 	EventUnregister()
