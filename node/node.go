@@ -147,7 +147,7 @@ func (self *Node) Round() error {
 		return fmt.Errorf("role assignments failed")
 	}
 	if rolec.Master == assignments[*self.config.Account] {
-		log.Debug("Master of this round..")
+		log.Info("Master of this round..")
 		if nil == self.producer {
 			self.producer = producer.NewProducer(self.txpool, self.config.Account)
 		}
