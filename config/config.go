@@ -48,6 +48,11 @@ const (
 	PROMETHEUS_ENABLED  = "prometheus.enabled"
 	PROMETHEUS_PORT     = "prometheus.port"
 	PROMETHEUS_MAX_CONN = "prometheus.maxOpenConnections"
+
+	// Expvar
+	EXPVAR_ENABLED = "expvar.enabled"
+	EXPVAR_PORT    = "expvar.port"
+	EXPVAR_PATH    = "expvar.path"
 )
 
 type AlgorithmConfig struct {
@@ -79,6 +84,8 @@ type NodeConfig struct {
 
 	// prometheus
 	PrometheusConf monitor.PrometheusConfig
+	// expvar
+	ExpvarConf monitor.ExpvarConfig
 }
 
 type Config struct {
@@ -176,6 +183,7 @@ func NewNodeConfig() NodeConfig {
 	blockChainConf := conf.NewBlockChainConf()
 	blockIntervalTime := conf.GetBlockProducerInterval()
 	prometheusConf := conf.GetPrometheusConf()
+	expvarConf := conf.GetExpvarConf()
 
 	return NodeConfig{
 		Account:          nodeAccount,
@@ -188,6 +196,7 @@ func NewNodeConfig() NodeConfig {
 		BlockInterval:    blockIntervalTime,
 		AlgorithmConf:    algorithmConf,
 		PrometheusConf:   prometheusConf,
+		ExpvarConf:       expvarConf,
 	}
 }
 
@@ -284,5 +293,18 @@ func (self *Config) GetPrometheusConf() monitor.PrometheusConfig {
 		PrometheusEnabled: prometheusEnabled,
 		PrometheusPort:    prometheusPort,
 		PrometheusMaxConn: prometheusMaxConn,
+	}
+}
+
+func (self *Config) GetExpvarConf() monitor.ExpvarConfig {
+	expvarEnabled := false
+	enabled := self.GetConfigItem(EXPVAR_ENABLED).(string)
+	if "true" == enabled {
+		expvarEnabled = true
+	}
+	return monitor.ExpvarConfig{
+		ExpvarEnabled: expvarEnabled,
+		ExpvarPort:    self.GetConfigItem(EXPVAR_PORT).(string),
+		ExpvarPath:    self.GetConfigItem(EXPVAR_PATH).(string),
 	}
 }

@@ -222,6 +222,7 @@ func (self *Node) Start() {
 	self.startSwitch()
 
 	monitor.StartPrometheusServer(self.config.PrometheusConf)
+	monitor.StartExpvarServer(self.config.ExpvarConf)
 
 	go self.mainLoop()
 }
