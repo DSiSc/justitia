@@ -1,18 +1,18 @@
 {
-  "algorithm":{
-    "hashAlgorithm":"SHA256"
+  "algorithm": {
+    "hashAlgorithm": "SHA256"
   },
-  "txpool":{
-    "globalSlots":"4096",
+  "txpool": {
+    "globalSlots": "4096",
     "txsPerBlock": "512"
   },
-  "participates":{
-    "policy":"solo"
+  "participates": {
+    "policy": "solo"
   },
-  "role":{
-    "policy":"solo"
+  "role": {
+    "policy": "solo"
   },
-  "consensus":{
+  "consensus": {
     "policy": "solo"
   },
   "node": {
@@ -33,5 +33,10 @@
     "enabled": "true",
     "port": "47780",
     "maxOpenConnections": "3"
+  },
+  "expvar": {
+    "enabled": "true",
+    "port": "6060",
+    "path": "/debug/vars"
   }
 }
