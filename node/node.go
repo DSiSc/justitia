@@ -163,7 +163,6 @@ func (self *Node) Round() error {
 			log.Error("Not to consensus.")
 			return fmt.Errorf("consensus failed")
 		}
-		block.HeaderHash = common.HeaderHash(block)
 		swChIn := self.blockSwitch.InPort(gossipswitch.LocalInPortId).Channel()
 		swChIn <- proposal.Block
 		self.txpool.DelTxs(block.Transactions)

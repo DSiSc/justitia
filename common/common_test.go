@@ -80,7 +80,7 @@ func MockBlock() *types.Block {
 	}
 }
 
-func TestBlockHash(t *testing.T) {
+func TestHeaderHash(t *testing.T) {
 	assert := assert.New(t)
 	block := MockBlock()
 
