@@ -1,0 +1,11 @@
+# Module: prometheus
+# Docs: https://www.elastic.co/guide/en/beats/metricbeat/6.4/metricbeat-module-prometheus.html
+
+- module: prometheus
+  enabled: true
+  period: 1s
+  hosts: ["127.0.0.1:47780"]
+  #metrics_path: /metrics
+  namespace: "justitia"
+  #username: "user"
+  #password: "secret"
