@@ -66,9 +66,8 @@ func EventRegister() {
 	})
 }
 
-func NewNode() (NodeService, error) {
-	log.AddFileAppender(
-		"filelog", "/tmp/DSiSc/justitia.log", log.InfoLevel, log.TextFmt, true, true)
+func NewNode(args common.SysConfig) (NodeService, error) {
+	log.AddFileAppender("filelog", args.LogPath, log.Level(args.LogLevel), args.LogStyle, true, true)
 	nodeConf := config.NewNodeConfig()
 	// record global hash algorithm
 	gconf.GlobalConfig.Store(gconf.HashAlgName, nodeConf.AlgorithmConf.HashAlgorithm)

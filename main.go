@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"github.com/DSiSc/craft/log"
+	"github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/justitia/node"
 	"github.com/DSiSc/justitia/tools/signal"
 	"os"
@@ -23,8 +25,26 @@ func sysSignalProcess(node node.NodeService) {
 	go sysSignalProcess.CatchSysSignal()
 }
 
+func argsParse() common.SysConfig {
+	logLevel := flag.Int("log_level", 1, "Log level [0: debug, 1: info, 2: warn, 3: error, 4: fatal, 5: panic, 6: disable].")
+	logPath := flag.String("log_path", "/tmp/DSiSc/justitia.log", "Log output file in absolute path.")
+	logStyle := flag.String("log_style", "json", "Log output style in json or text, which choose from [json, text].")
+	flag.Parse()
+	var style string = *logStyle
+	if style == "text" {
+		style = log.TextFmt
+	} else {
+		style = log.JsonFmt
+	}
+	return common.SysConfig{
+		LogLevel: log.Level(*logLevel),
+		LogPath:  *logPath,
+		LogStyle: style,
+	}
+}
+
 func main() {
-	node, err := node.NewNode()
+	node, err := node.NewNode(argsParse())
 	if nil != err {
 		log.Fatal("Failed to initial a node with err %v.", err)
 	}

@@ -2,26 +2,34 @@ package node
 
 import (
 	"fmt"
-	"github.com/DSiSc/craft/types"
-	"github.com/DSiSc/gossipswitch"
-	"github.com/DSiSc/monkey"
-	"github.com/stretchr/testify/assert"
-	"testing"
-
 	"github.com/DSiSc/apigateway"
 	"github.com/DSiSc/blockchain"
 	blockchainc "github.com/DSiSc/blockchain/config"
+	"github.com/DSiSc/craft/log"
+	"github.com/DSiSc/craft/types"
 	"github.com/DSiSc/galaxy/consensus"
 	consensusc "github.com/DSiSc/galaxy/consensus/config"
 	"github.com/DSiSc/galaxy/participates"
 	"github.com/DSiSc/galaxy/participates/config"
 	"github.com/DSiSc/galaxy/role"
 	rolec "github.com/DSiSc/galaxy/role/config"
+	"github.com/DSiSc/gossipswitch"
+	commonc "github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/justitia/tools/events"
+	"github.com/DSiSc/monkey"
 	"github.com/DSiSc/validator/tools/account"
+	"github.com/stretchr/testify/assert"
+	"io"
 	"net"
 	"reflect"
+	"testing"
 )
+
+var defaultConf = commonc.SysConfig{
+	LogLevel: log.InfoLevel,
+	LogPath:  "/tmp/justitia.log",
+	LogStyle: "json",
+}
 
 func TestNewNode(t *testing.T) {
 	assert := assert.New(t)
@@ -29,7 +37,10 @@ func TestNewNode(t *testing.T) {
 	monkey.Patch(gossipswitch.NewGossipSwitchByType, func(switchType gossipswitch.SwitchType) (*gossipswitch.GossipSwitch, error) {
 		return nil, fmt.Errorf("mock gossipswitch error")
 	})
-	service, err := NewNode()
+	monkey.Patch(log.AddAppender, func(appenderName string, output io.Writer, logLevel log.Level, format string, showCaller bool, showHostname bool) {
+		return
+	})
+	service, err := NewNode(defaultConf)
 	assert.NotNil(err)
 	assert.Nil(service)
 	assert.Equal(err, fmt.Errorf("txswitch init failed"))
@@ -38,7 +49,7 @@ func TestNewNode(t *testing.T) {
 	monkey.Patch(gossipswitch.NewGossipSwitchByType, func(switchType gossipswitch.SwitchType) (*gossipswitch.GossipSwitch, error) {
 		return nil, fmt.Errorf("mock gossipswitch error")
 	})
-	service, err = NewNode()
+	service, err = NewNode(defaultConf)
 	assert.NotNil(err)
 	assert.Nil(service)
 	assert.Equal(err, fmt.Errorf("txswitch init failed"))
@@ -48,7 +59,7 @@ func TestNewNode(t *testing.T) {
 		monkey.PatchInstanceMethod(reflect.TypeOf(oport), "BindToPort", func (_ *gossipswitch.OutPort, _ gossipswitch.OutPutFunc) error {
 			return fmt.Errorf("bind error")
 		})
-		service, err = NewNode()
+		service, err = NewNode(defaultConf)
 		assert.NotNil(err)
 		assert.Nil(service)
 		assert.Equal(err, fmt.Errorf("registe txpool failed"))
@@ -57,7 +68,7 @@ func TestNewNode(t *testing.T) {
 	monkey.Patch(blockchain.InitBlockChain, func(_ blockchainc.BlockChainConfig) error {
 		return fmt.Errorf("mock blockchain error")
 	})
-	service, err = NewNode()
+	service, err = NewNode(defaultConf)
 	assert.NotNil(err)
 	assert.Nil(service)
 	assert.Equal(err, fmt.Errorf("blockchain init failed"))
@@ -66,7 +77,7 @@ func TestNewNode(t *testing.T) {
 	monkey.Patch(participates.NewParticipates, func(conf config.ParticipateConfig) (participates.Participates, error) {
 		return nil, fmt.Errorf("mock participates error")
 	})
-	service, err = NewNode()
+	service, err = NewNode(defaultConf)
 	assert.NotNil(err)
 	assert.Nil(service)
 	assert.Equal(err, fmt.Errorf("participates init failed"))
@@ -75,7 +86,7 @@ func TestNewNode(t *testing.T) {
 	monkey.Patch(role.NewRole, func(_ participates.Participates, _ account.Account, _ rolec.RoleConfig) (role.Role, error) {
 		return nil, fmt.Errorf("mock role error")
 	})
-	service, err = NewNode()
+	service, err = NewNode(defaultConf)
 	assert.NotNil(err)
 	assert.Nil(service)
 	assert.Equal(err, fmt.Errorf("role init failed"))
@@ -84,13 +95,13 @@ func TestNewNode(t *testing.T) {
 	monkey.Patch(consensus.NewConsensus, func(_ participates.Participates, _ consensusc.ConsensusConfig) (consensus.Consensus, error) {
 		return nil, fmt.Errorf("mock consensus error")
 	})
-	service, err = NewNode()
+	service, err = NewNode(defaultConf)
 	assert.NotNil(err)
 	assert.Nil(service)
 	assert.Equal(err, fmt.Errorf("consensus init failed"))
 	monkey.Unpatch(consensus.NewConsensus)
 
-	service, err = NewNode()
+	service, err = NewNode(defaultConf)
 	assert.Nil(err)
 	assert.NotNil(service)
 
@@ -110,12 +121,15 @@ func TestNewNode(t *testing.T) {
 
 func TestNode_Start(t *testing.T) {
 	assert := assert.New(t)
-	service, err := NewNode()
-	assert.Nil(err)
-	assert.NotNil(service)
+	monkey.Patch(log.AddAppender, func(appenderName string, output io.Writer, logLevel log.Level, format string, showCaller bool, showHostname bool) {
+		return
+	})
 	monkey.Patch(apigateway.StartRPC, func(string) ([]net.Listener, error) {
 		return make([]net.Listener, 0), nil
 	})
+	service, err := NewNode(defaultConf)
+	assert.Nil(err)
+	assert.NotNil(service)
 	go func() {
 		service.Start()
 		nodeService := service.(*Node)

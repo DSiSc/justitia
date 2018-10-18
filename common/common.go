@@ -94,3 +94,9 @@ const (
 	MsgBlockVerifyFailed
 	MsgNodeServiceStopped
 )
+
+type SysConfig struct {
+	LogLevel log.Level
+	LogPath  string
+	LogStyle string
+}
