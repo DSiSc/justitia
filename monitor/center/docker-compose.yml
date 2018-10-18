@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  elasticsearch:
+    image: elasticsearch:6.4.2
+    container_name: elasticsearch
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+    volumes:
+      - "./es_data:/usr/share/elasticsearch/data:Z"
+  kibana:
+    image: kibana:6.4.2
+    container_name: kibana
+    depends_on:
+      - elasticsearch
+    ports:
+      - "5601:5601"

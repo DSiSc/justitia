@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  filebeat:
+    image: elastic/filebeat:6.4.2
+    container_name: filebeat
+    network_mode: "host"
+    user: "0:0"
+    volumes:
+      - "/var/log/justitia/justitia.log:/var/log/justitia/justitia.log:ro"
+      - "./filebeat.yml:/usr/share/filebeat/filebeat.yml"
+      - "./justitia.yml:/usr/share/filebeat/prospectors.d/justitia.yml"
+  metricbeat:
+    image: elastic/metricbeat:6.4.2
+    container_name: metricbeat
+    user: "0:0"
+    network_mode: "host"
+    volumes:
+      - "/proc:/hostfs/proc:ro"
+      - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
+      - "/:/hostfs:ro"
+      - "./metricbeat.yml:/usr/share/metricbeat/metricbeat.yml"
+      - "./prometheus.yml:/usr/share/metricbeat/modules.d/prometheus.yml"
+      - "./golang.yml:/usr/share/metricbeat/modules.d/golang.yml"
+    command: "-system.hostfs=/hostfs"

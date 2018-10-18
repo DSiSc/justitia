@@ -1,0 +1,14 @@
+# Module: golang
+# Docs: https://www.elastic.co/guide/en/beats/metricbeat/6.4/metricbeat-module-golang.html
+
+- module: golang
+  metricsets:
+    - expvar
+    - heap
+  enabled: true
+  period: 10s
+  hosts: ["127.0.0.1:6060"]
+  heap.path: "/debug/vars"
+  expvar:
+    namespace: "golang"
+    path: "/debug/vars"
