@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  remix:
+    image: httpd
+    container_name: remix
+    ports:
+      - "8088:80"
+    volumes:
+      # "remix-ide" is github repo: https://github.com/ethereum/remix-ide, 
+      # checkout to "gh-pages" branche before startup this container.
+      - "./remix-ide:/usr/local/apache2/htdocs"
