@@ -4,18 +4,22 @@
 PROJ_FOLDER=$(cd "$(dirname "$0")/..";pwd)
 cd $PROJ_FOLDER
 
+go get -d -v -u ./...
+
 # Read  "dependencies.txt" under project root
 DEPS=$(grep -v "^#" dependencies.txt | grep -v "^$")
 
 # Go get all the imported packages (except the ones under "vendor" folder) to $GOPATH
-for dep in $DEPS; do
-  dep_repo=$(echo ${dep} | awk -F ':' '{print $1}')
-  if [ -d "${GOPATH}/src/${dep_repo}" ]; then
-    cd ${GOPATH}/src/${dep_repo}
-    git checkout master &> /dev/null
-  fi
-  go get -v -u ${dep_repo}
-done
+# for dep in $DEPS; do
+#   dep_repo=$(echo ${dep} | awk -F ':' '{print $1}')
+#   if [ -d "${GOPATH}/src/${dep_repo}" ]; then
+#     echo "1 checkout"
+#     cd ${GOPATH}/src/${dep_repo}
+#     git checkout master &> /dev/null
+#   fi
+#   echo "2 get"
+#   go get -v -u ${dep_repo}
+# done
 
 # Check out to desired version
 for dep in $DEPS; do
@@ -23,7 +27,8 @@ for dep in $DEPS; do
   dep_ver=$(echo ${dep} | awk -F ':' '{print $2}')
   if [ -d "${GOPATH}/src/${dep_repo}" ]; then
 
-    echo "[INFO] Ensuring ${dep_repo} on ${dep_ver} ..."
+#   echo "[INFO] Ensuring ${dep_repo} on ${dep_ver} ..."
+    echo -e "\n[${dep_repo}] >> [${dep_ver}]"
 
     cd ${GOPATH}/src/${dep_repo}
 
@@ -34,18 +39,16 @@ for dep in $DEPS; do
 
     if [ $? != 0 ]; then
       # If failed, checkout to origin/${dep_ver}
-      git checkout origin/${dep_ver} > /dev/null
+      git checkout origin/${dep_ver} &> /dev/null
       if [ $? != 0 ]; then
-        echo "[ERROR] Got error when checking out ${dep_ver} under ${dep_repo}, please check."
+        echo "ERROR when checking out ${dep_ver} under ${dep_repo}, please check."
         exit 1
-      else
-        echo "[INFO] ${dep_repo} is now on ${dep_ver}"
       fi
-    else
-      echo "[INFO] ${dep_repo} is now on ${dep_ver}"
     fi
+#   echo "[INFO] ${dep_repo} is now on ${dep_ver}"
+    git log -n 1 --pretty=oneline
   else
-    echo "[WARN] ${GOPATH}/src/${dep_repo} not exist, do nothing, please check dependencies.txt."
+    echo "WARNING, ${GOPATH}/src/${dep_repo} not exist, do nothing, please check dependencies.txt."
   fi
 done
 

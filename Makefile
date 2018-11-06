@@ -83,6 +83,7 @@ get-tools:
 
 	# thirdparty tools
 	go get -u github.com/stretchr/testify
+	go get -u github.com/DSiSc/monkey
 	@# go get -u github.com/kardianos/govendor
 	@# go get -u github.com/axw/gocov/...
 	@# go get -u github.com/client9/misspell/cmd/misspell
