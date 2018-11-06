@@ -1,5 +1,3 @@
-name: "jtnode0"
-
 filebeat.config:
   prospectors:
     path: ${path.config}/prospectors.d/*.yml
@@ -8,6 +6,11 @@ filebeat.config:
     path: ${path.config}/modules.d/*.yml
     reload.enabled: false
 
+setup.template:
+  name: "justitia-logs-*"
+  pattern: "justitia-logs-*"
+
+
 processors:
 - add_cloud_metadata:
 
@@ -15,3 +18,4 @@ output.elasticsearch:
   hosts: ['elasticsearch:9200']
   username: elastic
   password: changeme
+  index: "justitia-logs-%{+yyyy.MM.dd}"
