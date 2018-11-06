@@ -9,7 +9,7 @@ services:
     volumes:
       - "/var/log/justitia/justitia.log:/var/log/justitia/justitia.log:ro"
       - "./filebeat.yml:/usr/share/filebeat/filebeat.yml"
-      - "./justitia.yml:/usr/share/filebeat/prospectors.d/justitia.yml"
+      - "./justitia-logs.yml:/usr/share/filebeat/prospectors.d/justitia-logs.yml"
   metricbeat:
     image: elastic/metricbeat:6.4.2
     container_name: metricbeat
@@ -20,6 +20,6 @@ services:
       - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
       - "/:/hostfs:ro"
       - "./metricbeat.yml:/usr/share/metricbeat/metricbeat.yml"
-      - "./prometheus.yml:/usr/share/metricbeat/modules.d/prometheus.yml"
+      - "./justitia-metrics.yml:/usr/share/metricbeat/modules.d/justitia-metrics.yml"
       - "./golang.yml:/usr/share/metricbeat/modules.d/golang.yml"
     command: "-system.hostfs=/hostfs"
