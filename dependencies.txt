@@ -13,5 +13,4 @@ github.com/DSiSc/producer:master
 github.com/DSiSc/statedb-NG:master
 github.com/DSiSc/txpool:master
 github.com/DSiSc/validator:master
-github.com/DSiSc/monkey:master
 github.com/DSiSc/crypto-suite:master
