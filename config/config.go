@@ -32,6 +32,7 @@ const (
 	// consensus policy setting
 	CONSENSUS_POLICY    = "consensus.policy"
 	PARTICIPATES_POLICY = "participates.policy"
+	PARTICIPATES_NUMBER = "participates.participates"
 	ROLE_POLICY         = "role.policy"
 	// node info
 	NODE_ADDRESS = "node.address"
@@ -229,8 +230,10 @@ func (self *Config) NewTxPoolConf() txpool.TxPoolConfig {
 
 func (self *Config) NewParticipateConf() participatesc.ParticipateConfig {
 	policy := self.GetConfigItem(PARTICIPATES_POLICY).(string)
+	participates, _ := strconv.Atoi(self.GetConfigItem(PARTICIPATES_NUMBER).(string))
 	participatesConf := participatesc.ParticipateConfig{
 		PolicyName: policy,
+		Delegates: uint64(participates),
 	}
 	return participatesConf
 }
