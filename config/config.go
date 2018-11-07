@@ -98,21 +98,17 @@ func LoadConfig() (config *viper.Viper) {
 	config.SetEnvKeyReplacer(replacer)
 
 	config.SetConfigName("justitia")
-	config.AddConfigPath("./")
-	config.AddConfigPath("../config")
-	//config.AddConfigPath( tools.Home() + "/.justitia/")
 	homePath, _ := tools.Home()
 	config.AddConfigPath(fmt.Sprintf("%s/.justitia", homePath))
 	// Path to look for the config file in based on GOPATH
-	gopath := os.Getenv("GOPATH")
-	for _, p := range filepath.SplitList(gopath) {
-		pbftpath := filepath.Join(p, "src/github.com/DSiSc/justitia/config")
-		config.AddConfigPath(pbftpath)
+	goPath := os.Getenv("GOPATH")
+	for _, p := range filepath.SplitList(goPath) {
+		config.AddConfigPath(filepath.Join(p, "src/github.com/DSiSc/justitia/config"))
 	}
 
 	err := config.ReadInConfig()
 	if err != nil {
-		panic(fmt.Errorf("Error reading plugin config: %s", err))
+		panic(fmt.Errorf("error reading plugin config: %s", err))
 	}
 	return
 }
