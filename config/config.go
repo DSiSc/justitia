@@ -1,9 +1,8 @@
 package config
 
 import (
-	"encoding/json"
+	"fmt"
 	blockchainc "github.com/DSiSc/blockchain/config"
-	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/monitor"
 	consensusc "github.com/DSiSc/galaxy/consensus/config"
 	participatesc "github.com/DSiSc/galaxy/participates/config"
@@ -11,49 +10,42 @@ import (
 	"github.com/DSiSc/justitia/tools"
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/validator/tools/account"
-	"io/ioutil"
+	"github.com/spf13/viper"
+	"os"
 	"path/filepath"
-	"runtime"
-	"strconv"
-	"strings"
 )
 
-var ConfigName = "config.json"
-var DefaultDataDir = "./config"
-
 const (
-	// json file relative path
-	CONFIG_DIR = "config/"
 	// algorithm setting
-	HASH_ALGORITHM = "algorithm.hashAlgorithm"
+	HASH_ALGORITHM = "general.hashAlgorithm"
 	// txpool setting
-	TXPOOL_SLOTS  = "txpool.globalSlots"
-	MAX_TXS_BLOCK = "txpool.txsPerBlock"
+	TXPOOL_SLOTS  = "general.txpool.globalslots"
+	MAX_TXS_BLOCK = "general.txpool.txsPerBlock"
 	// consensus policy setting
-	CONSENSUS_POLICY    = "consensus.policy"
-	PARTICIPATES_POLICY = "participates.policy"
-	PARTICIPATES_NUMBER = "participates.participates"
-	ROLE_POLICY         = "role.policy"
+	CONSENSUS_POLICY    = "general.consensus.policy"
+	PARTICIPATES_POLICY = "general.participates.policy"
+	PARTICIPATES_NUMBER = "general.participates.participates"
+	ROLE_POLICY         = "general.role.policy"
 	// node info
-	NODE_ADDRESS = "node.address"
+	NODE_ADDRESS = "general.node.address"
 	// block chain
-	BLOCK_CHAIN_PLUGIN     = "blockchain.plugin"
-	BLOCK_CHAIN_STATE_PATH = "blockchain.statePath"
-	BLOCK_CHAIN_DATA_PATH  = "blockchain.dataPath"
+	BLOCK_CHAIN_PLUGIN     = "general.blockchain.plugin"
+	BLOCK_CHAIN_STATE_PATH = "general.blockchain.statePath"
+	BLOCK_CHAIN_DATA_PATH  = "general.blockchain.dataPath"
 	// api gateway
-	API_GATEWAY_TCP_ADDR = "apigateway.tcpAddr"
+	API_GATEWAY_TCP_ADDR = "general.apigateway"
 	// Default parameter for solo block producer
-	SOLO_TEST_BLOCK_PRODUCER_INTERVAL = "soloTestBlockInterval.time"
+	SOLO_TEST_BLOCK_PRODUCER_INTERVAL = "general.soloModeBlockProducedInterval"
 
 	// prometheus
-	PROMETHEUS_ENABLED  = "prometheus.enabled"
-	PROMETHEUS_PORT     = "prometheus.port"
-	PROMETHEUS_MAX_CONN = "prometheus.maxOpenConnections"
+	PROMETHEUS_ENABLED  = "monitor.prometheus.enabled"
+	PROMETHEUS_PORT     = "monitor.prometheus.port"
+	PROMETHEUS_MAX_CONN = "monitor.prometheus.maxOpenConnections"
 
 	// Expvar
-	EXPVAR_ENABLED = "expvar.enabled"
-	EXPVAR_PORT    = "expvar.port"
-	EXPVAR_PATH    = "expvar.path"
+	EXPVAR_ENABLED = "monitor.expvar.enabled"
+	EXPVAR_PORT    = "monitor.expvar.port"
+	EXPVAR_PATH    = "monitor.expvar.path"
 )
 
 type AlgorithmConfig struct {
@@ -94,97 +86,40 @@ type Config struct {
 	maps     map[string]interface{}
 }
 
-func New(path string) Config {
-	_, file, _, _ := runtime.Caller(1)
-	keyString := "/github.com/DSiSc/justitia/"
-	index := strings.LastIndex(file, keyString)
-	relPath := CONFIG_DIR + ConfigName
-	confAbsPath := strings.Join([]string{file[:index+len(keyString)], relPath}, "")
-	return Config{filePath: confAbsPath}
-}
+func LoadConfig() (config *viper.Viper) {
+	config = viper.New()
 
-// Read the given json file.
-func (config *Config) read() {
-	if !filepath.IsAbs(config.filePath) {
-		filePath, err := filepath.Abs(config.filePath)
-		if err != nil {
-			panic(err)
-		}
-		config.filePath = filePath
+	config.SetConfigName("justitia")
+	config.AddConfigPath("./")
+	config.AddConfigPath("../config/")
+	config.AddConfigPath("/home/.justitia/")
+	// Path to look for the config file in based on GOPATH
+	gopath := os.Getenv("GOPATH")
+	for _, p := range filepath.SplitList(gopath) {
+		pbftpath := filepath.Join(p, "src/github.com/DSiSc/justitia/config")
+		config.AddConfigPath(pbftpath)
 	}
 
-	bts, err := ioutil.ReadFile(config.filePath)
-
+	err := config.ReadInConfig()
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("Error reading plugin config: %s", err))
 	}
-
-	err = json.Unmarshal(bts, &config.maps)
-
-	if err != nil {
-		panic(err)
-	}
-}
-
-// If we want to get item in a stucture, which like this:
-//{
-//	"classs": {
-//		"student":{
-//			"name": "john"
-//         }
-//     }
-//}
-// { class: {}}
-// You can get it by call Get("class.student.name")
-func (config *Config) GetConfigItem(name string) interface{} {
-	if config.maps == nil {
-		config.read()
-	}
-
-	if config.maps == nil {
-		return nil
-	}
-
-	keys := strings.Split(name, ".")
-	length := len(keys)
-	if length == 1 {
-		return config.maps[name]
-	}
-
-	var ret interface{}
-	for i := 0; i < length; i++ {
-		if i == 0 {
-			ret = config.maps[keys[i]]
-			if ret == nil {
-				return nil
-			}
-		} else {
-			if m, ok := ret.(map[string]interface{}); ok {
-				ret = m[keys[i]]
-			} else {
-				if length == i-1 {
-					return ret
-				}
-				return nil
-			}
-		}
-	}
-	return ret
+	return
 }
 
 func NewNodeConfig() NodeConfig {
-	conf := New(ConfigName)
-	algorithmConf := conf.GetAlgorithmConf()
-	nodeAccount := conf.GetNodeAccount()
-	apiGatewayTcpAddr := conf.GetApiGatewayTcpAddr()
-	txPoolConf := conf.NewTxPoolConf()
-	participatesConf := conf.NewParticipateConf()
-	roleConf := conf.NewRoleConf()
-	consensusConf := conf.NewConsensusConf()
-	blockChainConf := conf.NewBlockChainConf()
-	blockIntervalTime := conf.GetBlockProducerInterval()
-	prometheusConf := conf.GetPrometheusConf()
-	expvarConf := conf.GetExpvarConf()
+	config := LoadConfig()
+	algorithmConf := GetAlgorithmConf(config)
+	nodeAccount := GetNodeAccount(config)
+	apiGatewayTcpAddr := GetApiGatewayTcpAddr(config)
+	txPoolConf := NewTxPoolConf(config)
+	participatesConf := NewParticipateConf(config)
+	roleConf := NewRoleConf(config)
+	consensusConf := NewConsensusConf(config)
+	blockChainConf := NewBlockChainConf(config)
+	blockIntervalTime := GetBlockProducerInterval(config)
+	prometheusConf := GetPrometheusConf(config)
+	expvarConf := GetExpvarConf(config)
 
 	return NodeConfig{
 		Account:          nodeAccount,
@@ -199,65 +134,57 @@ func NewNodeConfig() NodeConfig {
 		PrometheusConf:   prometheusConf,
 		ExpvarConf:       expvarConf,
 	}
+
 }
 
-// GetAlgorithmConf get algorithm config
-func (self *Config) GetAlgorithmConf() AlgorithmConfig {
-	policy := self.GetConfigItem(HASH_ALGORITHM).(string)
-	//TODO get sigure algotihm config
+func GetAlgorithmConf(config *viper.Viper) AlgorithmConfig {
+	policy := config.GetString(HASH_ALGORITHM)
+	// TODO get sigure algotihm config
 	return AlgorithmConfig{
 		HashAlgorithm: policy,
 	}
 }
 
-func (self *Config) NewTxPoolConf() txpool.TxPoolConfig {
-	slots, err := strconv.ParseUint(self.GetConfigItem(TXPOOL_SLOTS).(string), 10, 64)
-	if err != nil {
-		log.Error("Get TXPOOL_SLOTS failed with err %v.", err)
-		slots = 0
-	}
-	txs, err1 := strconv.ParseUint(self.GetConfigItem(MAX_TXS_BLOCK).(string), 10, 64)
-	if nil != err1 {
-		log.Error("Get MAX_TXS_BLOCK failed with err %v.", err)
-		txs = 0
-	}
+func NewTxPoolConf(conf *viper.Viper) txpool.TxPoolConfig {
+	slots := conf.GetInt64(TXPOOL_SLOTS)
+	txPerBlock := conf.GetInt64(MAX_TXS_BLOCK)
 	txPoolConf := txpool.TxPoolConfig{
-		GlobalSlots:    slots,
-		MaxTrsPerBlock: txs,
+		GlobalSlots:    uint64(slots),
+		MaxTrsPerBlock: uint64(txPerBlock),
 	}
 	return txPoolConf
 }
 
-func (self *Config) NewParticipateConf() participatesc.ParticipateConfig {
-	policy := self.GetConfigItem(PARTICIPATES_POLICY).(string)
-	participates, _ := strconv.Atoi(self.GetConfigItem(PARTICIPATES_NUMBER).(string))
+func NewParticipateConf(conf *viper.Viper) participatesc.ParticipateConfig {
+	policy := conf.GetString(PARTICIPATES_POLICY)
+	participates := conf.GetInt64(PARTICIPATES_NUMBER)
 	participatesConf := participatesc.ParticipateConfig{
 		PolicyName: policy,
-		Delegates: uint64(participates),
+		Delegates:  uint64(participates),
 	}
 	return participatesConf
 }
 
-func (self *Config) NewRoleConf() rolec.RoleConfig {
-	policy := self.GetConfigItem(ROLE_POLICY).(string)
+func NewRoleConf(conf *viper.Viper) rolec.RoleConfig {
+	policy := conf.GetString(ROLE_POLICY)
 	roleConf := rolec.RoleConfig{
 		PolicyName: policy,
 	}
 	return roleConf
 }
 
-func (self *Config) NewConsensusConf() consensusc.ConsensusConfig {
-	policy := self.GetConfigItem(CONSENSUS_POLICY).(string)
+func NewConsensusConf(conf *viper.Viper) consensusc.ConsensusConfig {
+	policy := conf.GetString(CONSENSUS_POLICY)
 	consensusConf := consensusc.ConsensusConfig{
 		PolicyName: policy,
 	}
 	return consensusConf
 }
 
-func (self *Config) NewBlockChainConf() blockchainc.BlockChainConfig {
-	policy := self.GetConfigItem(BLOCK_CHAIN_PLUGIN).(string)
-	dataPath := self.GetConfigItem(BLOCK_CHAIN_DATA_PATH).(string)
-	statePath := self.GetConfigItem(BLOCK_CHAIN_STATE_PATH).(string)
+func NewBlockChainConf(conf *viper.Viper) blockchainc.BlockChainConfig {
+	policy := conf.GetString(BLOCK_CHAIN_PLUGIN)
+	dataPath := conf.GetString(BLOCK_CHAIN_DATA_PATH)
+	statePath := conf.GetString(BLOCK_CHAIN_STATE_PATH)
 	blockChainConf := blockchainc.BlockChainConfig{
 		PluginName:    policy,
 		StateDataPath: statePath,
@@ -266,48 +193,42 @@ func (self *Config) NewBlockChainConf() blockchainc.BlockChainConfig {
 	return blockChainConf
 }
 
-func (self *Config) GetApiGatewayTcpAddr() string {
-	apiGatewayAddr := self.GetConfigItem(API_GATEWAY_TCP_ADDR).(string)
+func GetApiGatewayTcpAddr(conf *viper.Viper) string {
+	apiGatewayAddr := conf.GetString(API_GATEWAY_TCP_ADDR)
 	return apiGatewayAddr
 }
 
-func (self *Config) GetNodeAccount() *account.Account {
-	nodeAddr := self.GetConfigItem(NODE_ADDRESS).(string)
+func GetNodeAccount(conf *viper.Viper) *account.Account {
+	nodeAddr := conf.GetString(NODE_ADDRESS)
 	address := tools.HexToAddress(nodeAddr)
 	return &account.Account{
 		Address: address,
 	}
 }
 
-func (self *Config) GetBlockProducerInterval() uint8 {
-	blockInterval, _ := strconv.Atoi(self.GetConfigItem(SOLO_TEST_BLOCK_PRODUCER_INTERVAL).(string))
+func GetBlockProducerInterval(conf *viper.Viper) uint8 {
+	blockInterval := conf.GetInt(SOLO_TEST_BLOCK_PRODUCER_INTERVAL)
 	return uint8(blockInterval)
 }
 
-func (self *Config) GetPrometheusConf() monitor.PrometheusConfig {
-	prometheusEnabled := false
-	enabled := self.GetConfigItem(PROMETHEUS_ENABLED).(string)
-	if "true" == enabled {
-		prometheusEnabled = true
-	}
-	prometheusPort := self.GetConfigItem(PROMETHEUS_PORT).(string)
-	prometheusMaxConn, _ := strconv.Atoi(self.GetConfigItem(PROMETHEUS_MAX_CONN).(string))
+func GetPrometheusConf(conf *viper.Viper) monitor.PrometheusConfig {
+	enabled := conf.GetBool(PROMETHEUS_ENABLED)
+	prometheusPort := conf.GetString(PROMETHEUS_PORT)
+	prometheusMaxConn := conf.GetInt(PROMETHEUS_MAX_CONN)
 	return monitor.PrometheusConfig{
-		PrometheusEnabled: prometheusEnabled,
+		PrometheusEnabled: enabled,
 		PrometheusPort:    prometheusPort,
 		PrometheusMaxConn: prometheusMaxConn,
 	}
 }
 
-func (self *Config) GetExpvarConf() monitor.ExpvarConfig {
-	expvarEnabled := false
-	enabled := self.GetConfigItem(EXPVAR_ENABLED).(string)
-	if "true" == enabled {
-		expvarEnabled = true
-	}
+func GetExpvarConf(conf *viper.Viper) monitor.ExpvarConfig {
+	enabled := conf.GetBool(EXPVAR_ENABLED)
+	prometheusPort := conf.GetString(EXPVAR_PORT)
+	ExpvarPath := conf.GetString(EXPVAR_PATH)
 	return monitor.ExpvarConfig{
-		ExpvarEnabled: expvarEnabled,
-		ExpvarPort:    self.GetConfigItem(EXPVAR_PORT).(string),
-		ExpvarPath:    self.GetConfigItem(EXPVAR_PATH).(string),
+		ExpvarEnabled: enabled,
+		ExpvarPort:    prometheusPort,
+		ExpvarPath:    ExpvarPath,
 	}
 }

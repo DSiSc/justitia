@@ -3,18 +3,8 @@ package config
 import (
 	"github.com/DSiSc/craft/types"
 	"github.com/stretchr/testify/assert"
-	"strings"
 	"testing"
 )
-
-func Test_New(t *testing.T) {
-	assert := assert.New(t)
-	conf := New("config.json")
-	assert.NotNil(conf)
-	path := conf.filePath
-	ok := strings.Contains(path, "/config/config.json")
-	assert.True(ok)
-}
 
 func Test_NewNodeConfig(t *testing.T) {
 	assert := assert.New(t)
