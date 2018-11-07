@@ -74,7 +74,7 @@
     "_type": "visualization",
     "_source": {
       "title": "Heap Summary [Metricbeat Golang]",
-      "visState": "{\"type\":\"timelion\",\"params\":{\"interval\":\"10s\",\"expression\":\".es(index=\\\"metricbeat*\\\",metric=\\\"avg:golang.heap.system.total\\\").label(\\\"System Total Memory\\\").yaxis(label=\\\"Bytes\\\",units=bytes),.es(index=\\\"metricbeat*\\\",metric=\\\"min:golang.heap.allocations.allocated\\\").label(\\\"Bytes Allocated(min)\\\").movingaverage(30),.es(index=\\\"metricbeat*\\\",metric=\\\"max:golang.heap.allocations.allocated\\\").label(\\\"Bytes Allocated(max)\\\").movingaverage(30),.es(index=\\\"metricbeat*\\\",metric=\\\"avg:golang.heap.gc.next_gc_limit\\\").label(\\\"GC Limit\\\"),.es(index=\\\"metricbeat*\\\",metric=\\\"avg:golang.heap.gc.pause.count\\\").condition(lt,1, null).points().label(\\\"GC Cycles(count)\\\").yaxis(2,label=\\\"Count\\\")\"},\"aggs\":[],\"title\":\"Heap Summary [Metricbeat Golang]\"}",
+      "visState": "{\"type\":\"timelion\",\"params\":{\"interval\":\"10s\",\"expression\":\".es(index=\\\"justitia-metrics-*\\\",metric=\\\"avg:golang.heap.system.total\\\").label(\\\"System Total Memory\\\").yaxis(label=\\\"Bytes\\\",units=bytes),.es(index=\\\"justitia-metrics-*\\\",metric=\\\"min:golang.heap.allocations.allocated\\\").label(\\\"Bytes Allocated(min)\\\").movingaverage(30),.es(index=\\\"justitia-metrics-*\\\",metric=\\\"max:golang.heap.allocations.allocated\\\").label(\\\"Bytes Allocated(max)\\\").movingaverage(30),.es(index=\\\"justitia-metrics-*\\\",metric=\\\"avg:golang.heap.gc.next_gc_limit\\\").label(\\\"GC Limit\\\"),.es(index=\\\"justitia-metrics-*\\\",metric=\\\"avg:golang.heap.gc.pause.count\\\").condition(lt,1, null).points().label(\\\"GC Cycles(count)\\\").yaxis(2,label=\\\"Count\\\")\"},\"aggs\":[],\"title\":\"Heap Summary [Metricbeat Golang]\"}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
@@ -329,7 +329,7 @@
     "_type": "visualization",
     "_source": {
       "title": "Objects [Metricbeat Golang]",
-      "visState": "{\"type\":\"timelion\",\"params\":{\"interval\":\"10s\",\"expression\":\".es(index=\\\"metricbeat*\\\",metric=\\\"max:golang.heap.allocations.objects\\\").label(\\\"Object Count(avg)\\\").yaxis(1,label=\\\"Count\\\").movingaverage(30),.es(index=\\\"metricbeat*\\\",metric=\\\"max:golang.heap.allocations.total\\\").derivative().label(\\\"Allocation Rate\\\").yaxis(2,label=\\\"Rate\\\").movingaverage(30)\"},\"aggs\":[],\"title\":\"Objects [Metricbeat Golang]\"}",
+      "visState": "{\"type\":\"timelion\",\"params\":{\"interval\":\"10s\",\"expression\":\".es(index=\\\"justitia-metrics-*\\\",metric=\\\"max:golang.heap.allocations.objects\\\").label(\\\"Object Count(avg)\\\").yaxis(1,label=\\\"Count\\\").movingaverage(30),.es(index=\\\"justitia-metrics-*\\\",metric=\\\"max:golang.heap.allocations.total\\\").derivative().label(\\\"Allocation Rate\\\").yaxis(2,label=\\\"Rate\\\").movingaverage(30)\"},\"aggs\":[],\"title\":\"Objects [Metricbeat Golang]\"}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
@@ -651,7 +651,7 @@
     "_type": "visualization",
     "_source": {
       "title": "GC durations [Metricbeat Golang]",
-      "visState": "{\"type\":\"timelion\",\"params\":{\"interval\":\"10s\",\"expression\":\".es(index=\\\"metricbeat*\\\",metric=\\\"max:golang.heap.gc.pause.sum.ns\\\").bars().label(\\\"sum of GC Pause durations(ns)\\\").yaxis(label=\\\"Durations(ns)\\\"),.es(index=\\\"metricbeat*\\\",metric=\\\"max:golang.heap.gc.total_pause.ns\\\").derivative().movingaverage(30).label(\\\"Total GC Pause(ns) Rate\\\"),.es(index=\\\"metricbeat*\\\",metric=\\\"max:golang.heap.gc.pause.max.ns\\\").label(\\\"Max GC Pause(ns)\\\").movingaverage(30),.es(index=\\\"metricbeat*\\\",metric=\\\"avg:golang.heap.gc.pause.avg.ns\\\").label(\\\"Avg GC Pause(ns)\\\").movingaverage(30),.es(index=\\\"metricbeat*\\\",metric=\\\"max:golang.heap.gc.pause.count\\\").condition(lt,1, null).label(\\\"GC Pause count\\\").points().yaxis(2,label=\\\"Count\\\")\"},\"aggs\":[],\"title\":\"GC durations [Metricbeat Golang]\"}",
+      "visState": "{\"type\":\"timelion\",\"params\":{\"interval\":\"10s\",\"expression\":\".es(index=\\\"justitia-metrics-*\\\",metric=\\\"max:golang.heap.gc.pause.sum.ns\\\").bars().label(\\\"sum of GC Pause durations(ns)\\\").yaxis(label=\\\"Durations(ns)\\\"),.es(index=\\\"justitia-metrics-*\\\",metric=\\\"max:golang.heap.gc.total_pause.ns\\\").derivative().movingaverage(30).label(\\\"Total GC Pause(ns) Rate\\\"),.es(index=\\\"justitia-metrics-*\\\",metric=\\\"max:golang.heap.gc.pause.max.ns\\\").label(\\\"Max GC Pause(ns)\\\").movingaverage(30),.es(index=\\\"justitia-metrics-*\\\",metric=\\\"avg:golang.heap.gc.pause.avg.ns\\\").label(\\\"Avg GC Pause(ns)\\\").movingaverage(30),.es(index=\\\"justitia-metrics-*\\\",metric=\\\"max:golang.heap.gc.pause.count\\\").condition(lt,1, null).label(\\\"GC Pause count\\\").points().yaxis(2,label=\\\"Count\\\")\"},\"aggs\":[],\"title\":\"GC durations [Metricbeat Golang]\"}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
@@ -685,7 +685,7 @@
     "_type": "visualization",
     "_source": {
       "title": "Heap [Metricbeat Golang]",
-      "visState": "{\"type\":\"timelion\",\"params\":{\"interval\":\"10s\",\"expression\":\".es(index=\\\"metricbeat*\\\",metric=\\\"avg:golang.heap.allocations.total\\\").label(\\\"Heap Total\\\").derivative().movingaverage(30).yaxis(label=\\\"Bytes\\\",units=bytes),.es(index=\\\"metricbeat*\\\",metric=\\\"avg:golang.heap.allocations.active\\\").label(\\\"Heap Inuse\\\").movingaverage(30),.es(index=\\\"metricbeat*\\\",metric=\\\"avg:golang.heap.allocations.allocated\\\").label(\\\"Heap Allocated\\\").movingaverage(30),.es(index=\\\"metricbeat*\\\",metric=\\\"avg:golang.heap.allocations.idle\\\").label(\\\"Heap Idle\\\").movingaverage(30)\"},\"aggs\":[],\"title\":\"Heap [Metricbeat Golang]\"}",
+      "visState": "{\"type\":\"timelion\",\"params\":{\"interval\":\"10s\",\"expression\":\".es(index=\\\"justitia-metrics-*\\\",metric=\\\"avg:golang.heap.allocations.total\\\").label(\\\"Heap Total\\\").derivative().movingaverage(30).yaxis(label=\\\"Bytes\\\",units=bytes),.es(index=\\\"justitia-metrics-*\\\",metric=\\\"avg:golang.heap.allocations.active\\\").label(\\\"Heap Inuse\\\").movingaverage(30),.es(index=\\\"justitia-metrics-*\\\",metric=\\\"avg:golang.heap.allocations.allocated\\\").label(\\\"Heap Allocated\\\").movingaverage(30),.es(index=\\\"justitia-metrics-*\\\",metric=\\\"avg:golang.heap.allocations.idle\\\").label(\\\"Heap Idle\\\").movingaverage(30)\"},\"aggs\":[],\"title\":\"Heap [Metricbeat Golang]\"}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
@@ -702,7 +702,7 @@
     "_type": "visualization",
     "_source": {
       "title": "System [Metricbeat Golang]",
-      "visState": "{\"type\":\"timelion\",\"params\":{\"interval\":\"10s\",\"expression\":\".es(index=\\\"metricbeat*\\\",metric=\\\"avg:golang.heap.system.total\\\").label(\\\"System Total\\\").yaxis(label=\\\"Bytes\\\",units=bytes),.es(index=\\\"metricbeat*\\\",metric=\\\"avg:golang.heap.system.obtained\\\").label(\\\"System Obtained\\\"),.es(index=\\\"metricbeat*\\\",metric=\\\"avg:golang.heap.system.stack\\\").label(\\\"System Stack\\\"),.es(index=\\\"metricbeat*\\\",metric=\\\"avg:golang.heap.system.released\\\").label(\\\"System Released\\\")\"},\"aggs\":[],\"title\":\"System [Metricbeat Golang]\"}",
+      "visState": "{\"type\":\"timelion\",\"params\":{\"interval\":\"10s\",\"expression\":\".es(index=\\\"justitia-metrics-*\\\",metric=\\\"avg:golang.heap.system.total\\\").label(\\\"System Total\\\").yaxis(label=\\\"Bytes\\\",units=bytes),.es(index=\\\"justitia-metrics-*\\\",metric=\\\"avg:golang.heap.system.obtained\\\").label(\\\"System Obtained\\\"),.es(index=\\\"justitia-metrics-*\\\",metric=\\\"avg:golang.heap.system.stack\\\").label(\\\"System Stack\\\"),.es(index=\\\"justitia-metrics-*\\\",metric=\\\"avg:golang.heap.system.released\\\").label(\\\"System Released\\\")\"},\"aggs\":[],\"title\":\"System [Metricbeat Golang]\"}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
@@ -719,7 +719,7 @@
     "_type": "visualization",
     "_source": {
       "title": "GC count [Metricbeat Golang]",
-      "visState": "{\"type\":\"timelion\",\"params\":{\"interval\":\"10s\",\"expression\":\".es(index=\\\"metricbeat*\\\",metric=\\\"max:golang.heap.gc.pause.count\\\").label(\\\"GC Count\\\").bars().yaxis(label=\\\"Count\\\"),.es(index=\\\"metricbeat*\\\",metric=\\\"max:golang.heap.gc.total_count\\\").label(\\\"GC Rate\\\").derivative().movingaverage(30),.es(index=\\\"metricbeat*\\\",metric=\\\"max:golang.heap.gc.cpu_fraction\\\").label(\\\"CPU Fraction\\\").yaxis(2,label=\\\"Fraction\\\")\"},\"aggs\":[],\"title\":\"GC count [Metricbeat Golang]\"}",
+      "visState": "{\"type\":\"timelion\",\"params\":{\"interval\":\"10s\",\"expression\":\".es(index=\\\"justitia-metrics-*\\\",metric=\\\"max:golang.heap.gc.pause.count\\\").label(\\\"GC Count\\\").bars().yaxis(label=\\\"Count\\\"),.es(index=\\\"justitia-metrics-*\\\",metric=\\\"max:golang.heap.gc.total_count\\\").label(\\\"GC Rate\\\").derivative().movingaverage(30),.es(index=\\\"justitia-metrics-*\\\",metric=\\\"max:golang.heap.gc.cpu_fraction\\\").label(\\\"CPU Fraction\\\").yaxis(2,label=\\\"Fraction\\\")\"},\"aggs\":[],\"title\":\"GC count [Metricbeat Golang]\"}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
@@ -820,7 +820,7 @@
     "_id": "79ffd6e0-faa0-11e6-947f-177f697178b8",
     "_type": "dashboard",
     "_source": {
-      "title": "Justitia Node Metrics [ jtnode0 ]",
+      "title": "Justitia Node Metrics [ justitia ]",
       "hits": 0,
       "description": "Overviw of host metrics",
       "panelsJSON": "[{\"gridData\":{\"h\":15,\"i\":\"1\",\"w\":24,\"x\":0,\"y\":55},\"id\":\"6b7b9a40-faa1-11e6-86b1-cd7735ff7e23\",\"panelIndex\":\"1\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":15,\"i\":\"2\",\"w\":24,\"x\":24,\"y\":25},\"id\":\"4d546850-1b15-11e7-b09e-037021c4f8df\",\"panelIndex\":\"2\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":15,\"i\":\"3\",\"w\":24,\"x\":24,\"y\":55},\"id\":\"089b85d0-1b16-11e7-b09e-037021c4f8df\",\"panelIndex\":\"3\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":15,\"i\":\"4\",\"w\":24,\"x\":0,\"y\":40},\"id\":\"bfa5e400-1b16-11e7-b09e-037021c4f8df\",\"panelIndex\":\"4\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":15,\"i\":\"5\",\"w\":24,\"x\":24,\"y\":70},\"id\":\"e0f001c0-1b18-11e7-b09e-037021c4f8df\",\"panelIndex\":\"5\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":15,\"i\":\"6\",\"w\":24,\"x\":0,\"y\":70},\"id\":\"2e224660-1b19-11e7-b09e-037021c4f8df\",\"panelIndex\":\"6\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":15,\"i\":\"7\",\"w\":24,\"x\":0,\"y\":25},\"id\":\"ab2d1e90-1b1a-11e7-b09e-037021c4f8df\",\"panelIndex\":\"7\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":15,\"i\":\"8\",\"w\":24,\"x\":24,\"y\":40},\"id\":\"4e4bb1e0-1b1b-11e7-b09e-037021c4f8df\",\"panelIndex\":\"8\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":10,\"i\":\"9\",\"w\":8,\"x\":16,\"y\":5},\"id\":\"26732e20-1b91-11e7-bec4-a5e9ec5cab8b\",\"panelIndex\":\"9\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":10,\"i\":\"10\",\"w\":8,\"x\":0,\"y\":5},\"id\":\"83e12df0-1b91-11e7-bec4-a5e9ec5cab8b\",\"panelIndex\":\"10\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":10,\"i\":\"11\",\"w\":8,\"x\":8,\"y\":5},\"id\":\"d3166e80-1b91-11e7-bec4-a5e9ec5cab8b\",\"panelIndex\":\"11\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":10,\"i\":\"12\",\"w\":8,\"x\":24,\"y\":5},\"id\":\"522ee670-1b92-11e7-bec4-a5e9ec5cab8b\",\"panelIndex\":\"12\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":10,\"i\":\"13\",\"w\":8,\"x\":32,\"y\":5},\"id\":\"1aae9140-1b93-11e7-8ada-3df93aab833e\",\"panelIndex\":\"13\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":10,\"i\":\"14\",\"w\":16,\"x\":32,\"y\":15},\"id\":\"34f97ee0-1b96-11e7-8ada-3df93aab833e\",\"panelIndex\":\"14\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":5,\"i\":\"16\",\"w\":24,\"x\":0,\"y\":0},\"id\":\"System-Navigation\",\"panelIndex\":\"16\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":10,\"i\":\"21\",\"w\":8,\"x\":0,\"y\":15},\"id\":\"19e123b0-4d5a-11e7-aee5-fdc812cc3bec\",\"panelIndex\":\"21\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":10,\"i\":\"22\",\"w\":8,\"x\":8,\"y\":15},\"id\":\"d2e80340-4d5c-11e7-aa29-87a97a796de6\",\"panelIndex\":\"22\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":10,\"i\":\"23\",\"w\":8,\"x\":24,\"y\":15},\"id\":\"825fdb80-4d1d-11e7-b5f2-2b7c1895bf32\",\"panelIndex\":\"23\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":10,\"i\":\"25\",\"w\":8,\"x\":40,\"y\":5},\"id\":\"96976150-4d5d-11e7-aa29-87a97a796de6\",\"panelIndex\":\"25\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":15,\"i\":\"27\",\"w\":24,\"x\":0,\"y\":85},\"id\":\"99381c80-4d60-11e7-9a4c-ed99bbcaa42b\",\"panelIndex\":\"27\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":15,\"i\":\"28\",\"w\":24,\"x\":24,\"y\":85},\"id\":\"c5e3cf90-4d60-11e7-9a4c-ed99bbcaa42b\",\"panelIndex\":\"28\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"embeddableConfig\":{\"vis\":{\"defaultColors\":{\"0 - 100\":\"rgb(0,104,55)\"}}},\"gridData\":{\"h\":10,\"i\":\"29\",\"w\":8,\"x\":16,\"y\":15},\"id\":\"590a60f0-5d87-11e7-8884-1bb4c3b890e4\",\"panelIndex\":\"29\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"gridData\":{\"h\":5,\"i\":\"30\",\"w\":24,\"x\":24,\"y\":0},\"id\":\"3d65d450-a9c3-11e7-af20-67db8aecb295\",\"panelIndex\":\"30\",\"type\":\"visualization\",\"version\":\"6.4.2\"}]",
@@ -828,7 +828,7 @@
       "version": 1,
       "timeRestore": false,
       "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"filter\":[],\"query\":{\"language\":\"lucene\",\"query\":\"beat.name:\\\"jtnode0\\\"\"},\"version\":true,\"highlightAll\":true}"
+        "searchSourceJSON": "{\"filter\":[],\"query\":{\"language\":\"lucene\",\"query\":\"beat.name:\\\"justitia\\\"\"},\"version\":true,\"highlightAll\":true}"
       }
     },
     "_meta": {
@@ -847,7 +847,7 @@
       "version": 1,
       "timeRestore": false,
       "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"query\":{\"language\":\"lucene\",\"query\":\"beat.name:\\\"jtnode0\\\"\"},\"filter\":[]}"
+        "searchSourceJSON": "{\"query\":{\"language\":\"lucene\",\"query\":\"beat.name:\\\"justitia\\\"\"},\"filter\":[]}"
       }
     },
     "_meta": {
