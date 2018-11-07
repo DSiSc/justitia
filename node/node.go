@@ -66,12 +66,34 @@ func EventRegister() {
 	})
 }
 
+func InitLog(args common.SysConfig, conf config.NodeConfig) {
+	var logPath = args.LogPath
+	if common.BlankString == logPath {
+		logPath = conf.Logger.Output
+	}
+	var logFormat = args.LogStyle
+	if common.BlankString == logFormat {
+		logFormat = conf.Logger.Format
+	}
+	var logLevel = args.LogLevel
+	if common.InvalidInt == int(logLevel) {
+		logLevel = log.Level(conf.Logger.LogLevel)
+	}
+
+	log.AddFileAppender(
+		"filelog",
+		logPath,
+		logLevel,
+		logFormat,
+		conf.Logger.ShowCaller,
+		conf.Logger.ShowHostname)
+}
+
 func NewNode(args common.SysConfig) (NodeService, error) {
-	log.AddFileAppender("filelog", args.LogPath, log.Level(args.LogLevel), args.LogStyle, true, true)
 	nodeConf := config.NewNodeConfig()
+	InitLog(args, nodeConf)
 	// record global hash algorithm
 	gconf.GlobalConfig.Store(gconf.HashAlgName, nodeConf.AlgorithmConf.HashAlgorithm)
-
 	types.GlobalEventCenter = events.NewEvent()
 	txpool := txpool.NewTxPool(nodeConf.TxPoolConf)
 	MsgChannel = make(chan common.MsgType)

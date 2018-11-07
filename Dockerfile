@@ -10,4 +10,4 @@ EXPOSE 47768
 EXPOSE 47780
 EXPOSE 6060
 
-CMD ["justitia --log_path /var/log/justitia/justitia.log"]
+CMD ["justitia"]

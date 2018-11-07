@@ -10,6 +10,9 @@ import (
 	"math/big"
 )
 
+const InvalidInt int = 255
+const BlankString string = ""
+
 // Sum returns the first 32 bytes of hash of the bz.
 func Sum(bz []byte) []byte {
 	var alg string

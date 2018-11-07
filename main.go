@@ -26,14 +26,15 @@ func sysSignalProcess(node node.NodeService) {
 }
 
 func argsParse() common.SysConfig {
-	logLevel := flag.Int("log_level", 1, "Log level [0: debug, 1: info, 2: warn, 3: error, 4: fatal, 5: panic, 6: disable].")
-	logPath := flag.String("log_path", "/tmp/DSiSc/justitia.log", "Log output file in absolute path.")
-	logStyle := flag.String("log_style", "json", "Log output style in json or text, which choose from [json, text].")
+	logLevel := flag.Int("log_level", common.InvalidInt, "Log level [0: debug, 1: info, 2: warn, 3: error, 4: fatal, 5: panic, 6: disable].")
+	logPath := flag.String("log_path", common.BlankString, "Log output file in absolute path.")
+	logStyle := flag.String("log_style", common.BlankString, "Log output style in json or text, which choose from [json, text].")
 	flag.Parse()
 	var style string = *logStyle
-	if style == "text" {
+	switch style {
+	case "text":
 		style = log.TextFmt
-	} else {
+	case "json":
 		style = log.JsonFmt
 	}
 	return common.SysConfig{

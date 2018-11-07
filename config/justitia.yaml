@@ -47,6 +47,7 @@ general:
     # Block produce interval for solo mode
     soloModeBlockProducedInterval: 2
 
+
 ################################################################################
 #
 #   SECTION: monitor
@@ -66,3 +67,28 @@ monitor:
         enabled: true
         port: 6060
         path: /debug/vars
+
+
+################################################################################
+#
+#   SECTION: log
+#
+#   - This section define log setting
+#
+################################################################################
+logging:
+
+    # Define log output file path, in absolute path
+    path: /var/log/justitia/justitia.log
+
+    # Define log level, which in { 0: debug, 1: info, 2: warn, 3: error, 4: fatal, 5: panic, 6: disable}
+    level: 1
+
+    # Define log print formation, which is json ot text
+    format: json
+
+    # Define whether to show caller info in log output
+    caller: true
+
+    # Define whether to show hostname info in log output
+    hostname: true

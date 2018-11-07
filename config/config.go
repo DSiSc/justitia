@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	blockchainc "github.com/DSiSc/blockchain/config"
+	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/monitor"
 	consensusc "github.com/DSiSc/galaxy/consensus/config"
 	participatesc "github.com/DSiSc/galaxy/participates/config"
@@ -48,6 +49,13 @@ const (
 	EXPVAR_ENABLED = "monitor.expvar.enabled"
 	EXPVAR_PORT    = "monitor.expvar.port"
 	EXPVAR_PATH    = "monitor.expvar.path"
+
+	// Log Setting
+	LOG_PATH     = "logging.path"
+	LOG_LEVEL    = "logging.level"
+	LOG_FORMAT   = "logging.format"
+	LOG_CALLER   = "logging.caller"
+	LOG_HOSTNAME = "logging.hostname"
 )
 
 type AlgorithmConfig struct {
@@ -81,6 +89,8 @@ type NodeConfig struct {
 	PrometheusConf monitor.PrometheusConfig
 	// expvar
 	ExpvarConf monitor.ExpvarConfig
+	// log setting
+	Logger log.AppenderConfig
 }
 
 type Config struct {
@@ -90,7 +100,6 @@ type Config struct {
 
 func LoadConfig() (config *viper.Viper) {
 	config = viper.New()
-
 	// for environment variables
 	config.SetEnvPrefix(CONFIG_PREFIX)
 	config.AutomaticEnv()
@@ -126,6 +135,7 @@ func NewNodeConfig() NodeConfig {
 	blockIntervalTime := GetBlockProducerInterval(config)
 	prometheusConf := GetPrometheusConf(config)
 	expvarConf := GetExpvarConf(config)
+	logConf := GetLogSetting(config)
 
 	return NodeConfig{
 		Account:          nodeAccount,
@@ -139,8 +149,8 @@ func NewNodeConfig() NodeConfig {
 		AlgorithmConf:    algorithmConf,
 		PrometheusConf:   prometheusConf,
 		ExpvarConf:       expvarConf,
+		Logger:           logConf,
 	}
-
 }
 
 func GetAlgorithmConf(config *viper.Viper) AlgorithmConfig {
@@ -236,5 +246,20 @@ func GetExpvarConf(conf *viper.Viper) monitor.ExpvarConfig {
 		ExpvarEnabled: enabled,
 		ExpvarPort:    prometheusPort,
 		ExpvarPath:    ExpvarPath,
+	}
+}
+
+func GetLogSetting(conf *viper.Viper) log.AppenderConfig {
+	logPath := conf.GetString(LOG_PATH)
+	logLevel := conf.GetInt(LOG_LEVEL)
+	logFormat := conf.GetString(LOG_FORMAT)
+	logCaller := conf.GetBool(LOG_CALLER)
+	logHostname := conf.GetBool(LOG_HOSTNAME)
+	return log.AppenderConfig{
+		Output:       logPath,
+		LogLevel:     log.Level(logLevel),
+		Format:       logFormat,
+		ShowCaller:   logCaller,
+		ShowHostname: logHostname,
 	}
 }
