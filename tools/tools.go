@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"github.com/DSiSc/craft/types"
+	"github.com/ontio/ontology/common/log"
 	"os"
 	"os/exec"
 	"os/user"
@@ -78,11 +79,13 @@ func homeUnix() (string, error) {
 	cmd := exec.Command("sh", "-c", "eval echo ~$USER")
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
+		log.Error("sh -c eval echo ~$USER error.")
 		return "", err
 	}
 
 	result := strings.TrimSpace(stdout.String())
 	if result == "" {
+		log.Error("blank output when reading home directory")
 		return "", errors.New("blank output when reading home directory")
 	}
 
@@ -97,6 +100,7 @@ func homeWindows() (string, error) {
 		home = os.Getenv("USERPROFILE")
 	}
 	if home == "" {
+		log.Error("Get home path error.")
 		return "", errors.New("HOMEDRIVE, HOMEPATH, and USERPROFILE are blank")
 	}
 

@@ -13,9 +13,11 @@ import (
 	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const (
+	CONFIG_PREFIX = "justitia"
 	// algorithm setting
 	HASH_ALGORITHM = "general.hashAlgorithm"
 	// txpool setting
@@ -89,10 +91,18 @@ type Config struct {
 func LoadConfig() (config *viper.Viper) {
 	config = viper.New()
 
+	// for environment variables
+	config.SetEnvPrefix(CONFIG_PREFIX)
+	config.AutomaticEnv()
+	replacer := strings.NewReplacer(".", "_")
+	config.SetEnvKeyReplacer(replacer)
+
 	config.SetConfigName("justitia")
 	config.AddConfigPath("./")
-	config.AddConfigPath("../config/")
-	config.AddConfigPath("/home/.justitia/")
+	config.AddConfigPath("../config")
+	//config.AddConfigPath( tools.Home() + "/.justitia/")
+	homePath, _ := tools.Home()
+	config.AddConfigPath(fmt.Sprintf("%s/.justitia", homePath))
 	// Path to look for the config file in based on GOPATH
 	gopath := os.Getenv("GOPATH")
 	for _, p := range filepath.SplitList(gopath) {
