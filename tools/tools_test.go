@@ -1,8 +1,11 @@
 package tools
 
 import (
+	"errors"
 	"github.com/DSiSc/craft/types"
+	"github.com/DSiSc/monkey"
 	"github.com/stretchr/testify/assert"
+	"os/user"
 	"testing"
 )
 
@@ -59,4 +62,18 @@ func TestSetBytes(t *testing.T) {
 	var expectBytes types.Address
 	SetBytes(addr, &expectBytes)
 	assert.Equal(t, addr[len(addr)-types.AddressLength:], expectBytes[:])
+}
+
+func TestHome(t *testing.T) {
+	asserts := assert.New(t)
+	home, err := Home()
+	asserts.Nil(err)
+	asserts.NotNil(home)
+
+	monkey.Patch(user.Current, func() (*user.User, error) {
+		return nil, errors.New("error detected")
+	})
+	home1, err1 := Home()
+	asserts.Nil(err1)
+	asserts.Equal(home, home1)
 }
