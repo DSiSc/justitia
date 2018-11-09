@@ -243,7 +243,7 @@ func (self *Node) Start() {
 
 	monitor.StartPrometheusServer(self.config.PrometheusConf)
 	monitor.StartExpvarServer(self.config.ExpvarConf)
-
+	go self.consensus.Start()
 	go self.mainLoop()
 }
 
