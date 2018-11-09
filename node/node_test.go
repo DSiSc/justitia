@@ -92,7 +92,7 @@ func TestNewNode(t *testing.T) {
 	assert.Equal(err, fmt.Errorf("role init failed"))
 	monkey.Unpatch(role.NewRole)
 
-	monkey.Patch(consensus.NewConsensus, func(_ participates.Participates, _ consensusc.ConsensusConfig) (consensus.Consensus, error) {
+	monkey.Patch(consensus.NewConsensus, func(participates.Participates, consensusc.ConsensusConfig, account.Account) (consensus.Consensus, error) {
 		return nil, fmt.Errorf("mock consensus error")
 	})
 	service, err = NewNode(defaultConf)

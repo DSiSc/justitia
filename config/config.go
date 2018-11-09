@@ -67,7 +67,7 @@ type AlgorithmConfig struct {
 
 type NodeConfig struct {
 	// default
-	Account *account.Account
+	Account account.Account
 	// api gateway
 	ApiGatewayAddr string
 	// txpool
@@ -214,12 +214,10 @@ func GetApiGatewayTcpAddr(conf *viper.Viper) string {
 	return apiGatewayAddr
 }
 
-func GetNodeAccount(conf *viper.Viper) *account.Account {
+func GetNodeAccount(conf *viper.Viper) account.Account {
 	nodeAddr := conf.GetString(NODE_ADDRESS)
 	address := tools.HexToAddress(nodeAddr)
-	return &account.Account{
-		Address: address,
-	}
+	return account.Account{Address: address}
 }
 
 func GetBlockProducerInterval(conf *viper.Viper) uint8 {

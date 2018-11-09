@@ -131,13 +131,13 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 		return nil, fmt.Errorf("participates init failed")
 	}
 
-	role, err := role.NewRole(participates, *nodeConf.Account, nodeConf.RoleConf)
+	role, err := role.NewRole(participates, nodeConf.Account, nodeConf.RoleConf)
 	if nil != err {
 		log.Error("Init role failed.")
 		return nil, fmt.Errorf("role init failed")
 	}
 
-	consensus, err := consensus.NewConsensus(participates, nodeConf.ConsensusConf)
+	consensus, err := consensus.NewConsensus(participates, nodeConf.ConsensusConf, nodeConf.Account)
 	if nil != err {
 		log.Error("Init consensus failed.")
 		return nil, fmt.Errorf("consensus init failed")
@@ -167,10 +167,10 @@ func (self *Node) Round() error {
 		log.Error("Role assignments failed.")
 		return fmt.Errorf("role assignments failed")
 	}
-	if rolec.Master == assignments[*self.config.Account] {
+	if rolec.Master == assignments[self.config.Account] {
 		log.Info("Master of this round..")
 		if nil == self.producer {
-			self.producer = producer.NewProducer(self.txpool, self.config.Account)
+			self.producer = producer.NewProducer(self.txpool, &self.config.Account)
 		}
 		block, err := self.producer.MakeBlock()
 		if err != nil {
@@ -191,7 +191,7 @@ func (self *Node) Round() error {
 	} else {
 		if self.validator == nil {
 			// TODO: attach validator to consensus
-			self.validator = validator.NewValidator(self.config.Account)
+			self.validator = validator.NewValidator(&self.config.Account)
 		}
 	}
 	return nil
