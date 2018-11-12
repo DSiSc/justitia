@@ -2,10 +2,6 @@ package node
 
 import (
 	"fmt"
-	"net"
-	"sync"
-	"time"
-
 	"github.com/DSiSc/apigateway"
 	rpc "github.com/DSiSc/apigateway/rpc/core"
 	"github.com/DSiSc/blockchain"
@@ -25,11 +21,9 @@ import (
 	"github.com/DSiSc/producer"
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/validator"
-)
-
-var (
-	MsgChannel chan common.MsgType
-	StopSignal chan interface{}
+	"net"
+	"sync"
+	"time"
 )
 
 type NodeService interface {
@@ -41,28 +35,30 @@ type NodeService interface {
 
 // node struct with all service
 type Node struct {
-	nodeWg       sync.WaitGroup
-	config       config.NodeConfig
-	txpool       txpool.TxsPool
-	participates participates.Participates
-	role         role.Role
-	consensus    consensus.Consensus
-	producer     *producer.Producer
-	txSwitch     *gossipswitch.GossipSwitch
-	blockSwitch  *gossipswitch.GossipSwitch
-	validator    *validator.Validator
-	rpcListeners []net.Listener
+	nodeWg         sync.WaitGroup
+	config         config.NodeConfig
+	txpool         txpool.TxsPool
+	participates   participates.Participates
+	role           role.Role
+	consensus      consensus.Consensus
+	producer       *producer.Producer
+	txSwitch       *gossipswitch.GossipSwitch
+	blockSwitch    *gossipswitch.GossipSwitch
+	validator      *validator.Validator
+	rpcListeners   []net.Listener
+	msgChannel     chan common.MsgType
+	serviceChannel chan interface{}
 }
 
-func EventRegister() {
+func EventRegister(node *Node) {
 	types.GlobalEventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
-		MsgChannel <- common.MsgBlockCommitSuccess
+		node.msgChannel <- common.MsgBlockCommitSuccess
 	})
 	types.GlobalEventCenter.Subscribe(types.EventBlockVerifyFailed, func(v interface{}) {
-		MsgChannel <- common.MsgBlockVerifyFailed
+		node.msgChannel <- common.MsgBlockVerifyFailed
 	})
 	types.GlobalEventCenter.Subscribe(types.EventBlockCommitFailed, func(v interface{}) {
-		MsgChannel <- common.MsgBlockCommitFailed
+		node.msgChannel <- common.MsgBlockCommitFailed
 	})
 }
 
@@ -96,8 +92,6 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 	gconf.GlobalConfig.Store(gconf.HashAlgName, nodeConf.AlgorithmConf.HashAlgorithm)
 	types.GlobalEventCenter = events.NewEvent()
 	txpool := txpool.NewTxPool(nodeConf.TxPoolConf)
-	MsgChannel = make(chan common.MsgType)
-	StopSignal = make(chan interface{})
 	txSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.TxSwitch)
 	if err != nil {
 		log.Error("Init txSwitch failed.")
@@ -121,7 +115,7 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 
 	err = blockchain.InitBlockChain(nodeConf.BlockChainConf)
 	if err != nil {
-		log.Error("Init blockchain failed.")
+		log.Error("Init block chain failed.")
 		return nil, fmt.Errorf("blockchain init failed")
 	}
 
@@ -131,7 +125,7 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 		return nil, fmt.Errorf("participates init failed")
 	}
 
-	role, err := role.NewRole(participates, nodeConf.Account, nodeConf.RoleConf)
+	role, err := role.NewRole(participates, nodeConf.RoleConf)
 	if nil != err {
 		log.Error("Init role failed.")
 		return nil, fmt.Errorf("role init failed")
@@ -142,17 +136,18 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 		log.Error("Init consensus failed.")
 		return nil, fmt.Errorf("consensus init failed")
 	}
-	EventRegister()
 	node := &Node{
-		config:       nodeConf,
-		txpool:       txpool,
-		participates: participates,
-		role:         role,
-		consensus:    consensus,
-		txSwitch:     txSwitch,
-		blockSwitch:  blkSwitch,
+		config:         nodeConf,
+		txpool:         txpool,
+		participates:   participates,
+		role:           role,
+		consensus:      consensus,
+		txSwitch:       txSwitch,
+		blockSwitch:    blkSwitch,
+		msgChannel:     make(chan common.MsgType),
+		serviceChannel: make(chan interface{}),
 	}
-
+	EventRegister(node)
 	return node, nil
 }
 
@@ -160,29 +155,38 @@ func EventUnregister() {
 	types.GlobalEventCenter.UnSubscribeAll()
 }
 
-func (self *Node) Round() error {
+func (self *Node) notify() {
+	go func() {
+		self.msgChannel <- common.MsgRoundRunFailed
+	}()
+}
+
+func (self *Node) Round() {
 	time.Sleep(time.Duration(self.config.BlockInterval) * time.Second)
 	assignments, err := self.role.RoleAssignments()
 	if nil != err {
-		log.Error("Role assignments failed.")
-		return fmt.Errorf("role assignments failed")
+		log.Error("Role assignments failed with err %v.", err)
+		self.notify()
+		return
 	}
 	if rolec.Master == assignments[self.config.Account] {
-		log.Info("Master of this round..")
+		log.Info("Master this round.")
 		if nil == self.producer {
 			self.producer = producer.NewProducer(self.txpool, &self.config.Account)
 		}
 		block, err := self.producer.MakeBlock()
 		if err != nil {
-			log.Error("Make block failed.")
-			return fmt.Errorf("make block failed")
+			log.Error("Make block failed with err %v.", err)
+			self.notify()
+			return
 		}
 		proposal := &consensusc.Proposal{
 			Block: block,
 		}
 		if err = self.consensus.ToConsensus(proposal); err != nil {
-			log.Error("Not to consensus.")
-			return fmt.Errorf("consensus failed")
+			log.Error("Not to consensus with err %v.", err)
+			self.notify()
+			return
 		}
 		swChIn := self.blockSwitch.InPort(gossipswitch.LocalInPortId).Channel()
 		swChIn <- proposal.Block
@@ -190,21 +194,17 @@ func (self *Node) Round() error {
 		log.Info("New block has been produced with height is: %d.", block.Header.Height)
 	} else {
 		if self.validator == nil {
+			log.Info("Slave this round..")
 			// TODO: attach validator to consensus
 			self.validator = validator.NewValidator(&self.config.Account)
 		}
 	}
-	return nil
 }
 
 func (self *Node) mainLoop() {
 	for {
-		if err := self.Round(); nil != err {
-			// if block make failed, then start a new round
-			log.Error("This round failed with err %v.", nil)
-			continue
-		}
-		msg := <-MsgChannel
+		self.Round()
+		msg := <-self.msgChannel
 		switch msg {
 		case common.MsgBlockCommitSuccess:
 			log.Info("Receive msg from switch is success.")
@@ -212,8 +212,11 @@ func (self *Node) mainLoop() {
 			log.Info("Receive msg from switch is commit failed.")
 		case common.MsgBlockVerifyFailed:
 			log.Info("Receive msg from switch is verify failed.")
+		case common.MsgRoundRunFailed:
+			log.Error("Receive msg from main loop is run failed.")
 		case common.MsgNodeServiceStopped:
-			return
+			log.Warn("Stop node service.")
+			break
 		}
 	}
 }
@@ -240,7 +243,6 @@ func (self *Node) startSwitch() {
 func (self *Node) Start() {
 	self.stratRpc()
 	self.startSwitch()
-
 	monitor.StartPrometheusServer(self.config.PrometheusConf)
 	monitor.StartExpvarServer(self.config.ExpvarConf)
 	go self.consensus.Start()
@@ -249,10 +251,10 @@ func (self *Node) Start() {
 
 func (self *Node) Stop() error {
 	log.Warn("Stop node service.")
-	close(StopSignal)
-	MsgChannel <- common.MsgNodeServiceStopped
-	for _, l := range self.rpcListeners {
-		if err := l.Close(); err != nil {
+	close(self.serviceChannel)
+	self.msgChannel <- common.MsgNodeServiceStopped
+	for _, listener := range self.rpcListeners {
+		if err := listener.Close(); err != nil {
 			log.Error("Stop rpc listeners failed with error %v.", err)
 			return fmt.Errorf("closing listener error")
 		}
@@ -265,11 +267,12 @@ func (self *Node) Stop() error {
 }
 
 func (self *Node) Wait() {
-	<-StopSignal
+	<-self.serviceChannel
 }
 
 func (self *Node) Restart() error {
 	if err := self.Stop(); err != nil {
+		log.Error("restart service failed with err %v.", err)
 		return err
 	}
 	self.Start()
