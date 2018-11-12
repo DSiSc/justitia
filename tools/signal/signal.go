@@ -22,18 +22,17 @@ func NewSignalSet() *SignalSet {
 func (set *SignalSet) RegisterSysSignal(s os.Signal, handler signalHandler) {
 	if _, found := set.m[s]; !found {
 		set.m[s] = handler
-	} else {
-		log.Error("signal %x has register, please confirm")
+		return
 	}
+	log.Error("signal %v has register, please confirm", s)
 }
 
 func (set *SignalSet) handle(sig os.Signal, arg interface{}) (err error) {
 	if _, found := set.m[sig]; found {
 		set.m[sig](sig, arg)
 		return nil
-	} else {
-		return fmt.Errorf("no handler available for signal %v", sig)
 	}
+	return fmt.Errorf("no handler available for signal %v", sig)
 }
 
 func (set *SignalSet) CatchSysSignal() {
@@ -47,7 +46,7 @@ func (set *SignalSet) CatchSysSignal() {
 		sig := <-c
 		err := set.handle(sig, nil)
 		if err != nil {
-			fmt.Printf("unknown signal received: %v\n", sig)
+			log.Error("unknown signal received: %v\n", sig)
 			os.Exit(1)
 		}
 	}
