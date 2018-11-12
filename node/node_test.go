@@ -89,7 +89,7 @@ func TestNewNode(t *testing.T) {
 	assert.Equal(err, fmt.Errorf("participates init failed"))
 	monkey.Unpatch(participates.NewParticipates)
 
-	monkey.Patch(role.NewRole, func(participates.Participates, rolec.RoleConfig) (role.Role, error) {
+	monkey.Patch(role.NewRole, func(rolec.RoleConfig) (role.Role, error) {
 		return nil, fmt.Errorf("mock role error")
 	})
 	service, err = NewNode(defaultConf)
@@ -213,12 +213,12 @@ func TestNode_Round(t *testing.T) {
 	node := service.(*Node)
 
 	var r *solo2.SoloPolicy
-	monkey.PatchInstanceMethod(reflect.TypeOf(r), "RoleAssignments", func(*solo2.SoloPolicy) (map[account.Account]common.Roler, error) {
+	monkey.PatchInstanceMethod(reflect.TypeOf(r), "RoleAssignments", func(*solo2.SoloPolicy, []account.Account) (map[account.Account]common.Roler, error) {
 		return nil, fmt.Errorf("assignments failed")
 	})
 	node.Round()
 
-	monkey.PatchInstanceMethod(reflect.TypeOf(r), "RoleAssignments", func(*solo2.SoloPolicy) (map[account.Account]common.Roler, error) {
+	monkey.PatchInstanceMethod(reflect.TypeOf(r), "RoleAssignments", func(*solo2.SoloPolicy, []account.Account) (map[account.Account]common.Roler, error) {
 		role := make(map[account.Account]common.Roler)
 		role[node.config.Account] = common.Slave
 		return role, nil
@@ -226,7 +226,7 @@ func TestNode_Round(t *testing.T) {
 	assert.Nil(node.validator)
 	node.Round()
 
-	monkey.PatchInstanceMethod(reflect.TypeOf(r), "RoleAssignments", func(*solo2.SoloPolicy) (map[account.Account]common.Roler, error) {
+	monkey.PatchInstanceMethod(reflect.TypeOf(r), "RoleAssignments", func(*solo2.SoloPolicy, []account.Account) (map[account.Account]common.Roler, error) {
 		role := make(map[account.Account]common.Roler)
 		role[node.config.Account] = common.Master
 		return role, nil

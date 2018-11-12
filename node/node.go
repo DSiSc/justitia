@@ -50,6 +50,10 @@ type Node struct {
 	serviceChannel chan interface{}
 }
 
+func init() {
+	types.GlobalEventCenter = events.NewEvent()
+}
+
 func EventRegister(node *Node) {
 	types.GlobalEventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
 		node.msgChannel <- common.MsgBlockCommitSuccess
@@ -90,7 +94,6 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 	InitLog(args, nodeConf)
 	// record global hash algorithm
 	gconf.GlobalConfig.Store(gconf.HashAlgName, nodeConf.AlgorithmConf.HashAlgorithm)
-	types.GlobalEventCenter = events.NewEvent()
 	txpool := txpool.NewTxPool(nodeConf.TxPoolConf)
 	txSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.TxSwitch)
 	if err != nil {
@@ -125,7 +128,7 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 		return nil, fmt.Errorf("participates init failed")
 	}
 
-	role, err := role.NewRole(participates, nodeConf.RoleConf)
+	role, err := role.NewRole(nodeConf.RoleConf)
 	if nil != err {
 		log.Error("Init role failed.")
 		return nil, fmt.Errorf("role init failed")
@@ -163,12 +166,19 @@ func (self *Node) notify() {
 
 func (self *Node) Round() {
 	time.Sleep(time.Duration(self.config.BlockInterval) * time.Second)
-	assignments, err := self.role.RoleAssignments()
+	participates, err := self.participates.GetParticipates()
+	if err != nil {
+		log.Error("get participates failed with error %s.", err)
+		self.notify()
+		return
+	}
+	assignments, err := self.role.RoleAssignments(participates)
 	if nil != err {
 		log.Error("Role assignments failed with err %v.", err)
 		self.notify()
 		return
 	}
+	self.consensus.Initialization(assignments, participates)
 	if rolec.Master == assignments[self.config.Account] {
 		log.Info("Master this round.")
 		if nil == self.producer {
