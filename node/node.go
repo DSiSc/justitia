@@ -46,24 +46,13 @@ type Node struct {
 	blockSwitch    *gossipswitch.GossipSwitch
 	validator      *validator.Validator
 	rpcListeners   []net.Listener
+	eventCenter    types.EventCenter
 	msgChannel     chan common.MsgType
 	serviceChannel chan interface{}
 }
 
 func init() {
 	types.GlobalEventCenter = events.NewEvent()
-}
-
-func EventRegister(node *Node) {
-	types.GlobalEventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
-		node.msgChannel <- common.MsgBlockCommitSuccess
-	})
-	types.GlobalEventCenter.Subscribe(types.EventBlockVerifyFailed, func(v interface{}) {
-		node.msgChannel <- common.MsgBlockVerifyFailed
-	})
-	types.GlobalEventCenter.Subscribe(types.EventBlockCommitFailed, func(v interface{}) {
-		node.msgChannel <- common.MsgBlockCommitFailed
-	})
 }
 
 func InitLog(args common.SysConfig, conf config.NodeConfig) {
@@ -94,7 +83,8 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 	InitLog(args, nodeConf)
 	// record global hash algorithm
 	gconf.GlobalConfig.Store(gconf.HashAlgName, nodeConf.AlgorithmConf.HashAlgorithm)
-	txpool := txpool.NewTxPool(nodeConf.TxPoolConf)
+	pool := txpool.NewTxPool(nodeConf.TxPoolConf)
+	eventsCenter := events.NewEvent()
 	txSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.TxSwitch)
 	if err != nil {
 		log.Error("Init txSwitch failed.")
@@ -103,7 +93,7 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 	swChIn := txSwitch.InPort(gossipswitch.LocalInPortId).Channel()
 	rpc.SetSwCh(swChIn)
 	err = txSwitch.OutPort(gossipswitch.LocalInPortId).BindToPort(func(msg interface{}) error {
-		return txpool.AddTx(msg.(*types.Transaction))
+		return pool.AddTx(msg.(*types.Transaction))
 	})
 	if err != nil {
 		log.Error("Register txpool failed.")
@@ -141,22 +131,40 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 	}
 	node := &Node{
 		config:         nodeConf,
-		txpool:         txpool,
+		txpool:         pool,
 		participates:   participates,
 		role:           role,
 		consensus:      consensus,
 		txSwitch:       txSwitch,
 		blockSwitch:    blkSwitch,
+		eventCenter:    eventsCenter,
 		msgChannel:     make(chan common.MsgType),
 		serviceChannel: make(chan interface{}),
 	}
-	EventRegister(node)
+	node.eventsRegister()
 	return node, nil
 }
 
 func EventUnregister() {
 	types.GlobalEventCenter.UnSubscribeAll()
 }
+
+func (self *Node)eventsRegister() {
+	self.eventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
+		self.msgChannel <- common.MsgBlockCommitSuccess
+	})
+	self.eventCenter.Subscribe(types.EventBlockVerifyFailed, func(v interface{}) {
+		self.msgChannel <- common.MsgBlockVerifyFailed
+	})
+	self.eventCenter.Subscribe(types.EventBlockCommitFailed, func(v interface{}) {
+		self.msgChannel <- common.MsgBlockCommitFailed
+	})
+}
+
+func (self *Node)eventUnregister() {
+	self.eventCenter.UnSubscribeAll()
+}
+
 
 func (self *Node) notify() {
 	go func() {
@@ -241,11 +249,11 @@ func (self *Node) stratRpc() {
 
 func (self *Node) startSwitch() {
 	if err := self.txSwitch.Start(); nil != err {
-		log.Error("Start txswitch failed with error %v.", err)
+		log.Error("Start txs witch failed with error %v.", err)
 		panic("TxSwitch start failed.")
 	}
 	if err := self.blockSwitch.Start(); nil != err {
-		log.Error("Start blockswitch failed with error %v.", err)
+		log.Error("Start block switch failed with error %v.", err)
 		panic("BlockSwitch start failed.")
 	}
 }

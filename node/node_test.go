@@ -121,7 +121,8 @@ func TestNewNode(t *testing.T) {
 	assert.NotNil(nodeService.role)
 	assert.Nil(nodeService.producer)
 	assert.Nil(nodeService.validator)
-	event := types.GlobalEventCenter.(*events.Event)
+
+	event := nodeService.eventCenter.(*events.Event)
 	assert.Equal(3, len(event.Subscribers))
 }
 
@@ -147,31 +148,6 @@ func TestNode_Start(t *testing.T) {
 		assert.Equal(0, len(nodeService.rpcListeners))
 	}()
 	service.Stop()
-}
-
-func TestEventRegister(t *testing.T) {
-	assert := assert.New(t)
-	service, err := NewNode(defaultConf)
-	assert.Nil(err)
-	assert.NotNil(service)
-	node := service.(*Node)
-	types.GlobalEventCenter = events.NewEvent()
-	EventRegister(node)
-	event := types.GlobalEventCenter.(*events.Event)
-	assert.Equal(3, len(event.Subscribers))
-}
-
-func TestEventUnregister(t *testing.T) {
-	assert := assert.New(t)
-	service, err := NewNode(defaultConf)
-	assert.Nil(err)
-	assert.NotNil(service)
-	node := service.(*Node)
-	// init event center
-	types.GlobalEventCenter = events.NewEvent()
-	EventRegister(node)
-	eventC := types.GlobalEventCenter.(*events.Event)
-	assert.Equal(3, len(eventC.Subscribers))
 }
 
 func TestNode_Restart(t *testing.T) {
