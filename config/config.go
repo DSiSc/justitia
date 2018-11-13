@@ -31,6 +31,8 @@ const (
 	ROLE_POLICY         = "general.role.policy"
 	// node info
 	NODE_ADDRESS = "general.node.address"
+	NODE_ID      = "general.node.id"
+	NODE_URL     = "general.node.url"
 	// block chain
 	BLOCK_CHAIN_PLUGIN     = "general.blockchain.plugin"
 	BLOCK_CHAIN_STATE_PATH = "general.blockchain.statePath"
@@ -217,7 +219,15 @@ func GetApiGatewayTcpAddr(conf *viper.Viper) string {
 func GetNodeAccount(conf *viper.Viper) account.Account {
 	nodeAddr := conf.GetString(NODE_ADDRESS)
 	address := tools.HexToAddress(nodeAddr)
-	return account.Account{Address: address}
+	id := conf.GetInt64(NODE_ID)
+	url := conf.GetString(NODE_URL)
+	return account.Account{
+		Address: address,
+		Extension: account.AccountExtension{
+			Id:  uint64(id),
+			Url: url,
+		},
+	}
 }
 
 func GetBlockProducerInterval(conf *viper.Viper) uint8 {
