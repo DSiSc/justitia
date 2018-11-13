@@ -38,7 +38,7 @@ var defaultConf = commonc.SysConfig{
 
 func TestNewNode(t *testing.T) {
 	assert := assert.New(t)
-	monkey.Patch(gossipswitch.NewGossipSwitchByType, func(switchType gossipswitch.SwitchType) (*gossipswitch.GossipSwitch, error) {
+	monkey.Patch(gossipswitch.NewGossipSwitchByType, func(gossipswitch.SwitchType, types.EventCenter) (*gossipswitch.GossipSwitch, error) {
 		return nil, fmt.Errorf("mock gossipswitch error")
 	})
 	monkey.Patch(log.AddAppender, func(appenderName string, output io.Writer, logLevel log.Level, format string, showCaller bool, showHostname bool) {
@@ -50,7 +50,7 @@ func TestNewNode(t *testing.T) {
 	assert.Equal(err, fmt.Errorf("txswitch init failed"))
 	monkey.Unpatch(gossipswitch.NewGossipSwitchByType)
 
-	monkey.Patch(gossipswitch.NewGossipSwitchByType, func(switchType gossipswitch.SwitchType) (*gossipswitch.GossipSwitch, error) {
+	monkey.Patch(gossipswitch.NewGossipSwitchByType, func(gossipswitch.SwitchType, types.EventCenter) (*gossipswitch.GossipSwitch, error) {
 		return nil, fmt.Errorf("mock gossipswitch error")
 	})
 	service, err = NewNode(defaultConf)
@@ -71,7 +71,7 @@ func TestNewNode(t *testing.T) {
 		return nil
 	})
 
-	monkey.Patch(blockchain.InitBlockChain, func(_ blockchainc.BlockChainConfig) error {
+	monkey.Patch(blockchain.InitBlockChain, func(blockchainc.BlockChainConfig, types.EventCenter) error {
 		return fmt.Errorf("mock blockchain error")
 	})
 	service, err = NewNode(defaultConf)

@@ -85,7 +85,7 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 	gconf.GlobalConfig.Store(gconf.HashAlgName, nodeConf.AlgorithmConf.HashAlgorithm)
 	pool := txpool.NewTxPool(nodeConf.TxPoolConf)
 	eventsCenter := events.NewEvent()
-	txSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.TxSwitch)
+	txSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.TxSwitch, eventsCenter)
 	if err != nil {
 		log.Error("Init txSwitch failed.")
 		return nil, fmt.Errorf("txswitch init failed")
@@ -100,13 +100,13 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 		return nil, fmt.Errorf("registe txpool failed")
 	}
 
-	blkSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.BlockSwitch)
+	blkSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.BlockSwitch, eventsCenter)
 	if err != nil {
 		log.Error("Init block switch failed.")
 		return nil, fmt.Errorf("blkSwitch init failed")
 	}
 
-	err = blockchain.InitBlockChain(nodeConf.BlockChainConf)
+	err = blockchain.InitBlockChain(nodeConf.BlockChainConf, eventsCenter)
 	if err != nil {
 		log.Error("Init block chain failed.")
 		return nil, fmt.Errorf("blockchain init failed")
@@ -149,7 +149,7 @@ func EventUnregister() {
 	types.GlobalEventCenter.UnSubscribeAll()
 }
 
-func (self *Node)eventsRegister() {
+func (self *Node) eventsRegister() {
 	self.eventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
 		self.msgChannel <- common.MsgBlockCommitSuccess
 	})
@@ -161,10 +161,9 @@ func (self *Node)eventsRegister() {
 	})
 }
 
-func (self *Node)eventUnregister() {
+func (self *Node) eventUnregister() {
 	self.eventCenter.UnSubscribeAll()
 }
-
 
 func (self *Node) notify() {
 	go func() {
