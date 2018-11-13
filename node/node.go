@@ -51,10 +51,6 @@ type Node struct {
 	serviceChannel chan interface{}
 }
 
-func init() {
-	types.GlobalEventCenter = events.NewEvent()
-}
-
 func InitLog(args common.SysConfig, conf config.NodeConfig) {
 	var logPath = args.LogPath
 	if common.BlankString == logPath {
@@ -279,7 +275,7 @@ func (self *Node) Stop() error {
 	monitor.StopPrometheusServer()
 	self.blockSwitch.Stop()
 	self.txSwitch.Stop()
-	EventUnregister()
+	self.eventUnregister()
 	return nil
 }
 
