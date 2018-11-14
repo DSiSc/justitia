@@ -13,7 +13,7 @@ import (
 	consensusc "github.com/DSiSc/galaxy/consensus/common"
 	"github.com/DSiSc/galaxy/participates"
 	"github.com/DSiSc/galaxy/role"
-	rolec "github.com/DSiSc/galaxy/role/common"
+	commonr "github.com/DSiSc/galaxy/role/common"
 	"github.com/DSiSc/gossipswitch"
 	"github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/justitia/config"
@@ -182,7 +182,8 @@ func (self *Node) Round() {
 		return
 	}
 	self.consensus.Initialization(assignments, participates)
-	if rolec.Master == assignments[self.config.Account] {
+	role, ok := assignments[self.config.Account]
+	if ok && (commonr.Master == role) {
 		log.Info("Master this round.")
 		if nil == self.producer {
 			self.producer = producer.NewProducer(self.txpool, &self.config.Account)
