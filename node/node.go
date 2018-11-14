@@ -141,10 +141,6 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 	return node, nil
 }
 
-func EventUnregister() {
-	types.GlobalEventCenter.UnSubscribeAll()
-}
-
 func (self *Node) eventsRegister() {
 	self.eventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
 		self.msgChannel <- common.MsgBlockCommitSuccess
