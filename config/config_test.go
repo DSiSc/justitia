@@ -23,4 +23,5 @@ func Test_NewNodeConfig(t *testing.T) {
 		0xf2, 0xbe, 0xdb, 0x2c, 0xa4, 0xb8, 0xb4, 0xdf, 0x63, 0x3d,
 	}
 	assert.Equal(address, nodeConf.Account.Address)
+	assert.Equal(int64(10), nodeConf.ConsensusConf.Timeout)
 }

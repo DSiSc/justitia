@@ -26,6 +26,7 @@ const (
 	MAX_TXS_BLOCK = "general.txpool.txsPerBlock"
 	// consensus policy setting
 	CONSENSUS_POLICY    = "general.consensus.policy"
+	CONSENSUS_TIMEOUT   = "general.consensus.timeout"
 	PARTICIPATES_POLICY = "general.participates.policy"
 	PARTICIPATES_NUMBER = "general.participates.participates"
 	ROLE_POLICY         = "general.role.policy"
@@ -193,8 +194,10 @@ func NewRoleConf(conf *viper.Viper) rolec.RoleConfig {
 
 func NewConsensusConf(conf *viper.Viper) consensusc.ConsensusConfig {
 	policy := conf.GetString(CONSENSUS_POLICY)
+	timeout := conf.GetInt64(CONSENSUS_TIMEOUT)
 	consensusConf := consensusc.ConsensusConfig{
 		PolicyName: policy,
+		Timeout:    timeout,
 	}
 	return consensusConf
 }
