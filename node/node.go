@@ -164,6 +164,7 @@ func (self *Node) notify() {
 }
 
 func (self *Node) Round() {
+	log.Debug("start a new round.")
 	time.Sleep(time.Duration(self.config.BlockInterval) * time.Second)
 	participates, err := self.participates.GetParticipates()
 	if err != nil {
@@ -203,9 +204,9 @@ func (self *Node) Round() {
 		self.txpool.DelTxs(block.Transactions)
 		log.Info("New block has been produced with height is: %d.", block.Header.Height)
 	} else {
+		log.Info("Slave this round.")
 		if self.validator == nil {
-			log.Info("Slave this round..")
-			// TODO: attach validator to consensus
+			log.Info("validator is nil.")
 			self.validator = validator.NewValidator(&self.config.Account)
 		}
 	}
