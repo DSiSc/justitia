@@ -21,7 +21,7 @@ general:
         url: 127.0.0.1:8080
 
     # Block chain setting
-    # Operational plugin: "memorydb" or "leveldb"
+    # Operational plugin: memorydb or leveldb
     # When leveldb is choose, define statepath and datapath in absolute path
     blockchain:
         plugin: memorydb
@@ -33,18 +33,23 @@ general:
         globalslots: 4096
         txsPerBlock: 512
 
-    # Role setting
-    role:
-        policy: solo
-
     # Participates setting
+    # Operational policy: solo, dpos
     participates:
         policy: solo
         participates: 4
 
+    # Role setting
+    # Operational policy: solo, dpos
+    role:
+        policy: solo
+
     # Consensus setting
+    # Operational policy: solo, bft
+    # Timeout for one consensus
     consensus:
         policy: solo
+        timeout: 10
 
     # Block produce interval for solo mode
     soloModeBlockProducedInterval: 2
