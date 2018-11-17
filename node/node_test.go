@@ -38,22 +38,16 @@ var defaultConf = commonc.SysConfig{
 
 func TestNewNode(t *testing.T) {
 	assert := assert.New(t)
-	monkey.Patch(gossipswitch.NewGossipSwitchByType, func(gossipswitch.SwitchType, types.EventCenter) (*gossipswitch.GossipSwitch, error) {
-		return nil, fmt.Errorf("mock gossipswitch error")
+	monkey.Patch(gossipswitch.NewGossipSwitchByType, func(switchType gossipswitch.SwitchType, _ types.EventCenter) (*gossipswitch.GossipSwitch, error) {
+		if gossipswitch.TxSwitch == switchType {
+			return nil, fmt.Errorf("mock gossipswitch error")
+		}
+		return nil, nil
 	})
 	monkey.Patch(log.AddAppender, func(appenderName string, output io.Writer, logLevel log.Level, format string, showCaller bool, showHostname bool) {
 		return
 	})
 	service, err := NewNode(defaultConf)
-	assert.NotNil(err)
-	assert.Nil(service)
-	assert.Equal(err, fmt.Errorf("txswitch init failed"))
-	monkey.Unpatch(gossipswitch.NewGossipSwitchByType)
-
-	monkey.Patch(gossipswitch.NewGossipSwitchByType, func(gossipswitch.SwitchType, types.EventCenter) (*gossipswitch.GossipSwitch, error) {
-		return nil, fmt.Errorf("mock gossipswitch error")
-	})
-	service, err = NewNode(defaultConf)
 	assert.NotNil(err)
 	assert.Nil(service)
 	assert.Equal(err, fmt.Errorf("txswitch init failed"))
@@ -121,7 +115,6 @@ func TestNewNode(t *testing.T) {
 	assert.NotNil(nodeService.role)
 	assert.Nil(nodeService.producer)
 	assert.Nil(nodeService.validator)
-
 	event := nodeService.eventCenter.(*events.Event)
 	assert.Equal(3, len(event.Subscribers))
 }
@@ -146,8 +139,11 @@ func TestNode_Start(t *testing.T) {
 		nodeService := service.(*Node)
 		assert.NotNil(nodeService.rpcListeners)
 		assert.Equal(0, len(nodeService.rpcListeners))
+		monkey.Unpatch(apigateway.StartRPC)
+		monkey.UnpatchInstanceMethod(reflect.TypeOf(c), "Start")
 	}()
 	service.Stop()
+	monkey.Unpatch(log.AddAppender)
 }
 
 func TestNode_Restart(t *testing.T) {
@@ -183,6 +179,9 @@ var mockAccount = account.Account{
 
 func TestNode_Round(t *testing.T) {
 	assert := assert.New(t)
+	monkey.Patch(log.AddAppender, func(appenderName string, output io.Writer, logLevel log.Level, format string, showCaller bool, showHostname bool) {
+		return
+	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
 	assert.NotNil(service)
@@ -222,5 +221,8 @@ func TestNode_Round(t *testing.T) {
 		return fmt.Errorf("consensus failed")
 	})
 	node.Round()
-
+	monkey.Unpatch(log.AddAppender)
+	monkey.UnpatchInstanceMethod(reflect.TypeOf(r), "RoleAssignments")
+	monkey.UnpatchInstanceMethod(reflect.TypeOf(p), "MakeBlock")
+	monkey.UnpatchInstanceMethod(reflect.TypeOf(c), "ToConsensus")
 }
