@@ -199,6 +199,7 @@ func (self *Node) Round() {
 			self.notify()
 			return
 		}
+		block.HeaderHash = common.HeaderHash(block)
 		swChIn := self.blockSwitch.InPort(gossipswitch.LocalInPortId).Channel()
 		swChIn <- proposal.Block
 		self.txpool.DelTxs(block.Transactions)
