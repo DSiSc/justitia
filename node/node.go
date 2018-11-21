@@ -65,6 +65,7 @@ func InitLog(args common.SysConfig, conf config.NodeConfig) {
 		logLevel = log.Level(conf.Logger.LogLevel)
 	}
 
+	log.SetTimestampFormat(conf.Logger.TimeFieldFormat)
 	log.AddFileAppender(
 		"filelog",
 		logPath,

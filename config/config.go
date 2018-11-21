@@ -54,11 +54,12 @@ const (
 	EXPVAR_PATH    = "monitor.expvar.path"
 
 	// Log Setting
-	LOG_PATH     = "logging.path"
-	LOG_LEVEL    = "logging.level"
-	LOG_FORMAT   = "logging.format"
-	LOG_CALLER   = "logging.caller"
-	LOG_HOSTNAME = "logging.hostname"
+	LOG_PATH            = "logging.path"
+	LOG_LEVEL           = "logging.level"
+	LOG_FORMAT          = "logging.format"
+	LOG_CALLER          = "logging.caller"
+	LOG_HOSTNAME        = "logging.hostname"
+	LOG_TIMEFIELDFORMAT = "logging.timeFieldFormat"
 )
 
 type AlgorithmConfig struct {
@@ -266,11 +267,13 @@ func GetLogSetting(conf *viper.Viper) log.AppenderConfig {
 	logFormat := conf.GetString(LOG_FORMAT)
 	logCaller := conf.GetBool(LOG_CALLER)
 	logHostname := conf.GetBool(LOG_HOSTNAME)
+	logTimestampFormat := conf.GetString(LOG_TIMEFIELDFORMAT)
 	return log.AppenderConfig{
-		Output:       logPath,
-		LogLevel:     log.Level(logLevel),
-		Format:       logFormat,
-		ShowCaller:   logCaller,
-		ShowHostname: logHostname,
+		Output:          logPath,
+		LogLevel:        log.Level(logLevel),
+		Format:          logFormat,
+		ShowCaller:      logCaller,
+		ShowHostname:    logHostname,
+		TimeFieldFormat: logTimestampFormat,
 	}
 }

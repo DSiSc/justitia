@@ -47,6 +47,9 @@ func TestNewNode(t *testing.T) {
 	monkey.Patch(log.AddAppender, func(appenderName string, output io.Writer, logLevel log.Level, format string, showCaller bool, showHostname bool) {
 		return
 	})
+	monkey.Patch(log.SetTimestampFormat, func(string) {
+		return
+	})
 	service, err := NewNode(defaultConf)
 	assert.NotNil(err)
 	assert.Nil(service)
@@ -117,11 +120,15 @@ func TestNewNode(t *testing.T) {
 	assert.Nil(nodeService.validator)
 	event := nodeService.eventCenter.(*events.Event)
 	assert.Equal(3, len(event.Subscribers))
+	monkey.Unpatch(log.SetTimestampFormat)
 }
 
 func TestNode_Start(t *testing.T) {
 	assert := assert.New(t)
 	monkey.Patch(log.AddAppender, func(appenderName string, output io.Writer, logLevel log.Level, format string, showCaller bool, showHostname bool) {
+		return
+	})
+	monkey.Patch(log.SetTimestampFormat, func(string) {
 		return
 	})
 	service, err := NewNode(defaultConf)
@@ -144,6 +151,7 @@ func TestNode_Start(t *testing.T) {
 	}()
 	service.Stop()
 	monkey.Unpatch(log.AddAppender)
+	monkey.Unpatch(log.SetTimestampFormat)
 }
 
 func TestNode_Restart(t *testing.T) {
@@ -180,6 +188,9 @@ var mockAccount = account.Account{
 func TestNode_Round(t *testing.T) {
 	assert := assert.New(t)
 	monkey.Patch(log.AddAppender, func(appenderName string, output io.Writer, logLevel log.Level, format string, showCaller bool, showHostname bool) {
+		return
+	})
+	monkey.Patch(log.SetTimestampFormat, func(string) {
 		return
 	})
 	service, err := NewNode(defaultConf)
@@ -222,6 +233,7 @@ func TestNode_Round(t *testing.T) {
 	})
 	node.Round()
 	monkey.Unpatch(log.AddAppender)
+	monkey.Unpatch(log.SetTimestampFormat)
 	monkey.UnpatchInstanceMethod(reflect.TypeOf(r), "RoleAssignments")
 	monkey.UnpatchInstanceMethod(reflect.TypeOf(p), "MakeBlock")
 	monkey.UnpatchInstanceMethod(reflect.TypeOf(c), "ToConsensus")
