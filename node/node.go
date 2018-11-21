@@ -72,6 +72,7 @@ func InitLog(args common.SysConfig, conf config.NodeConfig) {
 		logFormat,
 		conf.Logger.ShowCaller,
 		conf.Logger.ShowHostname)
+	log.SetTimestampFormat(conf.Logger.TimestampFormat)
 }
 
 func NewNode(args common.SysConfig) (NodeService, error) {
