@@ -200,9 +200,9 @@ func (self *Node) Round() {
 			return
 		}
 		block.HeaderHash = common.HeaderHash(block)
-		swChIn := self.blockSwitch.InPort(gossipswitch.LocalInPortId).Channel()
-		swChIn <- proposal.Block
-		self.txpool.DelTxs(block.Transactions)
+		// swChIn := self.blockSwitch.InPort(gossipswitch.LocalInPortId).Channel()
+		// swChIn <- proposal.Block
+		// self.txpool.DelTxs(block.Transactions)
 		log.Info("New block has been produced with height is: %d.", block.Header.Height)
 	} else {
 		log.Info("Slave this round.")
