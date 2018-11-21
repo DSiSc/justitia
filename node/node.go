@@ -152,6 +152,9 @@ func (self *Node) eventsRegister() {
 	self.eventCenter.Subscribe(types.EventBlockCommitFailed, func(v interface{}) {
 		self.msgChannel <- common.MsgBlockCommitFailed
 	})
+	self.eventCenter.Subscribe(types.EventConsensusFailed, func(v interface{}) {
+		self.msgChannel <- common.MsgToConsensusFailed
+	})
 }
 
 func (self *Node) eventUnregister() {
@@ -179,7 +182,7 @@ func (self *Node) Round() {
 		self.notify()
 		return
 	}
-	self.consensus.Initialization(assignments, participates)
+	self.consensus.Initialization(assignments, participates, self.eventCenter)
 	role, ok := assignments[self.config.Account]
 	if ok && (commonr.Master == role) {
 		log.Info("Master this round.")
@@ -197,14 +200,15 @@ func (self *Node) Round() {
 		}
 		if err = self.consensus.ToConsensus(proposal); err != nil {
 			log.Error("Not to consensus with err %v.", err)
-			self.notify()
-			return
+		} else {
+			block.HeaderHash = common.HeaderHash(block)
+			self.txpool.DelTxs(block.Transactions)
+			// TODO: notify p2p to broadcast block
+			log.Info("New block has been produced with height is: %d.", block.Header.Height)
 		}
-		block.HeaderHash = common.HeaderHash(block)
 		// swChIn := self.blockSwitch.InPort(gossipswitch.LocalInPortId).Channel()
 		// swChIn <- proposal.Block
 		// self.txpool.DelTxs(block.Transactions)
-		log.Info("New block has been produced with height is: %d.", block.Header.Height)
 	} else {
 		log.Info("Slave this round.")
 		if self.validator == nil {

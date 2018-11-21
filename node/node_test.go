@@ -119,7 +119,7 @@ func TestNewNode(t *testing.T) {
 	assert.Nil(nodeService.producer)
 	assert.Nil(nodeService.validator)
 	event := nodeService.eventCenter.(*events.Event)
-	assert.Equal(3, len(event.Subscribers))
+	assert.Equal(4, len(event.Subscribers))
 	monkey.Unpatch(log.SetTimestampFormat)
 }
 

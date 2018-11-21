@@ -97,6 +97,7 @@ const (
 	MsgBlockVerifyFailed
 	MsgNodeServiceStopped
 	MsgRoundRunFailed
+	MsgToConsensusFailed
 )
 
 type SysConfig struct {
