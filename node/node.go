@@ -231,6 +231,8 @@ func (self *Node) mainLoop() {
 			log.Info("Receive msg from switch is verify failed.")
 		case common.MsgRoundRunFailed:
 			log.Error("Receive msg from main loop is run failed.")
+		case common.MsgToConsensusFailed:
+			log.Error("Receive msg of to consensus failed.")
 		case common.MsgNodeServiceStopped:
 			log.Warn("Stop node service.")
 			break
