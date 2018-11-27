@@ -9,6 +9,7 @@ import (
 	participatesc "github.com/DSiSc/galaxy/participates/config"
 	rolec "github.com/DSiSc/galaxy/role/config"
 	"github.com/DSiSc/justitia/tools"
+	p2pConf "github.com/DSiSc/p2p/config"
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/validator/tools/account"
 	"github.com/spf13/viper"
@@ -42,6 +43,31 @@ const (
 	API_GATEWAY_TCP_ADDR = "general.apigateway"
 	// Default parameter for solo block producer
 	SOLO_TEST_BLOCK_PRODUCER_INTERVAL = "general.soloModeBlockProducedInterval"
+
+	//P2P Setting
+	// block syncer p2p config
+	BLOCK_SYNCER_P2P                  = "block_syncer_p2p"
+	P2P_BLOCK_SYNCER_ADDR_BOOK        = "general.p2p.blockSyncer.AddrBookFilePath"
+	P2P_BLOCK_SYNCER_LISTEN_ADDR      = "general.p2p.blockSyncer.ListenAddress"
+	P2P_BLOCK_SYNCER_MAX_OUT          = "general.p2p.blockSyncer.MaxConnOutBound"
+	P2P_BLOCK_SYNCER_MAX_IN           = "general.p2p.blockSyncer.MaxConnInBound"
+	P2P_BLOCK_SYNCER_PERSISTENT_PEERS = "general.p2p.blockSyncer.PersistentPeers"
+
+	// block p2p config
+	BLOCK_P2P                  = "block_p2p"
+	P2P_BLOCK_ADDR_BOOK        = "general.p2p.block.AddrBookFilePath"
+	P2P_BLOCK_LISTEN_ADDR      = "general.p2p.block.ListenAddress"
+	P2P_BLOCK_MAX_OUT          = "general.p2p.block.MaxConnOutBound"
+	P2P_BLOCK_MAX_IN           = "general.p2p.block.MaxConnInBound"
+	P2P_BLOCK_PERSISTENT_PEERS = "general.p2p.block.PersistentPeers"
+
+	// tx p2p config
+	TX_P2P                  = "tx_p2p"
+	P2P_TX_ADDR_BOOK        = "general.p2p.tx.AddrBookFilePath"
+	P2P_TX_LISTEN_ADDR      = "general.p2p.tx.ListenAddress"
+	P2P_TX_MAX_OUT          = "general.p2p.tx.MaxConnOutBound"
+	P2P_TX_MAX_IN           = "general.p2p.tx.MaxConnInBound"
+	P2P_TX_PERSISTENT_PEERS = "general.p2p.tx.PersistentPeers"
 
 	// prometheus
 	PROMETHEUS_ENABLED  = "monitor.prometheus.enabled"
@@ -95,6 +121,8 @@ type NodeConfig struct {
 	ExpvarConf monitor.ExpvarConfig
 	// log setting
 	Logger log.AppenderConfig
+	//P2P config
+	P2PConf map[string]*p2pConf.P2PConfig
 }
 
 type Config struct {
@@ -140,6 +168,7 @@ func NewNodeConfig() NodeConfig {
 	prometheusConf := GetPrometheusConf(config)
 	expvarConf := GetExpvarConf(config)
 	logConf := GetLogSetting(config)
+	p2pConfs := GetP2PConf(config)
 
 	return NodeConfig{
 		Account:          nodeAccount,
@@ -154,6 +183,7 @@ func NewNodeConfig() NodeConfig {
 		PrometheusConf:   prometheusConf,
 		ExpvarConf:       expvarConf,
 		Logger:           logConf,
+		P2PConf:          p2pConfs,
 	}
 }
 
@@ -275,5 +305,58 @@ func GetLogSetting(conf *viper.Viper) log.AppenderConfig {
 		ShowCaller:      logCaller,
 		ShowHostname:    logHostname,
 		TimeFieldFormat: logTimestampFormat,
+	}
+}
+
+func GetP2PConf(conf *viper.Viper) map[string]*p2pConf.P2PConfig {
+	p2pConfig := make(map[string]*p2pConf.P2PConfig)
+	p2pConfig[BLOCK_SYNCER_P2P] = getBlockSyncerP2PConf(conf)
+	p2pConfig[BLOCK_P2P] = getBlockP2PConf(conf)
+	p2pConfig[TX_P2P] = getTxP2PConf(conf)
+	return p2pConfig
+}
+
+func getBlockSyncerP2PConf(conf *viper.Viper) *p2pConf.P2PConfig {
+	addrFile := conf.GetString(P2P_BLOCK_SYNCER_ADDR_BOOK)
+	listenAddr := conf.GetString(P2P_BLOCK_SYNCER_LISTEN_ADDR)
+	maxOut := conf.GetInt(P2P_BLOCK_SYNCER_MAX_OUT)
+	maxIn := conf.GetInt(P2P_BLOCK_SYNCER_MAX_IN)
+	persistentPeers := conf.GetString(P2P_BLOCK_SYNCER_PERSISTENT_PEERS)
+	return &p2pConf.P2PConfig{
+		AddrBookFilePath: addrFile,
+		ListenAddress:    listenAddr,
+		MaxConnOutBound:  maxOut,
+		MaxConnInBound:   maxIn,
+		PersistentPeers:  persistentPeers,
+	}
+}
+
+func getBlockP2PConf(conf *viper.Viper) *p2pConf.P2PConfig {
+	addrFile := conf.GetString(P2P_BLOCK_ADDR_BOOK)
+	listenAddr := conf.GetString(P2P_BLOCK_LISTEN_ADDR)
+	maxOut := conf.GetInt(P2P_BLOCK_MAX_OUT)
+	maxIn := conf.GetInt(P2P_BLOCK_MAX_IN)
+	persistentPeers := conf.GetString(P2P_BLOCK_PERSISTENT_PEERS)
+	return &p2pConf.P2PConfig{
+		AddrBookFilePath: addrFile,
+		ListenAddress:    listenAddr,
+		MaxConnOutBound:  maxOut,
+		MaxConnInBound:   maxIn,
+		PersistentPeers:  persistentPeers,
+	}
+}
+
+func getTxP2PConf(conf *viper.Viper) *p2pConf.P2PConfig {
+	addrFile := conf.GetString(P2P_TX_ADDR_BOOK)
+	listenAddr := conf.GetString(P2P_TX_LISTEN_ADDR)
+	maxOut := conf.GetInt(P2P_TX_MAX_OUT)
+	maxIn := conf.GetInt(P2P_TX_MAX_IN)
+	persistentPeers := conf.GetString(P2P_TX_PERSISTENT_PEERS)
+	return &p2pConf.P2PConfig{
+		AddrBookFilePath: addrFile,
+		ListenAddress:    listenAddr,
+		MaxConnOutBound:  maxOut,
+		MaxConnInBound:   maxIn,
+		PersistentPeers:  persistentPeers,
 	}
 }

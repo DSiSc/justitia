@@ -14,3 +14,6 @@ github.com/DSiSc/statedb-NG:master
 github.com/DSiSc/txpool:master
 github.com/DSiSc/validator:master
 github.com/DSiSc/crypto-suite:master
+github.com/DSiSc/p2p:master
+github.com/DSiSc/syncer:master
+
