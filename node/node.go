@@ -17,8 +17,11 @@ import (
 	"github.com/DSiSc/gossipswitch"
 	"github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/justitia/config"
+	"github.com/DSiSc/justitia/propagator"
 	"github.com/DSiSc/justitia/tools/events"
+	"github.com/DSiSc/p2p"
 	"github.com/DSiSc/producer"
+	"github.com/DSiSc/syncer"
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/validator"
 	"net"
@@ -35,20 +38,26 @@ type NodeService interface {
 
 // node struct with all service
 type Node struct {
-	nodeWg         sync.WaitGroup
-	config         config.NodeConfig
-	txpool         txpool.TxsPool
-	participates   participates.Participates
-	role           role.Role
-	consensus      consensus.Consensus
-	producer       *producer.Producer
-	txSwitch       *gossipswitch.GossipSwitch
-	blockSwitch    *gossipswitch.GossipSwitch
-	validator      *validator.Validator
-	rpcListeners   []net.Listener
-	eventCenter    types.EventCenter
-	msgChannel     chan common.MsgType
-	serviceChannel chan interface{}
+	nodeWg          sync.WaitGroup
+	config          config.NodeConfig
+	txpool          txpool.TxsPool
+	participates    participates.Participates
+	role            role.Role
+	consensus       consensus.Consensus
+	producer        *producer.Producer
+	txSwitch        *gossipswitch.GossipSwitch
+	blockSwitch     *gossipswitch.GossipSwitch
+	validator       *validator.Validator
+	rpcListeners    []net.Listener
+	eventCenter     types.EventCenter
+	msgChannel      chan common.MsgType
+	serviceChannel  chan interface{}
+	blockSyncerP2P  p2p.P2PAPI
+	blockSyncer     syncer.BlockSyncerAPI
+	blockP2P        p2p.P2PAPI
+	blockPropagator *propagator.BlockPropagator
+	txP2P           p2p.P2PAPI
+	txPropagator    *propagator.TxPropagator
 }
 
 func InitLog(args common.SysConfig, conf config.NodeConfig) {
@@ -109,6 +118,43 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 		return nil, fmt.Errorf("blockchain init failed")
 	}
 
+	blockSyncerP2P, err := p2p.NewP2P(nodeConf.P2PConf[config.BLOCK_SYNCER_P2P])
+	if err != nil {
+		log.Error("Init block syncer p2p failed.")
+		return nil, fmt.Errorf("Init block syncer p2p failed.")
+	}
+
+	blockSyncer, err := syncer.NewBlockSyncer(blockSyncerP2P, blkSwitch.InPort(gossipswitch.LocalInPortId).Channel(), eventsCenter)
+	if err != nil {
+		log.Error("Init block syncer failed.")
+		return nil, fmt.Errorf("Init block syncer failed.")
+	}
+
+	blockP2P, err := p2p.NewP2P(nodeConf.P2PConf[config.BLOCK_P2P])
+	if err != nil {
+		log.Error("Init block p2p failed.")
+		return nil, fmt.Errorf("Init block p2p failed.")
+	}
+
+	blockPropagator, err := propagator.NewBlockPropagator(blockP2P, blkSwitch.InPort(gossipswitch.LocalInPortId).Channel(), eventsCenter)
+	if err != nil {
+		log.Error("Init block propagator failed.")
+		return nil, fmt.Errorf("Init block propagator failed. ")
+	}
+
+	txP2P, err := p2p.NewP2P(nodeConf.P2PConf[config.TX_P2P])
+	if err != nil {
+		log.Error("Init tx p2p failed.")
+		return nil, fmt.Errorf("Init tx p2p failed.")
+	}
+
+	txPropagator, err := propagator.NewTxPropagator(txP2P, txSwitch.InPort(gossipswitch.LocalInPortId).Channel())
+	if err != nil {
+		log.Error("Init tx propagator failed.")
+		return nil, fmt.Errorf("Init tx propagator failed. ")
+	}
+	txSwitch.OutPort(gossipswitch.RemoteOutPortId).BindToPort(txPropagator.TxSwitchOutPutFunc())
+
 	participates, err := participates.NewParticipates(nodeConf.ParticipatesConf)
 	if nil != err {
 		log.Error("Init participates failed.")
@@ -127,16 +173,22 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 		return nil, fmt.Errorf("consensus init failed")
 	}
 	node := &Node{
-		config:         nodeConf,
-		txpool:         pool,
-		participates:   participates,
-		role:           role,
-		consensus:      consensus,
-		txSwitch:       txSwitch,
-		blockSwitch:    blkSwitch,
-		eventCenter:    eventsCenter,
-		msgChannel:     make(chan common.MsgType),
-		serviceChannel: make(chan interface{}),
+		config:          nodeConf,
+		txpool:          pool,
+		participates:    participates,
+		role:            role,
+		consensus:       consensus,
+		txSwitch:        txSwitch,
+		blockSwitch:     blkSwitch,
+		eventCenter:     eventsCenter,
+		msgChannel:      make(chan common.MsgType),
+		serviceChannel:  make(chan interface{}),
+		blockSyncerP2P:  blockSyncerP2P,
+		blockSyncer:     blockSyncer,
+		blockP2P:        blockP2P,
+		blockPropagator: blockPropagator,
+		txP2P:           txP2P,
+		txPropagator:    txPropagator,
 	}
 	node.eventsRegister()
 	return node, nil
@@ -257,9 +309,45 @@ func (self *Node) startSwitch() {
 	}
 }
 
+func (self *Node) startBlockSyncer() {
+	if err := self.blockSyncerP2P.Start(); nil != err {
+		log.Error("Start block syncer p2p failed with error %v.", err)
+		panic("Start block syncer p2p failed.")
+	}
+	if err := self.blockSyncer.Start(); nil != err {
+		log.Error("Start block syncer failed with error %v.", err)
+		panic("Start block syncer failed.")
+	}
+}
+
+func (self *Node) startBlockPropagator() {
+	if err := self.blockP2P.Start(); nil != err {
+		log.Error("Start block p2p failed with error %v.", err)
+		panic("Start block p2p failed.")
+	}
+	if err := self.blockPropagator.Start(); nil != err {
+		log.Error("Start block propagator failed with error %v.", err)
+		panic("Start block propagator failed.")
+	}
+}
+
+func (self *Node) startTxPropagator() {
+	if err := self.txP2P.Start(); nil != err {
+		log.Error("Start tx p2p failed with error %v.", err)
+		panic("Start tx p2p failed.")
+	}
+	if err := self.txPropagator.Start(); nil != err {
+		log.Error("Start tx propagator failed with error %v.", err)
+		panic("Start tx propagator failed.")
+	}
+}
+
 func (self *Node) Start() {
 	self.stratRpc()
 	self.startSwitch()
+	self.startBlockSyncer()
+	self.startBlockPropagator()
+	self.startTxPropagator()
 	monitor.StartPrometheusServer(self.config.PrometheusConf)
 	monitor.StartExpvarServer(self.config.ExpvarConf)
 	go self.consensus.Start()
@@ -277,6 +365,12 @@ func (self *Node) Stop() error {
 		}
 	}
 	monitor.StopPrometheusServer()
+	self.blockSyncerP2P.Stop()
+	self.blockSyncer.Stop()
+	self.blockP2P.Stop()
+	self.blockPropagator.Stop()
+	self.txP2P.Stop()
+	self.txPropagator.Stop()
 	self.blockSwitch.Stop()
 	self.txSwitch.Stop()
 	self.eventUnregister()

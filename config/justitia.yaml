@@ -54,6 +54,28 @@ general:
     # Block produce interval for solo mode
     soloModeBlockProducedInterval: 2
 
+    # p2p setting
+    # Operational plugin: memorydb or leveldb
+    # When leveldb is choose, define statepath and datapath in absolute path
+    p2p:
+        blockSyncer:
+          AddrBookFilePath: /var/log/justitia/syncer_address.json
+          ListenAddress:  tcp://0.0.0.0:46660
+          MaxConnOutBound:  24
+          MaxConnInBound: 24
+          PersistentPeers:
+        block:
+          AddrBookFilePath: /var/log/justitia/block_address.json
+          ListenAddress:  tcp://0.0.0.0:46661
+          MaxConnOutBound:  24
+          MaxConnInBound: 24
+          PersistentPeers:
+        tx:
+          AddrBookFilePath: /var/log/justitia/tx_address.json
+          ListenAddress:  tcp://0.0.0.0:46662
+          MaxConnOutBound:  24
+          MaxConnInBound: 24
+          PersistentPeers:
 
 ################################################################################
 #

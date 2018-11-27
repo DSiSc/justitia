@@ -19,9 +19,12 @@ import (
 	solo2 "github.com/DSiSc/galaxy/role/policy/solo"
 	"github.com/DSiSc/gossipswitch"
 	commonc "github.com/DSiSc/justitia/common"
+	"github.com/DSiSc/justitia/propagator"
 	"github.com/DSiSc/justitia/tools/events"
 	"github.com/DSiSc/monkey"
+	"github.com/DSiSc/p2p"
 	"github.com/DSiSc/producer"
+	"github.com/DSiSc/syncer"
 	"github.com/DSiSc/validator/tools/account"
 	"github.com/stretchr/testify/assert"
 	"io"
@@ -142,12 +145,49 @@ func TestNode_Start(t *testing.T) {
 		monkey.PatchInstanceMethod(reflect.TypeOf(c), "Start", func(*solo.SoloPolicy) {
 			return
 		})
+		var p *p2p.P2P
+		monkey.PatchInstanceMethod(reflect.TypeOf(p), "Start", func(*p2p.P2P) error {
+			return nil
+		})
+		monkey.PatchInstanceMethod(reflect.TypeOf(p), "Stop", func(*p2p.P2P) {
+			return
+		})
+		var s *syncer.BlockSyncer
+		monkey.PatchInstanceMethod(reflect.TypeOf(s), "Start", func(*syncer.BlockSyncer) error {
+			return nil
+		})
+		monkey.PatchInstanceMethod(reflect.TypeOf(s), "Stop", func(*syncer.BlockSyncer) {
+			return
+		})
+		var pb *propagator.BlockPropagator
+		monkey.PatchInstanceMethod(reflect.TypeOf(pb), "Start", func(*propagator.BlockPropagator) error {
+			return nil
+		})
+		monkey.PatchInstanceMethod(reflect.TypeOf(pb), "Stop", func(*propagator.BlockPropagator) {
+			return
+		})
+		var pt *propagator.TxPropagator
+		monkey.PatchInstanceMethod(reflect.TypeOf(pt), "Start", func(*propagator.TxPropagator) error {
+			return nil
+		})
+		monkey.PatchInstanceMethod(reflect.TypeOf(pt), "Stop", func(*propagator.TxPropagator) {
+			return
+		})
+
 		service.Start()
 		nodeService := service.(*Node)
 		assert.NotNil(nodeService.rpcListeners)
 		assert.Equal(0, len(nodeService.rpcListeners))
 		monkey.Unpatch(apigateway.StartRPC)
 		monkey.UnpatchInstanceMethod(reflect.TypeOf(c), "Start")
+		monkey.UnpatchInstanceMethod(reflect.TypeOf(p), "Start")
+		monkey.UnpatchInstanceMethod(reflect.TypeOf(p), "Stop")
+		monkey.UnpatchInstanceMethod(reflect.TypeOf(s), "Start")
+		monkey.UnpatchInstanceMethod(reflect.TypeOf(s), "Stop")
+		monkey.UnpatchInstanceMethod(reflect.TypeOf(pb), "Start")
+		monkey.UnpatchInstanceMethod(reflect.TypeOf(pb), "Stop")
+		monkey.UnpatchInstanceMethod(reflect.TypeOf(pt), "Start")
+		monkey.UnpatchInstanceMethod(reflect.TypeOf(pt), "Stop")
 	}()
 	service.Stop()
 	monkey.Unpatch(log.AddAppender)
