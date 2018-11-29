@@ -199,16 +199,14 @@ func (self *Node) Round() {
 			Block: block,
 		}
 		if err = self.consensus.ToConsensus(proposal); err != nil {
-			log.Error("Not to consensus with err %v.", err)
+			log.Error("ToConsensus failed with err %v.", err)
 		} else {
 			block.HeaderHash = common.HeaderHash(block)
 			self.txpool.DelTxs(block.Transactions)
 			// TODO: notify p2p to broadcast block
-			log.Info("New block has been produced with height is: %d.", block.Header.Height)
+			log.Info("Block has been confirmed with height %d and hash %x.",
+				block.Header.Height, block.HeaderHash)
 		}
-		// swChIn := self.blockSwitch.InPort(gossipswitch.LocalInPortId).Channel()
-		// swChIn <- proposal.Block
-		// self.txpool.DelTxs(block.Transactions)
 	} else {
 		log.Info("Slave this round.")
 		if self.validator == nil {
