@@ -46,8 +46,7 @@ func (set *SignalSet) CatchSysSignal() {
 		sig := <-c
 		err := set.handle(sig, nil)
 		if err != nil {
-			log.Error("unknown signal received: %v\n", sig)
-			os.Exit(1)
+			log.Warn("unknown signal received: %v\n", sig)
 		}
 	}
 }
