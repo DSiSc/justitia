@@ -209,6 +209,9 @@ func (self *Node) eventsRegister() {
 	self.eventCenter.Subscribe(types.EventConsensusFailed, func(v interface{}) {
 		self.msgChannel <- common.MsgToConsensusFailed
 	})
+	self.eventCenter.Subscribe(types.EventMasterChange, func(v interface{}) {
+		self.msgChannel <- common.MsgChangeMaster
+	})
 }
 
 func (self *Node) eventUnregister() {
@@ -255,10 +258,10 @@ func (self *Node) blockFactory(assignments map[account.Account]commonr.Roler, pa
 	}
 }
 
-func (self *Node) ChangeMaster(con consensus.Consensus) {
-	switch con.(type) {
+func (self *Node) ChangeMaster() {
+	switch self.consensus.(type) {
 	case *dbft.DBFTPolicy:
-		consensusResult := con.GetConsensusResult()
+		consensusResult := self.consensus.GetConsensusResult()
 		self.blockFactory(consensusResult.Roles, consensusResult.Participate)
 	default:
 		log.Error("only support consensus failed process for dbft.")
@@ -299,6 +302,9 @@ func (self *Node) mainLoop() {
 			log.Error("Receive msg from main loop is run failed.")
 		case common.MsgToConsensusFailed:
 			log.Error("Receive msg of to consensus failed.")
+		case common.MsgChangeMaster:
+			log.Error("Receive msg of change views.")
+			self.ChangeMaster()
 		case common.MsgNodeServiceStopped:
 			log.Warn("Stop node service.")
 			break

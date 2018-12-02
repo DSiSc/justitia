@@ -98,6 +98,7 @@ const (
 	MsgNodeServiceStopped
 	MsgRoundRunFailed
 	MsgToConsensusFailed
+	MsgChangeMaster
 )
 
 type SysConfig struct {

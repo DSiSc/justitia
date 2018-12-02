@@ -123,7 +123,7 @@ func TestNewNode(t *testing.T) {
 	assert.Nil(nodeService.producer)
 	assert.Nil(nodeService.validator)
 	event := nodeService.eventCenter.(*events.Event)
-	assert.Equal(4, len(event.Subscribers))
+	assert.Equal(5, len(event.Subscribers))
 	monkey.Unpatch(log.SetTimestampFormat)
 }
 
@@ -318,11 +318,12 @@ func TestNode_Round(t *testing.T) {
 		Roles:       role,
 	}
 	bft, _ := dbft.NewDBFTPolicy(mockAccounts[0], int64(5))
+	node.consensus = bft
 	var d *dbft.DBFTPolicy
 	monkey.PatchInstanceMethod(reflect.TypeOf(d), "GetConsensusResult", func(d *dbft.DBFTPolicy) gcommon.ConsensusResult {
 		return result
 	})
-	node.ChangeMaster(bft)
+	node.ChangeMaster()
 
 	monkey.UnpatchAll()
 }
