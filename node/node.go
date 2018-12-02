@@ -5,12 +5,13 @@ import (
 	"github.com/DSiSc/apigateway"
 	rpc "github.com/DSiSc/apigateway/rpc/core"
 	"github.com/DSiSc/blockchain"
-	gconf "github.com/DSiSc/craft/config"
+	gconfing "github.com/DSiSc/craft/config"
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/monitor"
 	"github.com/DSiSc/craft/types"
 	"github.com/DSiSc/galaxy/consensus"
-	consensusc "github.com/DSiSc/galaxy/consensus/common"
+	commonc "github.com/DSiSc/galaxy/consensus/common"
+	"github.com/DSiSc/galaxy/consensus/policy/bft/dbft"
 	"github.com/DSiSc/galaxy/participates"
 	"github.com/DSiSc/galaxy/role"
 	commonr "github.com/DSiSc/galaxy/role/common"
@@ -24,6 +25,7 @@ import (
 	"github.com/DSiSc/syncer"
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/validator"
+	"github.com/DSiSc/validator/tools/account"
 	"net"
 	"sync"
 	"time"
@@ -88,7 +90,7 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 	nodeConf := config.NewNodeConfig()
 	InitLog(args, nodeConf)
 	// record global hash algorithm
-	gconf.GlobalConfig.Store(gconf.HashAlgName, nodeConf.AlgorithmConf.HashAlgorithm)
+	gconfing.GlobalConfig.Store(gconfing.HashAlgName, nodeConf.AlgorithmConf.HashAlgorithm)
 	pool := txpool.NewTxPool(nodeConf.TxPoolConf)
 	eventsCenter := events.NewEvent()
 	txSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.TxSwitch, eventsCenter)
@@ -219,22 +221,7 @@ func (self *Node) notify() {
 	}()
 }
 
-func (self *Node) Round() {
-	log.Debug("start a new round.")
-	time.Sleep(time.Duration(self.config.BlockInterval) * time.Second)
-	participates, err := self.participates.GetParticipates()
-	if err != nil {
-		log.Error("get participates failed with error %s.", err)
-		self.notify()
-		return
-	}
-	assignments, err := self.role.RoleAssignments(participates)
-	if nil != err {
-		log.Error("Role assignments failed with err %v.", err)
-		self.notify()
-		return
-	}
-	self.consensus.Initialization(assignments, participates, self.eventCenter)
+func (self *Node) blockFactory(assignments map[account.Account]commonr.Roler, participates []account.Account) {
 	role, ok := assignments[self.config.Account]
 	if ok && (commonr.Master == role) {
 		log.Info("Master this round.")
@@ -247,7 +234,7 @@ func (self *Node) Round() {
 			self.notify()
 			return
 		}
-		proposal := &consensusc.Proposal{
+		proposal := &commonc.Proposal{
 			Block: block,
 		}
 		if err = self.consensus.ToConsensus(proposal); err != nil {
@@ -266,6 +253,35 @@ func (self *Node) Round() {
 			self.validator = validator.NewValidator(&self.config.Account)
 		}
 	}
+}
+
+func (self *Node) ChangeMaster(con consensus.Consensus) {
+	switch con.(type) {
+	case *dbft.DBFTPolicy:
+		consensusResult := con.GetConsensusResult()
+		self.blockFactory(consensusResult.Roles, consensusResult.Participate)
+	default:
+		log.Error("only support consensus failed process for dbft.")
+	}
+}
+
+func (self *Node) Round() {
+	log.Debug("start a new round.")
+	time.Sleep(time.Duration(self.config.BlockInterval) * time.Second)
+	participates, err := self.participates.GetParticipates()
+	if err != nil {
+		log.Error("get participates failed with error %s.", err)
+		self.notify()
+		return
+	}
+	assignments, err := self.role.RoleAssignments(participates)
+	if nil != err {
+		log.Error("Role assignments failed with err %v.", err)
+		self.notify()
+		return
+	}
+	self.consensus.Initialization(assignments, participates, self.eventCenter)
+
 }
 
 func (self *Node) mainLoop() {
