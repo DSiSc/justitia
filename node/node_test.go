@@ -10,6 +10,7 @@ import (
 	"github.com/DSiSc/galaxy/consensus"
 	gcommon "github.com/DSiSc/galaxy/consensus/common"
 	consensusc "github.com/DSiSc/galaxy/consensus/config"
+	"github.com/DSiSc/galaxy/consensus/policy/bft/dbft"
 	"github.com/DSiSc/galaxy/consensus/policy/solo"
 	"github.com/DSiSc/galaxy/participates"
 	"github.com/DSiSc/galaxy/participates/config"
@@ -122,7 +123,7 @@ func TestNewNode(t *testing.T) {
 	assert.Nil(nodeService.producer)
 	assert.Nil(nodeService.validator)
 	event := nodeService.eventCenter.(*events.Event)
-	assert.Equal(4, len(event.Subscribers))
+	assert.Equal(5, len(event.Subscribers))
 	monkey.Unpatch(log.SetTimestampFormat)
 }
 
@@ -225,6 +226,39 @@ var mockAccount = account.Account{
 	},
 }
 
+var mockAccounts = []account.Account{
+	account.Account{
+		Address: types.Address{0x33, 0x3c, 0x33, 0x10, 0x82, 0x4b, 0x7c, 0x68,
+			0x51, 0x33, 0xf2, 0xbe, 0xdb, 0x2c, 0xa4, 0xb8, 0xb4, 0xdf, 0x63, 0x3d},
+		Extension: account.AccountExtension{
+			Id:  0,
+			Url: "127.0.0.1:8080",
+		},
+	},
+	account.Account{
+		Address: types.Address{0x34, 0x3c, 0x33, 0x10, 0x82, 0x4b, 0x7c, 0x68,
+			0x51, 0x33, 0xf2, 0xbe, 0xdb, 0x2c, 0xa4, 0xb8, 0xb4, 0xdf, 0x63, 0x3d},
+		Extension: account.AccountExtension{
+			Id:  1,
+			Url: "127.0.0.1:8081"},
+	},
+	account.Account{
+		Address: types.Address{0x35, 0x3c, 0x33, 0x10, 0x82, 0x4b, 0x7c, 0x68, 0x51, 0x33, 0xf2, 0xbe, 0xdb, 0x2c, 0xa4, 0xb8, 0xb4, 0xdf, 0x63, 0x3d},
+		Extension: account.AccountExtension{
+			Id:  2,
+			Url: "127.0.0.1:8082",
+		},
+	},
+
+	account.Account{
+		Address: types.Address{0x36, 0x3c, 0x33, 0x10, 0x82, 0x4b, 0x7c, 0x68, 0x51, 0x33, 0xf2, 0xbe, 0xdb, 0x2c, 0xa4, 0xb8, 0xb4, 0xdf, 0x63, 0x3d},
+		Extension: account.AccountExtension{
+			Id:  3,
+			Url: "127.0.0.1:8083",
+		},
+	},
+}
+
 func TestNode_Round(t *testing.T) {
 	assert := assert.New(t)
 	monkey.Patch(log.AddAppender, func(appenderName string, output io.Writer, logLevel log.Level, format string, showCaller bool, showHostname bool) {
@@ -272,9 +306,24 @@ func TestNode_Round(t *testing.T) {
 		return fmt.Errorf("consensus failed")
 	})
 	node.Round()
-	monkey.Unpatch(log.AddAppender)
-	monkey.Unpatch(log.SetTimestampFormat)
-	monkey.UnpatchInstanceMethod(reflect.TypeOf(r), "RoleAssignments")
-	monkey.UnpatchInstanceMethod(reflect.TypeOf(p), "MakeBlock")
-	monkey.UnpatchInstanceMethod(reflect.TypeOf(c), "ToConsensus")
+
+	role := make(map[account.Account]common.Roler)
+	role[mockAccounts[0]] = common.Slave
+	role[mockAccounts[1]] = common.Master
+	role[mockAccounts[2]] = common.Slave
+	role[mockAccounts[3]] = common.Slave
+	result := gcommon.ConsensusResult{
+		View:        uint64(0),
+		Participate: mockAccounts,
+		Roles:       role,
+	}
+	bft, _ := dbft.NewDBFTPolicy(mockAccounts[0], int64(5))
+	node.consensus = bft
+	var d *dbft.DBFTPolicy
+	monkey.PatchInstanceMethod(reflect.TypeOf(d), "GetConsensusResult", func(d *dbft.DBFTPolicy) gcommon.ConsensusResult {
+		return result
+	})
+	node.ChangeMaster()
+
+	monkey.UnpatchAll()
 }
