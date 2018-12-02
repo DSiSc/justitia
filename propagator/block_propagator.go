@@ -1,12 +1,12 @@
 package propagator
 
 import (
+	"errors"
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/types"
 	"github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/p2p"
 	"github.com/DSiSc/p2p/message"
-	"github.com/pkg/errors"
 	"sync"
 )
 

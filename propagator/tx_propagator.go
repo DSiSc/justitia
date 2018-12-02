@@ -1,6 +1,7 @@
 package propagator
 
 import (
+	"errors"
 	"fmt"
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/types"
@@ -8,7 +9,6 @@ import (
 	"github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/p2p"
 	"github.com/DSiSc/p2p/message"
-	"github.com/pkg/errors"
 	"reflect"
 	"sync"
 )
