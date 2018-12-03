@@ -225,6 +225,7 @@ func (self *Node) notify() {
 }
 
 func (self *Node) blockFactory(assignments map[account.Account]commonr.Roler, participates []account.Account) {
+	self.consensus.Initialization(assignments, participates, self.eventCenter)
 	role, ok := assignments[self.config.Account]
 	if ok && (commonr.Master == role) {
 		log.Info("Master this round.")
@@ -283,8 +284,7 @@ func (self *Node) Round() {
 		self.notify()
 		return
 	}
-	self.consensus.Initialization(assignments, participates, self.eventCenter)
-
+	self.blockFactory(assignments, participates)
 }
 
 func (self *Node) mainLoop() {
