@@ -32,6 +32,7 @@ import (
 	"net"
 	"reflect"
 	"testing"
+	`github.com/DSiSc/galaxy/consensus/policy/bft/fbft`
 )
 
 var defaultConf = commonc.SysConfig{
@@ -325,5 +326,53 @@ func TestNode_Round(t *testing.T) {
 	})
 	node.ChangeMaster()
 
+	monkey.UnpatchAll()
+}
+
+func TestNode_NextRound(t *testing.T) {
+	assert := assert.New(t)
+	monkey.Patch(log.AddAppender, func(appenderName string, output io.Writer, logLevel log.Level, format string, showCaller bool, showHostname bool) {
+		return
+	})
+	monkey.Patch(log.SetTimestampFormat, func(string) {
+		return
+	})
+	service, err := NewNode(defaultConf)
+	assert.Nil(err)
+
+	bft, err := dbft.NewDBFTPolicy(mockAccounts[0], int64(10))
+	assert.Nil(err)
+	assert.NotNil(bft)
+	node := service.(*Node)
+    node.consensus = bft
+    mockRole := make(map[account.Account]common.Roler)
+	mockRole[mockAccounts[0]] = common.Slave
+	mockRole[mockAccounts[1]] = common.Master
+	mockRole[mockAccounts[2]] = common.Slave
+	mockRole[mockAccounts[3]] = common.Slave
+    monkey.PatchInstanceMethod(reflect.TypeOf(bft), "GetConsensusResult", func(*dbft.DBFTPolicy) gcommon.ConsensusResult{
+        return gcommon.ConsensusResult{
+        	View:uint64(1),
+        	Participate:mockAccounts,
+        	Roles:mockRole,
+		}
+	})
+	node.NextRound(commonc.MsgChangeMaster)
+
+	monkey.PatchInstanceMethod(reflect.TypeOf(node), "Round", func(*Node){
+		return
+	})
+	node.NextRound(commonc.MsgBlockCommitSuccess)
+
+	bft1, err := fbft.NewFBFTPolicy(mockAccounts[0], int64(10))
+	monkey.PatchInstanceMethod(reflect.TypeOf(bft1), "GetConsensusResult", func(*fbft.FBFTPolicy) gcommon.ConsensusResult{
+		return gcommon.ConsensusResult{
+			View:uint64(1),
+			Participate:mockAccounts,
+			Roles:mockRole,
+		}
+	})
+	node.consensus = bft1
+	node.NextRound(commonc.MsgBlockCommitSuccess)
 	monkey.UnpatchAll()
 }

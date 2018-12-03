@@ -12,6 +12,7 @@ import (
 	"github.com/DSiSc/galaxy/consensus"
 	commonc "github.com/DSiSc/galaxy/consensus/common"
 	"github.com/DSiSc/galaxy/consensus/policy/bft/dbft"
+	"github.com/DSiSc/galaxy/consensus/policy/bft/fbft"
 	"github.com/DSiSc/galaxy/participates"
 	"github.com/DSiSc/galaxy/role"
 	commonr "github.com/DSiSc/galaxy/role/common"
@@ -246,7 +247,6 @@ func (self *Node) blockFactory(assignments map[account.Account]commonr.Roler, pa
 		} else {
 			block.HeaderHash = common.HeaderHash(block)
 			self.txpool.DelTxs(block.Transactions)
-			// TODO: notify p2p to broadcast block
 			log.Info("Block has been confirmed with height %d and hash %x.",
 				block.Header.Height, block.HeaderHash)
 		}
@@ -266,6 +266,26 @@ func (self *Node) ChangeMaster() {
 		self.blockFactory(consensusResult.Roles, consensusResult.Participate)
 	default:
 		log.Error("only support consensus failed process for dbft.")
+	}
+}
+
+func (self *Node) NextRound(msgType common.MsgType) {
+	switch self.consensus.(type) {
+	case *dbft.DBFTPolicy:
+		if common.MsgChangeMaster == msgType {
+			consensusResult := self.consensus.GetConsensusResult()
+			self.blockFactory(consensusResult.Roles, consensusResult.Participate)
+		} else {
+			log.Info("new round in dbft policy.")
+			self.Round()
+		}
+	case *fbft.FBFTPolicy:
+		consensusResult := self.consensus.GetConsensusResult()
+		log.Info("get participate %v and role %v.", consensusResult.Participate, consensusResult.Roles)
+		self.blockFactory(consensusResult.Roles, consensusResult.Participate)
+	default:
+		log.Warn("now we only support dbft and fbft..")
+		// self.Round()
 	}
 }
 
@@ -294,6 +314,7 @@ func (self *Node) mainLoop() {
 		switch msg {
 		case common.MsgBlockCommitSuccess:
 			log.Info("Receive msg from switch is success.")
+			self.NextRound(common.MsgBlockCommitSuccess)
 		case common.MsgBlockCommitFailed:
 			log.Info("Receive msg from switch is commit failed.")
 		case common.MsgBlockVerifyFailed:
@@ -304,7 +325,7 @@ func (self *Node) mainLoop() {
 			log.Error("Receive msg of to consensus failed.")
 		case common.MsgChangeMaster:
 			log.Error("Receive msg of change views.")
-			self.ChangeMaster()
+			self.NextRound(common.MsgBlockCommitSuccess)
 		case common.MsgNodeServiceStopped:
 			log.Warn("Stop node service.")
 			break
