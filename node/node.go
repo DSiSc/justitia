@@ -285,7 +285,7 @@ func (self *Node) NextRound(msgType common.MsgType) {
 		self.blockFactory(consensusResult.Roles, consensusResult.Participate)
 	default:
 		log.Warn("now we only support dbft and fbft..")
-		// self.Round()
+		self.Round()
 	}
 }
 
@@ -308,8 +308,8 @@ func (self *Node) Round() {
 }
 
 func (self *Node) mainLoop() {
+	self.Round()
 	for {
-		self.Round()
 		msg := <-self.msgChannel
 		switch msg {
 		case common.MsgBlockCommitSuccess:

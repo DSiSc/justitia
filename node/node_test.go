@@ -11,6 +11,7 @@ import (
 	gcommon "github.com/DSiSc/galaxy/consensus/common"
 	consensusc "github.com/DSiSc/galaxy/consensus/config"
 	"github.com/DSiSc/galaxy/consensus/policy/bft/dbft"
+	"github.com/DSiSc/galaxy/consensus/policy/bft/fbft"
 	"github.com/DSiSc/galaxy/consensus/policy/solo"
 	"github.com/DSiSc/galaxy/participates"
 	"github.com/DSiSc/galaxy/participates/config"
@@ -32,7 +33,6 @@ import (
 	"net"
 	"reflect"
 	"testing"
-	`github.com/DSiSc/galaxy/consensus/policy/bft/fbft`
 )
 
 var defaultConf = commonc.SysConfig{
@@ -69,10 +69,11 @@ func TestNewNode(t *testing.T) {
 	assert.NotNil(err)
 	assert.Nil(service)
 	assert.Equal(err, fmt.Errorf("registe txpool failed"))
+	monkey.UnpatchInstanceMethod(reflect.TypeOf(op), "BindToPort")
+
 	monkey.PatchInstanceMethod(reflect.TypeOf(op), "BindToPort", func(_ *gossipswitch.OutPort, _ gossipswitch.OutPutFunc) error {
 		return nil
 	})
-
 	monkey.Patch(blockchain.InitBlockChain, func(blockchainc.BlockChainConfig, types.EventCenter) error {
 		return fmt.Errorf("mock blockchain error")
 	})
@@ -81,6 +82,7 @@ func TestNewNode(t *testing.T) {
 	assert.Nil(service)
 	assert.Equal(err, fmt.Errorf("blockchain init failed"))
 	monkey.Unpatch(blockchain.InitBlockChain)
+	monkey.UnpatchInstanceMethod(reflect.TypeOf(op), "BindToPort")
 
 	monkey.Patch(participates.NewParticipates, func(conf config.ParticipateConfig) (participates.Participates, error) {
 		return nil, fmt.Errorf("mock participates error")
@@ -126,6 +128,7 @@ func TestNewNode(t *testing.T) {
 	event := nodeService.eventCenter.(*events.Event)
 	assert.Equal(5, len(event.Subscribers))
 	monkey.Unpatch(log.SetTimestampFormat)
+	monkey.Unpatch(log.AddAppender)
 }
 
 func TestNode_Start(t *testing.T) {
@@ -136,6 +139,7 @@ func TestNode_Start(t *testing.T) {
 	monkey.Patch(log.SetTimestampFormat, func(string) {
 		return
 	})
+
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
 	assert.NotNil(service)
@@ -325,7 +329,6 @@ func TestNode_Round(t *testing.T) {
 		return result
 	})
 	node.ChangeMaster()
-
 	monkey.UnpatchAll()
 }
 
@@ -337,6 +340,10 @@ func TestNode_NextRound(t *testing.T) {
 	monkey.Patch(log.SetTimestampFormat, func(string) {
 		return
 	})
+	var op *gossipswitch.OutPort
+	monkey.PatchInstanceMethod(reflect.TypeOf(op), "BindToPort", func(_ *gossipswitch.OutPort, _ gossipswitch.OutPutFunc) error {
+		return nil
+	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
 
@@ -344,32 +351,32 @@ func TestNode_NextRound(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(bft)
 	node := service.(*Node)
-    node.consensus = bft
-    mockRole := make(map[account.Account]common.Roler)
+	node.consensus = bft
+	mockRole := make(map[account.Account]common.Roler)
 	mockRole[mockAccounts[0]] = common.Slave
 	mockRole[mockAccounts[1]] = common.Master
 	mockRole[mockAccounts[2]] = common.Slave
 	mockRole[mockAccounts[3]] = common.Slave
-    monkey.PatchInstanceMethod(reflect.TypeOf(bft), "GetConsensusResult", func(*dbft.DBFTPolicy) gcommon.ConsensusResult{
-        return gcommon.ConsensusResult{
-        	View:uint64(1),
-        	Participate:mockAccounts,
-        	Roles:mockRole,
+	monkey.PatchInstanceMethod(reflect.TypeOf(bft), "GetConsensusResult", func(*dbft.DBFTPolicy) gcommon.ConsensusResult {
+		return gcommon.ConsensusResult{
+			View:        uint64(1),
+			Participate: mockAccounts,
+			Roles:       mockRole,
 		}
 	})
 	node.NextRound(commonc.MsgChangeMaster)
 
-	monkey.PatchInstanceMethod(reflect.TypeOf(node), "Round", func(*Node){
+	monkey.PatchInstanceMethod(reflect.TypeOf(node), "Round", func(*Node) {
 		return
 	})
 	node.NextRound(commonc.MsgBlockCommitSuccess)
 
 	bft1, err := fbft.NewFBFTPolicy(mockAccounts[0], int64(10))
-	monkey.PatchInstanceMethod(reflect.TypeOf(bft1), "GetConsensusResult", func(*fbft.FBFTPolicy) gcommon.ConsensusResult{
+	monkey.PatchInstanceMethod(reflect.TypeOf(bft1), "GetConsensusResult", func(*fbft.FBFTPolicy) gcommon.ConsensusResult {
 		return gcommon.ConsensusResult{
-			View:uint64(1),
-			Participate:mockAccounts,
-			Roles:mockRole,
+			View:        uint64(1),
+			Participate: mockAccounts,
+			Roles:       mockRole,
 		}
 	})
 	node.consensus = bft1
