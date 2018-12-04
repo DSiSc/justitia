@@ -311,25 +311,6 @@ func TestNode_Round(t *testing.T) {
 		return fmt.Errorf("consensus failed")
 	})
 	node.Round()
-
-	role := make(map[account.Account]common.Roler)
-	role[mockAccounts[0]] = common.Slave
-	role[mockAccounts[1]] = common.Master
-	role[mockAccounts[2]] = common.Slave
-	role[mockAccounts[3]] = common.Slave
-	result := gcommon.ConsensusResult{
-		View:        uint64(0),
-		Participate: mockAccounts,
-		Roles:       role,
-	}
-	bft, _ := dbft.NewDBFTPolicy(mockAccounts[0], int64(5))
-	node.consensus = bft
-	var d *dbft.DBFTPolicy
-	monkey.PatchInstanceMethod(reflect.TypeOf(d), "GetConsensusResult", func(d *dbft.DBFTPolicy) gcommon.ConsensusResult {
-		return result
-	})
-	node.ChangeMaster()
-	monkey.UnpatchAll()
 }
 
 func TestNode_NextRound(t *testing.T) {

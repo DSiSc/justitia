@@ -259,16 +259,6 @@ func (self *Node) blockFactory(assignments map[account.Account]commonr.Roler, pa
 	}
 }
 
-func (self *Node) ChangeMaster() {
-	switch self.consensus.(type) {
-	case *dbft.DBFTPolicy:
-		consensusResult := self.consensus.GetConsensusResult()
-		self.blockFactory(consensusResult.Roles, consensusResult.Participate)
-	default:
-		log.Error("only support consensus failed process for dbft.")
-	}
-}
-
 func (self *Node) NextRound(msgType common.MsgType) {
 	switch self.consensus.(type) {
 	case *dbft.DBFTPolicy:
