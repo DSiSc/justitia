@@ -124,19 +124,19 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 	blockSyncerP2P, err := p2p.NewP2P(nodeConf.P2PConf[config.BLOCK_SYNCER_P2P])
 	if err != nil {
 		log.Error("Init block syncer p2p failed.")
-		return nil, fmt.Errorf("Init block syncer p2p failed.")
+		return nil, fmt.Errorf("Init block syncer p2p failed. ")
 	}
 
 	blockSyncer, err := syncer.NewBlockSyncer(blockSyncerP2P, blkSwitch.InPort(gossipswitch.LocalInPortId).Channel(), eventsCenter)
 	if err != nil {
 		log.Error("Init block syncer failed.")
-		return nil, fmt.Errorf("Init block syncer failed.")
+		return nil, fmt.Errorf("Init block syncer failed. ")
 	}
 
 	blockP2P, err := p2p.NewP2P(nodeConf.P2PConf[config.BLOCK_P2P])
 	if err != nil {
 		log.Error("Init block p2p failed.")
-		return nil, fmt.Errorf("Init block p2p failed.")
+		return nil, fmt.Errorf("Init block p2p failed. ")
 	}
 
 	blockPropagator, err := propagator.NewBlockPropagator(blockP2P, blkSwitch.InPort(gossipswitch.LocalInPortId).Channel(), eventsCenter)
@@ -148,7 +148,7 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 	txP2P, err := p2p.NewP2P(nodeConf.P2PConf[config.TX_P2P])
 	if err != nil {
 		log.Error("Init tx p2p failed.")
-		return nil, fmt.Errorf("Init tx p2p failed.")
+		return nil, fmt.Errorf("Init tx p2p failed. ")
 	}
 
 	txPropagator, err := propagator.NewTxPropagator(txP2P, txSwitch.InPort(gossipswitch.LocalInPortId).Channel())
@@ -265,15 +265,13 @@ func (self *Node) NextRound(msgType common.MsgType) {
 			consensusResult := self.consensus.GetConsensusResult()
 			self.blockFactory(consensusResult.Roles, consensusResult.Participate)
 		} else {
-			log.Info("new round in dbft policy.")
 			self.Round()
 		}
 	case *fbft.FBFTPolicy:
 		consensusResult := self.consensus.GetConsensusResult()
-		log.Info("get participate %v and role %v.", consensusResult.Participate, consensusResult.Roles)
+		log.Debug("get participate %v and role %v.", consensusResult.Participate, consensusResult.Roles)
 		self.blockFactory(consensusResult.Roles, consensusResult.Participate)
 	default:
-		log.Warn("now we only support dbft and fbft..")
 		self.Round()
 	}
 }
