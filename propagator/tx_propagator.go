@@ -55,12 +55,12 @@ func (tp *TxPropagator) broadCastTx(tx *types.Transaction) {
 
 // Start start propagator
 func (tp *TxPropagator) Start() error {
-	log.Info("Start block propagator")
+	log.Info("Start transaction propagator")
 	tp.lock.Lock()
 	defer tp.lock.Unlock()
 	if tp.isRuning == 1 {
-		log.Error("block propagator already started")
-		return errors.New("block propagator already started")
+		log.Error("transaction propagator already started")
+		return errors.New("transaction propagator already started")
 	}
 	tp.isRuning = 1
 	go tp.recvHandler()
@@ -69,7 +69,7 @@ func (tp *TxPropagator) Start() error {
 
 // Stop start propagator
 func (tp *TxPropagator) Stop() {
-	log.Info("Stop block propagator")
+	log.Info("Stop transaction propagator")
 	tp.lock.Lock()
 	defer tp.lock.Unlock()
 	if tp.isRuning == 0 {
@@ -87,10 +87,10 @@ func (tp *TxPropagator) recvHandler() {
 			switch msg.Payload.(type) {
 			case *message.Transaction:
 				txmsg := msg.Payload.(*message.Transaction)
-				log.Debug("received a block %x", common.TxHash(txmsg.Tx))
+				log.Debug("received a transaction %x", common.TxHash(txmsg.Tx))
 				tp.txOut <- txmsg.Tx
 			default:
-				log.Error("received an invalid block message, message type: %v", msg.Payload.MsgType())
+				log.Error("received an invalid transaction message, message type: %v", msg.Payload.MsgType())
 			}
 		case <-tp.quitChan:
 			log.Info("exit propagator receive handler, as propagator already stopped")
