@@ -20,6 +20,7 @@ import (
 	rolec "github.com/DSiSc/galaxy/role/config"
 	solo2 "github.com/DSiSc/galaxy/role/policy/solo"
 	"github.com/DSiSc/gossipswitch"
+	"github.com/DSiSc/gossipswitch/port"
 	commonc "github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/justitia/propagator"
 	"github.com/DSiSc/justitia/tools/events"
@@ -61,8 +62,8 @@ func TestNewNode(t *testing.T) {
 	assert.Equal(err, fmt.Errorf("txswitch init failed"))
 	monkey.Unpatch(gossipswitch.NewGossipSwitchByType)
 
-	var op *gossipswitch.OutPort
-	monkey.PatchInstanceMethod(reflect.TypeOf(op), "BindToPort", func(_ *gossipswitch.OutPort, _ gossipswitch.OutPutFunc) error {
+	var op *port.OutPort
+	monkey.PatchInstanceMethod(reflect.TypeOf(op), "BindToPort", func(_ *port.OutPort, _ port.OutPutFunc) error {
 		return fmt.Errorf("bind error")
 	})
 	service, err = NewNode(defaultConf)
@@ -71,7 +72,7 @@ func TestNewNode(t *testing.T) {
 	assert.Equal(err, fmt.Errorf("registe txpool failed"))
 	monkey.UnpatchInstanceMethod(reflect.TypeOf(op), "BindToPort")
 
-	monkey.PatchInstanceMethod(reflect.TypeOf(op), "BindToPort", func(_ *gossipswitch.OutPort, _ gossipswitch.OutPutFunc) error {
+	monkey.PatchInstanceMethod(reflect.TypeOf(op), "BindToPort", func(_ *port.OutPort, _ port.OutPutFunc) error {
 		return nil
 	})
 	monkey.Patch(blockchain.InitBlockChain, func(blockchainc.BlockChainConfig, types.EventCenter) error {
@@ -321,8 +322,8 @@ func TestNode_NextRound(t *testing.T) {
 	monkey.Patch(log.SetTimestampFormat, func(string) {
 		return
 	})
-	var op *gossipswitch.OutPort
-	monkey.PatchInstanceMethod(reflect.TypeOf(op), "BindToPort", func(_ *gossipswitch.OutPort, _ gossipswitch.OutPutFunc) error {
+	var op *port.OutPort
+	monkey.PatchInstanceMethod(reflect.TypeOf(op), "BindToPort", func(_ *port.OutPort, _ port.OutPutFunc) error {
 		return nil
 	})
 	service, err := NewNode(defaultConf)

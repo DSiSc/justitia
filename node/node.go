@@ -17,6 +17,7 @@ import (
 	"github.com/DSiSc/galaxy/role"
 	commonr "github.com/DSiSc/galaxy/role/common"
 	"github.com/DSiSc/gossipswitch"
+	"github.com/DSiSc/gossipswitch/port"
 	"github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/justitia/config"
 	"github.com/DSiSc/justitia/propagator"
@@ -99,9 +100,9 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 		log.Error("Init txSwitch failed.")
 		return nil, fmt.Errorf("txswitch init failed")
 	}
-	swChIn := txSwitch.InPort(gossipswitch.LocalInPortId).Channel()
+	swChIn := txSwitch.InPort(port.LocalInPortId).Channel()
 	rpc.SetSwCh(swChIn)
-	err = txSwitch.OutPort(gossipswitch.LocalInPortId).BindToPort(func(msg interface{}) error {
+	err = txSwitch.OutPort(port.LocalInPortId).BindToPort(func(msg interface{}) error {
 		return pool.AddTx(msg.(*types.Transaction))
 	})
 	if err != nil {
@@ -127,7 +128,7 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 		return nil, fmt.Errorf("Init block syncer p2p failed. ")
 	}
 
-	blockSyncer, err := syncer.NewBlockSyncer(blockSyncerP2P, blkSwitch.InPort(gossipswitch.LocalInPortId).Channel(), eventsCenter)
+	blockSyncer, err := syncer.NewBlockSyncer(blockSyncerP2P, blkSwitch.InPort(port.LocalInPortId).Channel(), eventsCenter)
 	if err != nil {
 		log.Error("Init block syncer failed.")
 		return nil, fmt.Errorf("Init block syncer failed. ")
@@ -139,7 +140,7 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 		return nil, fmt.Errorf("Init block p2p failed. ")
 	}
 
-	blockPropagator, err := propagator.NewBlockPropagator(blockP2P, blkSwitch.InPort(gossipswitch.LocalInPortId).Channel(), eventsCenter)
+	blockPropagator, err := propagator.NewBlockPropagator(blockP2P, blkSwitch.InPort(port.RemoteInPortId).Channel(), eventsCenter)
 	if err != nil {
 		log.Error("Init block propagator failed.")
 		return nil, fmt.Errorf("Init block propagator failed. ")
@@ -151,12 +152,12 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 		return nil, fmt.Errorf("Init tx p2p failed. ")
 	}
 
-	txPropagator, err := propagator.NewTxPropagator(txP2P, txSwitch.InPort(gossipswitch.LocalInPortId).Channel())
+	txPropagator, err := propagator.NewTxPropagator(txP2P, txSwitch.InPort(port.RemoteInPortId).Channel())
 	if err != nil {
 		log.Error("Init tx propagator failed.")
 		return nil, fmt.Errorf("Init tx propagator failed. ")
 	}
-	txSwitch.OutPort(gossipswitch.RemoteOutPortId).BindToPort(txPropagator.TxSwitchOutPutFunc())
+	txSwitch.OutPort(port.RemoteOutPortId).BindToPort(txPropagator.TxSwitchOutPutFunc())
 
 	participates, err := participates.NewParticipates(nodeConf.ParticipatesConf)
 	if nil != err {
@@ -170,7 +171,7 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 		return nil, fmt.Errorf("role init failed")
 	}
 
-	consensus, err := consensus.NewConsensus(participates, nodeConf.ConsensusConf, nodeConf.Account, blkSwitch.InPort(gossipswitch.LocalInPortId).Channel())
+	consensus, err := consensus.NewConsensus(participates, nodeConf.ConsensusConf, nodeConf.Account, blkSwitch.InPort(port.LocalInPortId).Channel())
 	if nil != err {
 		log.Error("Init consensus failed.")
 		return nil, fmt.Errorf("consensus init failed")
