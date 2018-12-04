@@ -170,7 +170,7 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 		return nil, fmt.Errorf("role init failed")
 	}
 
-	consensus, err := consensus.NewConsensus(participates, nodeConf.ConsensusConf, nodeConf.Account)
+	consensus, err := consensus.NewConsensus(participates, nodeConf.ConsensusConf, nodeConf.Account, blkSwitch.InPort(gossipswitch.LocalInPortId).Channel())
 	if nil != err {
 		log.Error("Init consensus failed.")
 		return nil, fmt.Errorf("consensus init failed")
@@ -245,7 +245,6 @@ func (self *Node) blockFactory(assignments map[account.Account]commonr.Roler, pa
 		if err = self.consensus.ToConsensus(proposal); err != nil {
 			log.Error("ToConsensus failed with err %v.", err)
 		} else {
-			block.HeaderHash = common.HeaderHash(block)
 			self.txpool.DelTxs(block.Transactions)
 			log.Info("Block has been confirmed with height %d and hash %x.",
 				block.Header.Height, block.HeaderHash)
