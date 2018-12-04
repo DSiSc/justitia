@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/types"
-	"github.com/DSiSc/gossipswitch"
+	"github.com/DSiSc/gossipswitch/port"
 	"github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/p2p"
 	"github.com/DSiSc/p2p/message"
@@ -33,7 +33,7 @@ func NewTxPropagator(p2p p2p.P2PAPI, txOut chan<- interface{}) (*TxPropagator, e
 }
 
 // TxSwitchOutPutFunc get a OutPutFunc that can be bound to gossip switch
-func (tp *TxPropagator) TxSwitchOutPutFunc() gossipswitch.OutPutFunc {
+func (tp *TxPropagator) TxSwitchOutPutFunc() port.OutPutFunc {
 	return func(msg interface{}) error {
 		switch msg.(type) {
 		case *types.Transaction:
