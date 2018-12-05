@@ -271,6 +271,7 @@ func (self *Node) NextRound(msgType common.MsgType) {
 	case *fbft.FBFTPolicy:
 		consensusResult := self.consensus.GetConsensusResult()
 		log.Debug("get participate %v and role %v.", consensusResult.Participate, consensusResult.Roles)
+		time.Sleep(500 * time.Millisecond)
 		self.blockFactory(consensusResult.Roles, consensusResult.Participate)
 	default:
 		self.Round()
