@@ -12,6 +12,7 @@ import (
 
 const InvalidInt int = 255
 const BlankString string = ""
+const FBFTRoundInterval = 500
 
 // Sum returns the first 32 bytes of hash of the bz.
 func Sum(bz []byte) []byte {
