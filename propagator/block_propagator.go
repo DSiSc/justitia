@@ -53,7 +53,6 @@ func (bp *BlockPropagator) broadCastBlock(block *types.Block) {
 
 // Start start propagator
 func (bp *BlockPropagator) Start() error {
-	log.Info("Start block propagator")
 	bp.lock.Lock()
 	defer bp.lock.Unlock()
 	if bp.isRuning == 1 {
@@ -70,7 +69,6 @@ func (bp *BlockPropagator) Start() error {
 
 // Stop start propagator
 func (bp *BlockPropagator) Stop() {
-	log.Info("Stop block propagator")
 	bp.lock.Lock()
 	defer bp.lock.Unlock()
 	if bp.isRuning == 0 {
