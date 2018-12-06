@@ -55,7 +55,6 @@ func (tp *TxPropagator) broadCastTx(tx *types.Transaction) {
 
 // Start start propagator
 func (tp *TxPropagator) Start() error {
-	log.Info("Start block propagator")
 	tp.lock.Lock()
 	defer tp.lock.Unlock()
 	if tp.isRuning == 1 {
@@ -69,7 +68,6 @@ func (tp *TxPropagator) Start() error {
 
 // Stop start propagator
 func (tp *TxPropagator) Stop() {
-	log.Info("Stop block propagator")
 	tp.lock.Lock()
 	defer tp.lock.Unlock()
 	if tp.isRuning == 0 {
