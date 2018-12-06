@@ -4,8 +4,9 @@ services:
   filebeat:
     image: elastic/filebeat:6.4.2
     container_name: filebeat
-    network_mode: "host"
     user: "0:0"
+    privileged: true
+    network_mode: "host"
     volumes:
       - "/var/log/justitia/justitia.log:/var/log/justitia/justitia.log:ro"
       - "./filebeat.yml:/usr/share/filebeat/filebeat.yml"
@@ -14,6 +15,7 @@ services:
     image: elastic/metricbeat:6.4.2
     container_name: metricbeat
     user: "0:0"
+    privileged: true
     network_mode: "host"
     volumes:
       - "/proc:/hostfs/proc:ro"
