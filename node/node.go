@@ -312,6 +312,7 @@ func (self *Node) mainLoop() {
 			log.Error("Receive msg from main loop is run failed.")
 		case common.MsgToConsensusFailed:
 			log.Error("Receive msg of to consensus failed.")
+			self.NextRound(common.MsgToConsensusFailed)
 		case common.MsgChangeMaster:
 			log.Error("Receive msg of change views.")
 			self.NextRound(common.MsgBlockCommitSuccess)
