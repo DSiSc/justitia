@@ -95,7 +95,7 @@ Examples:
 		for i := 0; i <= durationInt; i++ {
 			<-ticker.C
 			if random {
-				sendTXs(rand.Intn(txsRate*2))
+				sendTXs(rand.Intn(txsRate * 2))
 			} else {
 				sendTXs(txsRate)
 			}
