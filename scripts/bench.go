@@ -1,14 +1,17 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/DSiSc/craft/log"
+	"io"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -27,6 +30,38 @@ type RPCResponse struct {
 	Error   *RPCError   `json:"error,omitempty"`
 }
 
+type timeType uint8
+
+const (
+	NullTime = timeType(iota)
+	Year
+	Month
+	Day
+	Hour
+	Minute
+	Second
+)
+
+const (
+	SecondBase     = float64(1)
+	MinuteToSecond = 60 * SecondBase
+	HourToSecond   = 60 * MinuteToSecond
+)
+
+const (
+	BlockAssembleTxsKeyWords = "assemble success with"
+	DefaultBlockStartIndex   = 1
+	DefaultBlockEndIndex     = 1
+)
+
+type LogStruct struct {
+	Level     string `json:"level"`
+	HostName  string `json:"host"`
+	Timestamp string `json:"time"`
+	Caller    string `json:"caller"`
+	Message   string `json:"message"`
+}
+
 var (
 	client   = &http.Client{}
 	endpoint string
@@ -34,9 +69,10 @@ var (
 
 // main process goes here.
 func main() {
-	var durationInt, txsRate int
-	var verbose, random, showHelp bool
+	var durationInt, txsRate, blockStart, blockEnd int
+	var verbose, random, showHelp, statistic bool
 	var timerWG sync.WaitGroup
+	var filePath string
 
 	//////////////////////////////////
 	// flagSet handles command flags.
@@ -47,14 +83,30 @@ func main() {
 	flagSet.BoolVar(&verbose, "v", false, "Verbose output")
 	flagSet.BoolVar(&showHelp, "h", false, "Display help")
 	flagSet.BoolVar(&random, "random", false, "Random number of tx")
+	flagSet.BoolVar(&statistic, "x", false, "The switch of statistic and bench.")
+	flagSet.IntVar(&blockStart, "s", 1, "The number of starting statistics.")
+	flagSet.IntVar(&blockEnd, "e", 1, "The number of ending statistics.")
+	flagSet.StringVar(&filePath, "f", "/var/log/justitia/justitia.log", "The absolute path of statistic file.")
 	flagSet.Usage = func() {
 		fmt.Println(`Justitia blockchain benchmarking tool.
 
 Usage:
-	jt-bench [-t 30] [-r 200] [-v] [endpoint]
+	go run bench.go [-t 30] [-r 200] [-v] [-x] [-s] [-e] [endpoint]
 
 Examples:
-	jt-bench http://127.0.0.1:47768 (by default)`)
+    There are two ways to use this tools.
+
+    First is to bench, simulate send 200 txs/s in 30 second
+    It will output starting, ending block number and tps, bps at the same time.
+
+	go run bench.go -t 30 -r 200 http://127.0.0.1:47768
+
+    Second is statistic output of the bench result, it will output log info
+    when making block, and tps, bps at the same time.
+
+	go run bench.go -x -s 117 -e 160
+
+   `)
 
 		fmt.Println("Flags:")
 		flagSet.PrintDefaults()
@@ -63,7 +115,7 @@ Examples:
 
 	if showHelp {
 		flagSet.Usage()
-		os.Exit(1)
+		return
 	}
 
 	if flagSet.NArg() == 0 {
@@ -81,6 +133,11 @@ Examples:
 		log.SetGlobalLogLevel(log.DebugLevel)
 	} else {
 		log.SetGlobalLogLevel(log.InfoLevel)
+	}
+
+	if statistic {
+		resultStatistic(filePath, blockStart, blockEnd)
+		return
 	}
 
 	//////////////////////////////////
@@ -238,4 +295,136 @@ var addressList = []string{
 	"0xb4e17991a0d715e3bb9b8a42429eda4026d9b054", "0x95e23e97d88e076df2502faa72a3ba8ad3315ed4",
 	"0x1a007089523cc763d8e7c8a2f33429b28cdae5d5", "0x28e708710de4b2e51012b203deec6e02b0927018",
 	"0xcb35393297d9ce36247a2ca70d6ee30a130ec254", "0xaa40386ff92635b80c141facbcd6ab1b04b27eb0",
+}
+
+func minusSecond(x float64, y float64, style interface{}) float64 {
+	if Hour == style {
+		return (x - y) * HourToSecond
+	}
+	if Minute == style {
+		return (x - y) * MinuteToSecond
+	}
+	if Second == style {
+		return (x - y) * SecondBase
+	}
+	return float64(0)
+}
+
+func computeTime(startTime string, endTime string) float64 {
+	start := strings.Split(startTime, " ")
+	startSplit := strings.Split(start[1], ":")
+	startHour, _ := strconv.ParseFloat(startSplit[0], 64)
+	startMin, _ := strconv.ParseFloat(startSplit[1], 64)
+	startSec, _ := strconv.ParseFloat(startSplit[2], 64)
+	end := strings.Split(endTime, " ")
+	endSplit := strings.Split(end[1], ":")
+	endHour, _ := strconv.ParseFloat(endSplit[0], 64)
+	endMin, _ := strconv.ParseFloat(endSplit[1], 64)
+	endSec, _ := strconv.ParseFloat(endSplit[2], 64)
+	diffHour := minusSecond(endHour, startHour, Hour)
+	diffMinute := minusSecond(endMin, startMin, Minute)
+	diffSecond := minusSecond(endSec, startSec, Second)
+	totalTime := diffHour + diffMinute + diffSecond
+	fmt.Printf("diffHour: %v.\ndiffMinute: %v.\ndiffSecond: %v.\ntotal time %v.\n", diffHour, diffMinute, diffSecond, totalTime)
+	return totalTime
+}
+
+func resultStatistic(filePath string, blockStart int, blockEnd int) {
+	fmt.Printf("start %d, end %d.\n", blockStart, blockEnd)
+	var totalTxs = uint64(0)
+	var startTime, endTime string
+	file, err := os.OpenFile(filePath, os.O_RDONLY, 0666)
+	if err != nil {
+		fmt.Println("Open file error!", err)
+		return
+	}
+	defer file.Close()
+
+	buf := bufio.NewReader(file)
+	var success = false
+	var startIndex = blockStart
+	if DefaultBlockEndIndex == blockEnd {
+		for {
+			line, err := buf.ReadString('\n')
+			line = strings.TrimSpace(line)
+			var keyString = fmt.Sprintf("Block %d %s", startIndex, BlockAssembleTxsKeyWords)
+			if strings.Contains(line, keyString) {
+				success = true
+				var logLine LogStruct
+				if err := json.Unmarshal([]byte(line), &logLine); err == nil {
+					if 0 == totalTxs {
+						startTime = logLine.Timestamp
+					}
+					reg := regexp.MustCompile(`(?U)\b.+\b`)
+					txString := reg.FindAllString(logLine.Message, -1)
+					tx, _ := strconv.Atoi(txString[10])
+					totalTxs = totalTxs + uint64(tx)
+					fmt.Printf("block: %d, txs: %d, time %s.\n", startIndex, tx, logLine.Timestamp)
+					if 0 == tx {
+						endTime = logLine.Timestamp
+						fmt.Printf("Total txs %d.\nstart time %s.\nend time %s.\n", totalTxs, startTime, endTime)
+						break
+					}
+				} else {
+					fmt.Println(err)
+				}
+				startIndex = startIndex + 1
+			}
+			if err != nil {
+				if err == io.EOF {
+					fmt.Println("File read ok!")
+					break
+				} else {
+					fmt.Println("Read file error!", err)
+					return
+				}
+			}
+		}
+	} else {
+		for {
+			if startIndex < blockEnd {
+				line, err := buf.ReadString('\n')
+				line = strings.TrimSpace(line)
+				var keyString = fmt.Sprintf("Block %d %s", startIndex, BlockAssembleTxsKeyWords)
+				if strings.Contains(line, keyString) {
+					success = true
+					var logLine LogStruct
+					if err := json.Unmarshal([]byte(line), &logLine); err == nil {
+						if 0 == totalTxs {
+							startTime = logLine.Timestamp
+						}
+						reg := regexp.MustCompile(`(?U)\b.+\b`)
+						txString := reg.FindAllString(logLine.Message, -1)
+						tx, _ := strconv.Atoi(txString[10])
+						totalTxs = totalTxs + uint64(tx)
+						fmt.Printf("block: %d, txs: %d, time %s.\n", startIndex, tx, logLine.Timestamp)
+						endTime = logLine.Timestamp
+					} else {
+						fmt.Println(err)
+					}
+					startIndex = startIndex + 1
+				}
+				if err != nil {
+					if err == io.EOF {
+						fmt.Println("File read ok!")
+						break
+					} else {
+						fmt.Println("Read file error!", err)
+						return
+					}
+				}
+			} else {
+				break
+			}
+		}
+	}
+	if success {
+		totalTime := computeTime(startTime, endTime)
+		rate := float64(totalTxs) / totalTime
+		bps := float64(blockEnd-blockStart) / totalTime
+		fmt.Printf("system average TPS: %v txs/s.\n", rate)
+		fmt.Printf("system average BPS: %v b/s.\n", bps)
+		return
+	}
+	fmt.Println("no record found, please confirm.")
 }
