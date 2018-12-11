@@ -3,7 +3,7 @@
 version: 2
 
 jobs:
-  build:
+  check:
 
     docker:
       - image: circleci/golang:1.10.3
@@ -29,3 +29,47 @@ jobs:
           command: |
             make coverage
             bash <(curl -s https://codecov.io/bash)
+
+      - persist_to_workspace:
+          root: ./build
+          paths:
+          - justitia
+
+  rpctest:
+    docker:
+    - image: circleci/python:3.6.1
+    working_directory: ~/repo
+    steps:
+    - attach_workspace:
+        at: ./
+    - run:
+        name: install pyresttest
+        command: |
+          sudo pip install pyresttest
+    - run:
+        name: run justitia and rpc test
+        command: |
+          mkdir -p /home/circleci/.justitia && curl -q -o /home/circleci/.justitia/justitia.yml https://raw.githubusercontent.com/DSiSc/justitia/master/config/justitia.yaml
+          ./justitia --log_path=/tmp/justitia.log > /dev/null &
+          curl -q -O https://raw.githubusercontent.com/DSiSc/tester/master/JTtests/RPCtests/testcases_tx.yaml
+          pyresttest http://localhost:47768 testcases_tx.yaml
+          pkill justitia
+
+workflows:
+  version: 2
+  commit:
+    jobs:
+    - check
+  nightly:
+    triggers:
+    - schedule:
+        cron: "20 * * * *"
+        filters:
+          branches:
+            only:
+            - master
+    jobs:
+    - check
+    - rpctest:
+        requires:
+        - check
