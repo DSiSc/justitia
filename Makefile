@@ -56,7 +56,12 @@ static-check: fmt spelling lint
 build:
 	@echo "building justitia ${VERSION}"
 	@echo "GOPATH=${GOPATH}"
-	go build -v -ldflags "-X github.com/DSiSc/justitia/version.GitCommit=${GIT_COMMIT}${GIT_DIRTY} -X github.com/DSiSc/justitia/version.BuildDate=${BUILD_DATE}" ./...
+	go build -v -ldflags "-X github.com/DSiSc/justitia/version.GitCommit=${GIT_COMMIT}${GIT_DIRTY} -X github.com/DSiSc/justitia/version.BuildDate=${BUILD_DATE}" -o build/justitia main.go
+
+install:
+	@echo "installing justitia ${VERSION}"
+	@echo "GOPATH=${GOPATH}"
+	go install -v -ldflags "-X github.com/DSiSc/justitia/version.GitCommit=${GIT_COMMIT}${GIT_DIRTY} -X github.com/DSiSc/justitia/version.BuildDate=${BUILD_DATE}" ./...
 
 vet:
 	@echo "Examine source code and reports suspicious constructs..."
