@@ -36,9 +36,8 @@ func TxHash(tx *types.Transaction) (hash types.Hash) {
 }
 
 func HeaderHash(block *types.Block) (hash types.Hash) {
-	var defaultHash types.Hash
-	if !bytes.Equal(block.HeaderHash[:], defaultHash[:]) {
-		log.Info("block hash %v has exits.", block.HeaderHash)
+	//var defaultHash types.Hash
+	if !(block.HeaderHash == types.Hash{}) {
 		copy(hash[:], block.HeaderHash[:])
 		return
 	}
@@ -93,7 +92,8 @@ func NewTransaction(nonce uint64, to types.Address, amount *big.Int, gasLimit ui
 type MsgType uint8
 
 const (
-	MsgBlockCommitSuccess MsgType = iota
+	MsgNull MsgType = iota
+	MsgBlockCommitSuccess
 	MsgBlockCommitFailed
 	MsgBlockVerifyFailed
 	MsgNodeServiceStopped

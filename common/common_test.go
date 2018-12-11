@@ -96,4 +96,18 @@ func TestHeaderHash(t *testing.T) {
 	block.HeaderHash = HeaderHash(block)
 	headerHash = HeaderHash(block)
 	assert.Equal(exceptHeaderHash, headerHash)
+
+	newBlock := &types.Block{
+		Header: &types.Header{
+			Height: 1,
+		},
+		HeaderHash: MockBlockHash,
+	}
+	ttt := HeaderHash(newBlock)
+	assert.Equal(MockBlockHash, ttt)
+
+	newBlock = &types.Block{}
+	assert.Equal(newBlock.HeaderHash, types.Hash{})
+	ttt = HeaderHash(newBlock)
+	assert.NotEqual(types.Hash{}, ttt)
 }
