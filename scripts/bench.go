@@ -1,17 +1,15 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/DSiSc/craft/log"
-	"io"
 	"io/ioutil"
+	"math"
 	"math/rand"
 	"net/http"
 	"os"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -30,38 +28,6 @@ type RPCResponse struct {
 	Error   *RPCError   `json:"error,omitempty"`
 }
 
-type timeType uint8
-
-const (
-	NullTime = timeType(iota)
-	Year
-	Month
-	Day
-	Hour
-	Minute
-	Second
-)
-
-const (
-	SecondBase     = float64(1)
-	MinuteToSecond = 60 * SecondBase
-	HourToSecond   = 60 * MinuteToSecond
-)
-
-const (
-	BlockAssembleTxsKeyWords = "assemble success with"
-	DefaultBlockStartIndex   = 1
-	DefaultBlockEndIndex     = 1
-)
-
-type LogStruct struct {
-	Level     string `json:"level"`
-	HostName  string `json:"host"`
-	Timestamp string `json:"time"`
-	Caller    string `json:"caller"`
-	Message   string `json:"message"`
-}
-
 var (
 	client   = &http.Client{}
 	endpoint string
@@ -69,7 +35,7 @@ var (
 
 // main process goes here.
 func main() {
-	var durationInt, txsRate, blockStart, blockEnd int
+	var durationInt, txsRate, blockStart, blockEnd uint
 	var verbose, random, showHelp, statistic bool
 	var timerWG sync.WaitGroup
 	var filePath string
@@ -78,33 +44,38 @@ func main() {
 	// flagSet handles command flags.
 	//////////////////////////////////
 	flagSet := flag.NewFlagSet("jt-bench", flag.ExitOnError)
-	flagSet.IntVar(&durationInt, "t", 30, "Exit after the specified amount of time in seconds")
-	flagSet.IntVar(&txsRate, "r", 200, "Txs per second to send in a connection")
+	flagSet.UintVar(&durationInt, "t", 60, "Exit after the specified amount of time in seconds(0 means forever)")
+	flagSet.UintVar(&txsRate, "r", 200, "Txs per second to send in a connection")
 	flagSet.BoolVar(&verbose, "v", false, "Verbose output")
 	flagSet.BoolVar(&showHelp, "h", false, "Display help")
-	flagSet.BoolVar(&random, "random", false, "Random number of tx")
-	flagSet.BoolVar(&statistic, "x", false, "The switch of statistic and bench.")
-	flagSet.IntVar(&blockStart, "s", 1, "The number of starting statistics.")
-	flagSet.IntVar(&blockEnd, "e", 1, "The number of ending statistics.")
+	flagSet.BoolVar(&random, "R", false, "Random number of tx")
+	flagSet.BoolVar(&statistic, "s", false, "The switch of statistic and bench.")
+	flagSet.UintVar(&blockStart, "b", 1, "The number of starting statistics.")
+	flagSet.UintVar(&blockEnd, "e", 1, "The number of ending statistics.")
 	flagSet.StringVar(&filePath, "f", "/var/log/justitia/justitia.log", "The absolute path of statistic file.")
 	flagSet.Usage = func() {
 		fmt.Println(`Justitia blockchain benchmarking tool.
 
 Usage:
-	go run bench.go [-t 30] [-r 200] [-v] [-x] [-s] [-e] [endpoint]
+    Send TXs:  go run bench.go [-t 60] [-r 200] [-R] [-v] [endpoint]
+    Statistic: go run bench.go -s -b 100 -e 200 [-v] [endpoint]
 
 Examples:
     There are two ways to use this tools.
 
-    First is to bench, simulate send 200 txs/s in 30 second
+    First is to bench, simulate send 200 txs/s in 60 second
     It will output starting, ending block number and tps, bps at the same time.
 
-	go run bench.go -t 30 -r 200 http://127.0.0.1:47768
+        go run bench.go -t 60 -r 200 -v http://127.0.0.1:47768
+
+        Or keep sending random number of tx forever
+
+        go run bench.go -t 0 -R
 
     Second is statistic output of the bench result, it will output log info
     when making block, and tps, bps at the same time.
 
-	go run bench.go -x -s 117 -e 160
+        go run bench.go -s -b 120 -e 160
 
    `)
 
@@ -135,66 +106,93 @@ Examples:
 		log.SetGlobalLogLevel(log.InfoLevel)
 	}
 
+	//////////////////////////////////
+	// statistic and report.
+	//////////////////////////////////
 	if statistic {
-		resultStatistic(filePath, blockStart, blockEnd)
+		statisticBetweenBlock(int64(blockStart), int64(blockEnd))
 		return
+	}
+
+	//////////////////////////////////
+	// preparation
+	//////////////////////////////////
+	timerWG.Add(2)
+	var ticker, totalTimer *time.Ticker
+	var progress []byte
+	stopped := false
+	showProgress := true
+
+	if durationInt == 0 {
+		durationInt = math.MaxInt32
+		showProgress = false
+	} else if durationInt < 10 {
+		log.Error("Duration too short, recommend a bigger integer.")
+		return
+	} else if durationInt > 3600 {
+		showProgress = false
+	}
+
+	if showProgress {
+		progress = make([]byte, durationInt)
+		for i := range progress {
+			progress[i] = ' '
+		}
 	}
 
 	//////////////////////////////////
 	// send tx at a given rate
 	//////////////////////////////////
-	var ticker, totalTimer *time.Ticker
-	timerWG.Add(2)
 	go func() {
-		log.Info(fmt.Sprintf("Sending TX at rate of %d tx/sec ...", txsRate))
+		log.Info(fmt.Sprintf("Sending TX at rate of %d tx/sec for %d sec ...", txsRate, durationInt))
 		ticker = time.NewTicker(1 * time.Second)
-		sendTXs(txsRate)
-		for i := 0; i <= durationInt; i++ {
+		sent := 0
+		for i := 0; i < int(durationInt); i++ {
+			go func() {
+				if random {
+					count := rand.Intn(int(txsRate) * 2)
+					log.Debug(fmt.Sprintf("Sending %d TXs ...", count))
+					sendTXs(count)
+				} else {
+					temp := i
+					if showProgress {
+						progress[temp] = '-'
+						fmt.Fprintf(os.Stdout, "Sending... |%s| %2d%% started, %2d%% finished.\r", string(progress[:]), (i+1)*100/int(durationInt), (sent+1)*100/int(durationInt))
+					}
+
+					sendTXs(int(txsRate))
+
+					sent = temp
+					if showProgress && !stopped {
+						progress[temp] = '='
+						fmt.Fprintf(os.Stdout, "Sending... |%s| %2d%% started, %2d%% finished.\r", string(progress[:]), (i+1)*100/int(durationInt), (sent+1)*100/int(durationInt))
+					}
+				}
+			}()
 			<-ticker.C
-			if random {
-				sendTXs(rand.Intn(txsRate * 2))
-			} else {
-				sendTXs(txsRate)
-			}
 		}
+		fmt.Println()
 		timerWG.Done()
 	}()
 
-	//////////////////////////////////////////////////////////////
-	// accumulate tx number of blocks generated in bench period.
-	//////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////
+	// accumulate tx number of blocks generated during bench period.
+	////////////////////////////////////////////////////////////////
+	var beginningHeight, endingHeight int64
 	go func() {
-		// wait a moment for tx to be stored into block.
-		time.Sleep(time.Millisecond * 1000)
-
 		totalTimer = time.NewTicker(time.Second * time.Duration(durationInt))
 
-		beginHeight := latestBlockNumber()
-		log.Info(fmt.Sprintf("Record beginnng block height: %d", beginHeight))
+		beginningHeight = latestBlockNumber() + 1
 		<-totalTimer.C
-		endHeight := latestBlockNumber()
-		log.Info(fmt.Sprintf("Record ending block height: %d", endHeight))
+		endingHeight = latestBlockNumber()
 
-		//////////////////////////////////////////////////////////////////////////////
-		// calculateStatistics calculates the tx / second, and blocks / second based
-		// off of the number the transactions and number of blocks that occurred from
-		// the start block, to the end time.
-		//////////////////////////////////////////////////////////////////////////////
-		log.Info("Calculating...")
-		var totalTxNum int64
-		for bn := beginHeight; bn <= endHeight; bn++ {
-			totalTxNum += txNumOfBlock(bn)
-		}
-
-		blockPerSecond := float64(endHeight-beginHeight) / float64(durationInt)
-		txPerSecond := float64(totalTxNum) / float64(durationInt)
-
-		log.Info(fmt.Sprintf("Bench test result: %0.2f tx/sec, %0.2f block/sec.", txPerSecond, blockPerSecond))
-
+		stopped = true
 		timerWG.Done()
 	}()
 
 	timerWG.Wait()
+
+	statisticBetweenBlock(beginningHeight, endingHeight)
 }
 
 // latestBlockNumber fetches current block number.
@@ -204,22 +202,35 @@ func latestBlockNumber() int64 {
 	return hexstr2dec(recv.Result)
 }
 
+// timestampOfBlockByNumber returns the time when specified block was created.
+func timestampOfBlockByNumber(blockNum int64) int64 {
+	reqData := fmt.Sprintf(`{"jsonrpc": "2.0", "method": "eth_getBlockByNumber", "id": 1, "params": ["0x%x", true]}`, blockNum)
+	resp, err := http.Post(endpoint, "application/json", strings.NewReader(reqData))
+	if err != nil {
+		panic(nil)
+	}
+	defer resp.Body.Close()
+	blob, _ := ioutil.ReadAll(resp.Body)
+	bodystr := string(blob)
+	index := strings.Index(bodystr, "timestamp")
+	return hexstr2dec(bodystr[index+13 : index+23])
+}
+
 // txNumOfBlock gets tx number of given block number.
 func txNumOfBlock(blockNum int64) int64 {
 	reqData := fmt.Sprintf(`{"jsonrpc": "2.0", "method": "eth_getBlockTransactionCountByNumber", "id": 1, "params": ["0x%x"]}`, blockNum)
 	recv := doPost(reqData)
 	txNum := hexstr2dec(recv.Result)
-	log.Debug(fmt.Sprintf("Block[%d] has %d TXs.", blockNum, txNum))
+	log.Debug(fmt.Sprintf("Block %-6d has %-6d TXs.", blockNum, txNum))
 	return txNum
 }
 
 // sendTXs sends a batch of tx, batch size is given by parameter count.
 func sendTXs(count int) {
-	log.Debug("Sending %d Txs...", count)
 	for index := 0; index < count; index++ {
 		reqData := fmt.Sprintf(
 			`{"jsonrpc":"2.0","method":"eth_sendTransaction","params":[{"from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b","to": "%s","gas": "0x6400","gasPrice": "0x1234","value": "0x%x"}],"id":1}`,
-			addressList[index%len(addressList)], index)
+			addressList[index%len(addressList)], index+rand.Intn(count))
 		doPost(reqData)
 	}
 }
@@ -268,6 +279,29 @@ func hexstr2dec(hex string) int64 {
 	return dec
 }
 
+// statisticBetweenBlock calculates the tx / second, and blocks / second based
+// off of the number the transactions and number of blocks that occurred from
+// the start block, to the end time.
+func statisticBetweenBlock(beginningHeight int64, endingHeight int64) {
+
+	timeS := timestampOfBlockByNumber(beginningHeight)
+	timeE := timestampOfBlockByNumber(endingHeight)
+
+	log.Info(fmt.Sprintf("Beginning block height: %d", beginningHeight))
+	log.Info(fmt.Sprintf("Ending block height:    %d", endingHeight))
+
+	log.Debug("Calculating...")
+	var totalTxNum int64
+	for bn := beginningHeight + 1; bn <= endingHeight; bn++ {
+		totalTxNum += txNumOfBlock(bn)
+	}
+
+	blockPerSecond := float64(endingHeight-beginningHeight) / float64(timeE-timeS)
+	txPerSecond := float64(totalTxNum) / float64(timeE-timeS)
+
+	log.Info(fmt.Sprintf("Bench test result: %0.2f tx/sec, %0.2f block/sec.", txPerSecond, blockPerSecond))
+}
+
 // addressList contains addresses used to send tx.
 var addressList = []string{
 	"0x8be461ea3c27b698a31515a98b8fa339b4bea51a", "0x7a445eaf276834d9aaeda583f46d6b505489923e",
@@ -295,136 +329,4 @@ var addressList = []string{
 	"0xb4e17991a0d715e3bb9b8a42429eda4026d9b054", "0x95e23e97d88e076df2502faa72a3ba8ad3315ed4",
 	"0x1a007089523cc763d8e7c8a2f33429b28cdae5d5", "0x28e708710de4b2e51012b203deec6e02b0927018",
 	"0xcb35393297d9ce36247a2ca70d6ee30a130ec254", "0xaa40386ff92635b80c141facbcd6ab1b04b27eb0",
-}
-
-func minusSecond(x float64, y float64, style interface{}) float64 {
-	if Hour == style {
-		return (x - y) * HourToSecond
-	}
-	if Minute == style {
-		return (x - y) * MinuteToSecond
-	}
-	if Second == style {
-		return (x - y) * SecondBase
-	}
-	return float64(0)
-}
-
-func computeTime(startTime string, endTime string) float64 {
-	start := strings.Split(startTime, " ")
-	startSplit := strings.Split(start[1], ":")
-	startHour, _ := strconv.ParseFloat(startSplit[0], 64)
-	startMin, _ := strconv.ParseFloat(startSplit[1], 64)
-	startSec, _ := strconv.ParseFloat(startSplit[2], 64)
-	end := strings.Split(endTime, " ")
-	endSplit := strings.Split(end[1], ":")
-	endHour, _ := strconv.ParseFloat(endSplit[0], 64)
-	endMin, _ := strconv.ParseFloat(endSplit[1], 64)
-	endSec, _ := strconv.ParseFloat(endSplit[2], 64)
-	diffHour := minusSecond(endHour, startHour, Hour)
-	diffMinute := minusSecond(endMin, startMin, Minute)
-	diffSecond := minusSecond(endSec, startSec, Second)
-	totalTime := diffHour + diffMinute + diffSecond
-	fmt.Printf("diffHour: %v.\ndiffMinute: %v.\ndiffSecond: %v.\ntotal time %v.\n", diffHour, diffMinute, diffSecond, totalTime)
-	return totalTime
-}
-
-func resultStatistic(filePath string, blockStart int, blockEnd int) {
-	fmt.Printf("start %d, end %d.\n", blockStart, blockEnd)
-	var totalTxs = uint64(0)
-	var startTime, endTime string
-	file, err := os.OpenFile(filePath, os.O_RDONLY, 0666)
-	if err != nil {
-		fmt.Println("Open file error!", err)
-		return
-	}
-	defer file.Close()
-
-	buf := bufio.NewReader(file)
-	var success = false
-	var startIndex = blockStart
-	if DefaultBlockEndIndex == blockEnd {
-		for {
-			line, err := buf.ReadString('\n')
-			line = strings.TrimSpace(line)
-			var keyString = fmt.Sprintf("Block %d %s", startIndex, BlockAssembleTxsKeyWords)
-			if strings.Contains(line, keyString) {
-				success = true
-				var logLine LogStruct
-				if err := json.Unmarshal([]byte(line), &logLine); err == nil {
-					if 0 == totalTxs {
-						startTime = logLine.Timestamp
-					}
-					reg := regexp.MustCompile(`(?U)\b.+\b`)
-					txString := reg.FindAllString(logLine.Message, -1)
-					tx, _ := strconv.Atoi(txString[10])
-					totalTxs = totalTxs + uint64(tx)
-					fmt.Printf("block: %d, txs: %d, time %s.\n", startIndex, tx, logLine.Timestamp)
-					if 0 == tx {
-						endTime = logLine.Timestamp
-						fmt.Printf("Total txs %d.\nstart time %s.\nend time %s.\n", totalTxs, startTime, endTime)
-						break
-					}
-				} else {
-					fmt.Println(err)
-				}
-				startIndex = startIndex + 1
-			}
-			if err != nil {
-				if err == io.EOF {
-					fmt.Println("File read ok!")
-					break
-				} else {
-					fmt.Println("Read file error!", err)
-					return
-				}
-			}
-		}
-	} else {
-		for {
-			if startIndex < blockEnd {
-				line, err := buf.ReadString('\n')
-				line = strings.TrimSpace(line)
-				var keyString = fmt.Sprintf("Block %d %s", startIndex, BlockAssembleTxsKeyWords)
-				if strings.Contains(line, keyString) {
-					success = true
-					var logLine LogStruct
-					if err := json.Unmarshal([]byte(line), &logLine); err == nil {
-						if 0 == totalTxs {
-							startTime = logLine.Timestamp
-						}
-						reg := regexp.MustCompile(`(?U)\b.+\b`)
-						txString := reg.FindAllString(logLine.Message, -1)
-						tx, _ := strconv.Atoi(txString[10])
-						totalTxs = totalTxs + uint64(tx)
-						fmt.Printf("block: %d, txs: %d, time %s.\n", startIndex, tx, logLine.Timestamp)
-						endTime = logLine.Timestamp
-					} else {
-						fmt.Println(err)
-					}
-					startIndex = startIndex + 1
-				}
-				if err != nil {
-					if err == io.EOF {
-						fmt.Println("File read ok!")
-						break
-					} else {
-						fmt.Println("Read file error!", err)
-						return
-					}
-				}
-			} else {
-				break
-			}
-		}
-	}
-	if success {
-		totalTime := computeTime(startTime, endTime)
-		rate := float64(totalTxs) / totalTime
-		bps := float64(blockEnd-blockStart) / totalTime
-		fmt.Printf("system average TPS: %v txs/s.\n", rate)
-		fmt.Printf("system average BPS: %v b/s.\n", bps)
-		return
-	}
-	fmt.Println("no record found, please confirm.")
 }
