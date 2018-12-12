@@ -1,7 +1,7 @@
-# Imported packages that does not exsit under "vendor" folder.
-# The following lines listed by git repositories(each line for one git repo) 
-# alone with compatible version(branch/tag/commit-id).
+# We use the BRANCH-MODEL as "develop on master, release on master",
+# so "master" branch contains the most updated, runnable code.
 
+# Dependencies are as follows:
 github.com/DSiSc/apigateway:master
 github.com/DSiSc/blockchain:master
 github.com/DSiSc/blockstore:master
@@ -16,4 +16,3 @@ github.com/DSiSc/validator:master
 github.com/DSiSc/crypto-suite:master
 github.com/DSiSc/p2p:master
 github.com/DSiSc/syncer:master
-
