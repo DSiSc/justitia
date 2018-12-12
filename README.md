@@ -31,7 +31,18 @@ Here's how to set up `justitia` for local development.
 
         $ git clone git@github.com:your_name_here/justitia.git
         $ cd justitia
-        $ make fetch-deps
+        $ make devenv
+    
+    > - `make devenv` will get go-tools and dependencies, usually for the first time.
+    >    most of the time, we use:
+    >   
+    >       $ make fetch-deps
+    >   
+    >   which only update dependencies, faster.
+    >
+    > - If you want to switch to a certain release tag, use env `RELEASE`:
+    >
+    >       $ RELEASE=v0.6.0 make fetch-deps
 
 3. Create a branch for local development:
 
@@ -43,17 +54,22 @@ Here's how to set up `justitia` for local development.
 
         $ make test
         
-5. Or directly run justitia with the following command:
+5. Copy config file to `$HOME/.justitia`, and make adjustments as you need:
+
+        $ make -p $HOME/.justitia
+        $ cp config/justitia.yaml $HOME/.justitia/
+
+6. Run justitia with the following command:
 
         $ go run main.go
 
-6. Commit your changes and push your branch to GitHub, We use [Angular Commit Guidelines](https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines), Thanks for Angular good job.
+7. Commit your changes and push your branch to GitHub, We use [Angular Commit Guidelines](https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines), Thanks for Angular good job.
 
         $ git add .
         $ git commit -m "Your detailed description of your changes."
         $ git push origin name-of-your-bugfix-or-feature
 
-7. Submit a pull request through the GitHub website.
+8. Submit a pull request through the GitHub website.
 
 ## Sub-projects
 
@@ -70,11 +86,13 @@ Here's how to set up `justitia` for local development.
 - [txpool](https://github.com/DSiSc/txpool): A high-performance blockchain transaction pool.
 - [validator](https://github.com/DSiSc/validator): A high-speed validator verify transaction and block.
 - [wallet](https://github.com/DSiSc/wallet): A high-security wallet implemention.
+- [p2p]
 
 
 ## Releases
 
-- [v0.1 - Sep 7, 2018](https://github.com/DSiSc/justitia/releases/tag/v0.1)
+- [v0.1   - Sep 07, 2018](https://github.com/DSiSc/justitia/releases/tag/v0.1)
+- [v0.2.0 - Dec 12, 2018](https://github.com/DSiSc/justitia/releases/tag/v0.2.0)
 
 ## Licensing
 
