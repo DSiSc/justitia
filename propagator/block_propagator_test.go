@@ -10,7 +10,7 @@ import (
 
 func mockP2P() p2p.P2PAPI {
 	config := &pconf.P2PConfig{}
-	p, _ := p2p.NewP2P(config)
+	p, _ := p2p.NewP2P(config, events.NewEvent())
 	return p
 }
 
