@@ -251,7 +251,6 @@ func (self *Node) blockFactory(assignments map[account.Account]commonr.Roler, pa
 		if err = self.consensus.ToConsensus(proposal); err != nil {
 			log.Error("ToConsensus failed with err %v.", err)
 		} else {
-			self.txpool.DelTxs(block.Transactions)
 			log.Info("Block has been confirmed with height %d and hash %x.",
 				block.Header.Height, block.HeaderHash)
 		}
