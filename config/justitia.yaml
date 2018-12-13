@@ -65,20 +65,29 @@ general:
       AddrBookFilePath: /var/log/justitia/syncer_address.json
       ListenAddress:  tcp://0.0.0.0:46660
       MaxConnOutBound:  24
-      MaxConnInBound: 24
+      MaxConnInBound: 48
       PersistentPeers:
+      DebugP2P: false
+      DebugServer:
+      DebugAddr:
     block:
       AddrBookFilePath: /var/log/justitia/block_address.json
       ListenAddress:  tcp://0.0.0.0:46661
       MaxConnOutBound:  24
-      MaxConnInBound: 24
+      MaxConnInBound: 48
       PersistentPeers:
+      DebugP2P: false
+      DebugServer:
+      DebugAddr:
     tx:
       AddrBookFilePath: /var/log/justitia/tx_address.json
       ListenAddress:  tcp://0.0.0.0:46662
       MaxConnOutBound:  24
-      MaxConnInBound: 24
+      MaxConnInBound: 48
       PersistentPeers:
+      DebugP2P: false
+      DebugServer:
+      DebugAddr:
 
 ################################################################################
 #

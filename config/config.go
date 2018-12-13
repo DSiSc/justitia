@@ -51,28 +51,37 @@ const (
 
 	//P2P Setting
 	// block syncer p2p config
-	BlockSyncerP2p                = "block_syncer_p2p"
-	P2pBlockSyncerAddrBook        = "general.p2p.blockSyncer.AddrBookFilePath"
-	P2pBlockSyncerListenAddr      = "general.p2p.blockSyncer.ListenAddress"
-	P2pBlockSyncerMaxOut          = "general.p2p.blockSyncer.MaxConnOutBound"
-	P2pBlockSyncerMaxIn           = "general.p2p.blockSyncer.MaxConnInBound"
-	P2pBlockSyncerPersistentPeers = "general.p2p.blockSyncer.PersistentPeers"
+	BlockSyncerP2P                = "block_syncer_p2p"
+	BlockSyncerP2PAddrBook        = "general.p2p.blockSyncer.AddrBookFilePath"
+	BlockSyncerP2PListenAddr      = "general.p2p.blockSyncer.ListenAddress"
+	BlockSyncerP2PMaxOut          = "general.p2p.blockSyncer.MaxConnOutBound"
+	BlockSyncerP2PMaxIn           = "general.p2p.blockSyncer.MaxConnInBound"
+	BlockSyncerP2PPersistendPeers = "general.p2p.blockSyncer.PersistentPeers"
+	BlockSyncerP2PDebug           = "general.p2p.blockSyncer.DebugP2P"
+	BlockSyncerP2PDebugServer     = "general.p2p.blockSyncer.DebugServer"
+	BlockSyncerP2PDebugAddr       = "general.p2p.blockSyncer.DebugAddr"
 
 	// block p2p config
-	BlockP2p                = "block_p2p"
-	P2pBlockAddrBook        = "general.p2p.block.AddrBookFilePath"
-	P2pBlockListenAddr      = "general.p2p.block.ListenAddress"
-	P2pBlockMaxOut          = "general.p2p.block.MaxConnOutBound"
-	P2pBlockMaxIn           = "general.p2p.block.MaxConnInBound"
-	P2pBlockPersistentPeers = "general.p2p.block.PersistentPeers"
+	BlockP2P                = "block_p2p"
+	BlockP2PAddrBook        = "general.p2p.block.AddrBookFilePath"
+	BlockP2PListenAddr      = "general.p2p.block.ListenAddress"
+	BlockP2PMaxOut          = "general.p2p.block.MaxConnOutBound"
+	BlockP2PMaxIn           = "general.p2p.block.MaxConnInBound"
+	BlockP2PPersistendPeers = "general.p2p.block.PersistentPeers"
+	BlockP2PDebug           = "general.p2p.block.DebugP2P"
+	BlockP2PDebugServer     = "general.p2p.block.DebugServer"
+	BlockP2PDebugAddr       = "general.p2p.block.DebugAddr"
 
 	// tx p2p config
-	TxP2p                = "tx_p2p"
-	P2pTxAddrBook        = "general.p2p.tx.AddrBookFilePath"
-	P2pTxListenAddr      = "general.p2p.tx.ListenAddress"
-	P2pTxMaxOut          = "general.p2p.tx.MaxConnOutBound"
-	P2pTxMaxIn           = "general.p2p.tx.MaxConnInBound"
-	P2pTxPersistentPeers = "general.p2p.tx.PersistentPeers"
+	TxP2P                = "tx_p2p"
+	TxP2PAddrBook        = "general.p2p.tx.AddrBookFilePath"
+	TxP2PListenAddr      = "general.p2p.tx.ListenAddress"
+	TxP2PMaxOut          = "general.p2p.tx.MaxConnOutBound"
+	TxP2PMaxIn           = "general.p2p.tx.MaxConnInBound"
+	TxP2PPersistendPeers = "general.p2p.tx.PersistentPeers"
+	TxP2PDebug           = "general.p2p.tx.DebugP2P"
+	TxP2PDebugServer     = "general.p2p.tx.DebugServer"
+	TxP2PDebugAddr       = "general.p2p.tx.DebugAddr"
 
 	// prometheus
 	PrometheusEnabled = "monitor.prometheus.enabled"
@@ -370,54 +379,72 @@ func GetLogSetting(conf *viper.Viper) log.Config {
 
 func GetP2PConf(conf *viper.Viper) map[string]*p2pConf.P2PConfig {
 	p2pConfig := make(map[string]*p2pConf.P2PConfig)
-	p2pConfig[BlockSyncerP2p] = getBlockSyncerP2PConf(conf)
-	p2pConfig[BlockP2p] = getBlockP2PConf(conf)
-	p2pConfig[TxP2p] = getTxP2PConf(conf)
+	p2pConfig[BlockSyncerP2P] = getBlockSyncerP2PConf(conf)
+	p2pConfig[BlockP2P] = getBlockP2PConf(conf)
+	p2pConfig[TxP2P] = getTxP2PConf(conf)
 	return p2pConfig
 }
 
 func getBlockSyncerP2PConf(conf *viper.Viper) *p2pConf.P2PConfig {
-	addrFile := conf.GetString(P2pBlockSyncerAddrBook)
-	listenAddr := conf.GetString(P2pBlockSyncerListenAddr)
-	maxOut := conf.GetInt(P2pBlockSyncerMaxIn)
-	maxIn := conf.GetInt(P2pBlockSyncerMaxOut)
-	persistentPeers := conf.GetString(P2pBlockSyncerPersistentPeers)
+	addrFile := conf.GetString(BlockSyncerP2PAddrBook)
+	listenAddr := conf.GetString(BlockSyncerP2PListenAddr)
+	maxOut := conf.GetInt(BlockSyncerP2PMaxOut)
+	maxIn := conf.GetInt(BlockSyncerP2PMaxIn)
+	persistentPeers := conf.GetString(BlockSyncerP2PPersistendPeers)
+	debugP2P := conf.GetBool(BlockSyncerP2PDebug)
+	debugServer := conf.GetString(BlockSyncerP2PDebugServer)
+	debugAddr := conf.GetString(BlockSyncerP2PDebugAddr)
 	return &p2pConf.P2PConfig{
 		AddrBookFilePath: addrFile,
 		ListenAddress:    listenAddr,
 		MaxConnOutBound:  maxOut,
 		MaxConnInBound:   maxIn,
 		PersistentPeers:  persistentPeers,
+		DebugP2P:         debugP2P,
+		DebugServer:      debugServer,
+		DebugAddr:        debugAddr,
 	}
 }
 
 func getBlockP2PConf(conf *viper.Viper) *p2pConf.P2PConfig {
-	addrFile := conf.GetString(P2pBlockAddrBook)
-	listenAddr := conf.GetString(P2pBlockListenAddr)
-	maxOut := conf.GetInt(P2pBlockMaxOut)
-	maxIn := conf.GetInt(P2pBlockMaxIn)
-	persistentPeers := conf.GetString(P2pBlockPersistentPeers)
+	addrFile := conf.GetString(BlockP2PAddrBook)
+	listenAddr := conf.GetString(BlockP2PListenAddr)
+	maxOut := conf.GetInt(BlockP2PMaxOut)
+	maxIn := conf.GetInt(BlockP2PMaxIn)
+	persistentPeers := conf.GetString(BlockP2PPersistendPeers)
+	debugP2P := conf.GetBool(BlockP2PDebug)
+	debugServer := conf.GetString(BlockP2PDebugServer)
+	debugAddr := conf.GetString(BlockP2PDebugAddr)
 	return &p2pConf.P2PConfig{
 		AddrBookFilePath: addrFile,
 		ListenAddress:    listenAddr,
 		MaxConnOutBound:  maxOut,
 		MaxConnInBound:   maxIn,
 		PersistentPeers:  persistentPeers,
+		DebugP2P:         debugP2P,
+		DebugServer:      debugServer,
+		DebugAddr:        debugAddr,
 	}
 }
 
 func getTxP2PConf(conf *viper.Viper) *p2pConf.P2PConfig {
-	addrFile := conf.GetString(P2pTxAddrBook)
-	listenAddr := conf.GetString(P2pTxListenAddr)
-	maxOut := conf.GetInt(P2pTxMaxIn)
-	maxIn := conf.GetInt(P2pTxMaxOut)
-	persistentPeers := conf.GetString(P2pTxPersistentPeers)
+	addrFile := conf.GetString(TxP2PAddrBook)
+	listenAddr := conf.GetString(TxP2PListenAddr)
+	maxOut := conf.GetInt(TxP2PMaxOut)
+	maxIn := conf.GetInt(TxP2PMaxIn)
+	persistentPeers := conf.GetString(TxP2PPersistendPeers)
+	debugP2P := conf.GetBool(TxP2PDebug)
+	debugServer := conf.GetString(TxP2PDebugServer)
+	debugAddr := conf.GetString(TxP2PDebugAddr)
 	return &p2pConf.P2PConfig{
 		AddrBookFilePath: addrFile,
 		ListenAddress:    listenAddr,
 		MaxConnOutBound:  maxOut,
 		MaxConnInBound:   maxIn,
 		PersistentPeers:  persistentPeers,
+		DebugP2P:         debugP2P,
+		DebugServer:      debugServer,
+		DebugAddr:        debugAddr,
 	}
 }
 
