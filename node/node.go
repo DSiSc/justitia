@@ -201,6 +201,11 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 func (self *Node) eventsRegister() {
 	self.eventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
 		self.msgChannel <- common.MsgBlockCommitSuccess
+		if nil != v {
+			block := v.(*types.Block)
+			log.Info("begin delete txs after block %d committed success.", block.Header.Height)
+			self.txpool.DelTxs(block.Transactions)
+		}
 	})
 	self.eventCenter.Subscribe(types.EventBlockVerifyFailed, func(v interface{}) {
 		self.msgChannel <- common.MsgBlockVerifyFailed

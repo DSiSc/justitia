@@ -7,6 +7,7 @@ import (
 	"github.com/DSiSc/craft/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 func TestNewEvent(t *testing.T) {
@@ -67,4 +68,28 @@ func TestNewEvent(t *testing.T) {
 
 	// test nil eventFunc
 	event.NotifySubscriber(nil, nil)
+}
+
+func TestEvent_Notify(t *testing.T) {
+	event := NewEvent()
+	assert := assert.New(t)
+	var EventSaveBlock types.EventType = 1
+	block := &types.Block{
+		Header: &types.Header{
+			Height: uint64(10),
+		},
+	}
+
+	var subscriber1 types.EventFunc = func(v interface{}) {
+		assert.NotNil(v)
+		assert.Equal(block, v.(*types.Block))
+		log.Info("TEST: subscriber1 event func #1.")
+	}
+
+	log.Info("TEST: Subscribe...")
+	sub1 := event.Subscribe(EventSaveBlock, subscriber1)
+	assert.NotNil(sub1)
+
+	event.Notify(EventSaveBlock, block)
+	time.Sleep(10 * time.Millisecond)
 }
