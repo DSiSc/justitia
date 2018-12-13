@@ -30,6 +30,7 @@ help:
 	@echo '    make fmt             Check code formatting.'
 	@echo '    make static-check    Static code check: style & spelling & formatting.'
 	@echo '    make build           Compile the project.'
+	@echo '    make install         Build and install justitia.'
 	@echo '    make vet             Examine source code and reports suspicious constructs.'
 	@echo '    make unit-test       Run unit tests with coverage report.'
 	@echo '    make test            Run unit tests with coverage report.'
@@ -93,8 +94,8 @@ get-tools:
 	@# go get -u github.com/axw/gocov/...
 	@# go get -u github.com/client9/misspell/cmd/misspell
 
-fetch-deps: get-tools
-	@echo "Run go get to fetch dependencies as described in dependencies.txt ..."
+fetch-deps:
+	@echo "Ensure dependencies are on the right version ..."
 	@bash scripts/ensure_deps.sh
 
 ## tools & deps

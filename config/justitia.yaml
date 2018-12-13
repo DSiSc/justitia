@@ -123,4 +123,4 @@ logging:
     hostname: true
 
     # Define the timestamp filed format
-    timeFieldFormat: "2006-01-02 15:04:05.999"
+    timeFieldFormat: "2006-01-02 15:04:05.000"
