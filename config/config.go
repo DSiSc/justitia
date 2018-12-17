@@ -8,6 +8,7 @@ import (
 	consensusc "github.com/DSiSc/galaxy/consensus/config"
 	participatesc "github.com/DSiSc/galaxy/participates/config"
 	rolec "github.com/DSiSc/galaxy/role/config"
+	"github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/justitia/tools"
 	p2pConf "github.com/DSiSc/p2p/config"
 	"github.com/DSiSc/txpool"
@@ -19,7 +20,10 @@ import (
 )
 
 const (
+	// config file prefix
 	CONFIG_PREFIX = "justitia"
+	// node type
+	NodeType = "general.nodeType"
 	// algorithm setting
 	HASH_ALGORITHM = "general.hashAlgorithm"
 	// txpool setting
@@ -96,6 +100,7 @@ type AlgorithmConfig struct {
 }
 
 type NodeConfig struct {
+	NodeType common.NodeType
 	// default
 	Account account.Account
 	// api gateway
@@ -156,6 +161,7 @@ func LoadConfig() (config *viper.Viper) {
 
 func NewNodeConfig() NodeConfig {
 	config := LoadConfig()
+	nodeType := getNodeType(config)
 	algorithmConf := GetAlgorithmConf(config)
 	nodeAccount := GetNodeAccount(config)
 	apiGatewayTcpAddr := GetApiGatewayTcpAddr(config)
@@ -172,6 +178,7 @@ func NewNodeConfig() NodeConfig {
 
 	return NodeConfig{
 		Account:          nodeAccount,
+		NodeType:         nodeType,
 		ApiGatewayAddr:   apiGatewayTcpAddr,
 		TxPoolConf:       txPoolConf,
 		ParticipatesConf: participatesConf,
@@ -359,4 +366,12 @@ func getTxP2PConf(conf *viper.Viper) *p2pConf.P2PConfig {
 		MaxConnInBound:   maxIn,
 		PersistentPeers:  persistentPeers,
 	}
+}
+
+func getNodeType(conf *viper.Viper) common.NodeType {
+	nodeType := common.NodeType(conf.GetInt(NodeType))
+	if (nodeType) <= common.UnknownNode || nodeType >= common.MaxNodeType {
+		panic(fmt.Errorf("unknown node type of %d", nodeType))
+	}
+	return nodeType
 }

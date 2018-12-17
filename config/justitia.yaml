@@ -8,6 +8,9 @@
 ################################################################################
 general:
 
+    # Node type,  which in { 0: UnknownNode, 1: FullNode, 2: CandidateNode, 3: LightNode}
+    nodeType: 1
+
     # Operational algorithm: "SHA256", "Keccak512", "Keccak256", "SM3"
     hashAlgorithm: SHA256
 

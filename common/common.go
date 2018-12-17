@@ -10,9 +10,21 @@ import (
 	"math/big"
 )
 
-const InvalidInt int = 255
-const BlankString string = ""
-const FBFTRoundInterval = 500
+type NodeType int
+
+const (
+	UnknownNode   NodeType = iota // UnknownNode --> 0, Unknown node type
+	ConsensusNode                 // ConsensusNode --> 1, Consensus function node
+	FullNode                       // FullNode --> 2, Full node
+	LightNode                      // LightNode --> 3, Light node with simply function
+	MaxNodeType                    // MaxNodeType is the boundary of node type
+)
+
+const (
+	InvalidInt        int    = 255
+	BlankString       string = ""
+	FBFTRoundInterval        = 500
+)
 
 // Sum returns the first 32 bytes of hash of the bz.
 func Sum(bz []byte) []byte {

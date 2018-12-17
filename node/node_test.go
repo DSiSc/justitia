@@ -7,21 +7,18 @@ import (
 	blockchainc "github.com/DSiSc/blockchain/config"
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/types"
-	"github.com/DSiSc/galaxy/consensus"
+	"github.com/DSiSc/galaxy"
+	galaxyCommon "github.com/DSiSc/galaxy/common"
 	gcommon "github.com/DSiSc/galaxy/consensus/common"
-	consensusc "github.com/DSiSc/galaxy/consensus/config"
 	"github.com/DSiSc/galaxy/consensus/policy/dbft"
 	"github.com/DSiSc/galaxy/consensus/policy/fbft"
 	"github.com/DSiSc/galaxy/consensus/policy/solo"
-	"github.com/DSiSc/galaxy/participates"
-	"github.com/DSiSc/galaxy/participates/config"
-	"github.com/DSiSc/galaxy/role"
 	"github.com/DSiSc/galaxy/role/common"
-	rolec "github.com/DSiSc/galaxy/role/config"
 	solo2 "github.com/DSiSc/galaxy/role/policy/solo"
 	"github.com/DSiSc/gossipswitch"
 	"github.com/DSiSc/gossipswitch/port"
-	commonc "github.com/DSiSc/justitia/common"
+	justitiaCommon "github.com/DSiSc/justitia/common"
+	"github.com/DSiSc/justitia/config"
 	"github.com/DSiSc/justitia/propagator"
 	"github.com/DSiSc/justitia/tools/events"
 	"github.com/DSiSc/monkey"
@@ -34,9 +31,10 @@ import (
 	"net"
 	"reflect"
 	"testing"
+	"time"
 )
 
-var defaultConf = commonc.SysConfig{
+var defaultConf = justitiaCommon.SysConfig{
 	LogLevel: log.InfoLevel,
 	LogPath:  "/tmp/justitia.log",
 	LogStyle: "json",
@@ -84,34 +82,34 @@ func TestNewNode(t *testing.T) {
 	assert.Equal(err, fmt.Errorf("blockchain init failed"))
 	monkey.Unpatch(blockchain.InitBlockChain)
 	monkey.UnpatchInstanceMethod(reflect.TypeOf(op), "BindToPort")
+	/*
+		monkey.Patch(participates.NewParticipates, func(conf config.ParticipateConfig) (participates.Participates, error) {
+			return nil, fmt.Errorf("mock participates error")
+		})
+		service, err = NewNode(defaultConf)
+		assert.NotNil(err)
+		assert.Nil(service)
+		assert.Equal(err, fmt.Errorf("participates init failed"))
+		monkey.Unpatch(participates.NewParticipates)
 
-	monkey.Patch(participates.NewParticipates, func(conf config.ParticipateConfig) (participates.Participates, error) {
-		return nil, fmt.Errorf("mock participates error")
-	})
-	service, err = NewNode(defaultConf)
-	assert.NotNil(err)
-	assert.Nil(service)
-	assert.Equal(err, fmt.Errorf("participates init failed"))
-	monkey.Unpatch(participates.NewParticipates)
+		monkey.Patch(role.NewRole, func(rolec.RoleConfig) (role.Role, error) {
+			return nil, fmt.Errorf("mock role error")
+		})
+		service, err = NewNode(defaultConf)
+		assert.NotNil(err)
+		assert.Nil(service)
+		assert.Equal(err, fmt.Errorf("role init failed"))
+		monkey.Unpatch(role.NewRole)
 
-	monkey.Patch(role.NewRole, func(rolec.RoleConfig) (role.Role, error) {
-		return nil, fmt.Errorf("mock role error")
-	})
-	service, err = NewNode(defaultConf)
-	assert.NotNil(err)
-	assert.Nil(service)
-	assert.Equal(err, fmt.Errorf("role init failed"))
-	monkey.Unpatch(role.NewRole)
-
-	monkey.Patch(consensus.NewConsensus, func(participates.Participates, consensusc.ConsensusConfig, account.Account, chan<- interface{}) (consensus.Consensus, error) {
-		return nil, fmt.Errorf("mock consensus error")
-	})
-	service, err = NewNode(defaultConf)
-	assert.NotNil(err)
-	assert.Nil(service)
-	assert.Equal(err, fmt.Errorf("consensus init failed"))
-	monkey.Unpatch(consensus.NewConsensus)
-
+		monkey.Patch(consensus.NewConsensus, func(participates.Participates, consensusc.ConsensusConfig, account.Account, chan<- interface{}) (consensus.Consensus, error) {
+			return nil, fmt.Errorf("mock consensus error")
+		})
+		service, err = NewNode(defaultConf)
+		assert.NotNil(err)
+		assert.Nil(service)
+		assert.Equal(err, fmt.Errorf("consensus init failed"))
+		monkey.Unpatch(consensus.NewConsensus)
+	*/
 	service, err = NewNode(defaultConf)
 	assert.Nil(err)
 	assert.NotNil(service)
@@ -130,6 +128,28 @@ func TestNewNode(t *testing.T) {
 	assert.Equal(5, len(event.Subscribers))
 	monkey.Unpatch(log.SetTimestampFormat)
 	monkey.Unpatch(log.AddAppender)
+
+	monkey.Patch(galaxy.NewGalaxyPlugin, func(galaxyCommon.GalaxyPluginConf) (*galaxyCommon.GalaxyPlugin, error) {
+		return nil, fmt.Errorf("error of NewGalaxyPlugin")
+	})
+	service, err = NewNode(defaultConf)
+	assert.Equal(err, fmt.Errorf("init galaxy plugin failed with error error of NewGalaxyPlugin"))
+	assert.NotNil(service)
+	monkey.Unpatch(galaxy.NewGalaxyPlugin)
+
+	nodeConf := config.NewNodeConfig()
+	monkey.Patch(config.NewNodeConfig, func() config.NodeConfig {
+		nodeConf.NodeType = justitiaCommon.FullNode
+		return nodeConf
+	})
+	service, err = NewNode(defaultConf)
+	nodeService = service.(*Node)
+	event = nodeService.eventCenter.(*events.Event)
+	assert.Equal(1, len(event.Subscribers))
+	assert.Nil(nodeService.participates)
+	assert.Nil(nodeService.consensus)
+	assert.Nil(nodeService.role)
+	monkey.Unpatch(config.NewNodeConfig)
 }
 
 func TestNode_Start(t *testing.T) {
@@ -196,6 +216,7 @@ func TestNode_Start(t *testing.T) {
 		monkey.UnpatchInstanceMethod(reflect.TypeOf(pt), "Start")
 		monkey.UnpatchInstanceMethod(reflect.TypeOf(pt), "Stop")
 	}()
+	time.Sleep(2 * time.Second)
 	service.Stop()
 	monkey.Unpatch(log.AddAppender)
 	monkey.Unpatch(log.SetTimestampFormat)
@@ -346,12 +367,12 @@ func TestNode_NextRound(t *testing.T) {
 			Roles:       mockRole,
 		}
 	})
-	node.NextRound(commonc.MsgChangeMaster)
+	node.NextRound(justitiaCommon.MsgChangeMaster)
 
 	monkey.PatchInstanceMethod(reflect.TypeOf(node), "Round", func(*Node) {
 		return
 	})
-	node.NextRound(commonc.MsgBlockCommitSuccess)
+	node.NextRound(justitiaCommon.MsgBlockCommitSuccess)
 
 	bft1, err := fbft.NewFBFTPolicy(mockAccounts[0], int64(10), nil)
 	monkey.PatchInstanceMethod(reflect.TypeOf(bft1), "GetConsensusResult", func(*fbft.FBFTPolicy) gcommon.ConsensusResult {
@@ -362,6 +383,6 @@ func TestNode_NextRound(t *testing.T) {
 		}
 	})
 	node.consensus = bft1
-	node.NextRound(commonc.MsgBlockCommitSuccess)
+	node.NextRound(justitiaCommon.MsgBlockCommitSuccess)
 	monkey.UnpatchAll()
 }

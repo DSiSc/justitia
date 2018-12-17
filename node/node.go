@@ -9,6 +9,8 @@ import (
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/monitor"
 	"github.com/DSiSc/craft/types"
+	"github.com/DSiSc/galaxy"
+	galaxyCommon "github.com/DSiSc/galaxy/common"
 	"github.com/DSiSc/galaxy/consensus"
 	commonc "github.com/DSiSc/galaxy/consensus/common"
 	"github.com/DSiSc/galaxy/consensus/policy/dbft"
@@ -91,7 +93,6 @@ func InitLog(args common.SysConfig, conf config.NodeConfig) {
 func NewNode(args common.SysConfig) (NodeService, error) {
 	nodeConf := config.NewNodeConfig()
 	InitLog(args, nodeConf)
-	// record global hash algorithm
 	gconfing.GlobalConfig.Store(gconfing.HashAlgName, nodeConf.AlgorithmConf.HashAlgorithm)
 	pool := txpool.NewTxPool(nodeConf.TxPoolConf)
 	eventsCenter := events.NewEvent()
@@ -109,79 +110,50 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 		log.Error("Register txpool failed.")
 		return nil, fmt.Errorf("registe txpool failed")
 	}
-
 	blkSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.BlockSwitch, eventsCenter)
 	if err != nil {
 		log.Error("Init block switch failed.")
 		return nil, fmt.Errorf("blkSwitch init failed")
 	}
-
 	err = blockchain.InitBlockChain(nodeConf.BlockChainConf, eventsCenter)
 	if err != nil {
 		log.Error("Init block chain failed.")
 		return nil, fmt.Errorf("blockchain init failed")
 	}
-
 	blockSyncerP2P, err := p2p.NewP2P(nodeConf.P2PConf[config.BLOCK_SYNCER_P2P], eventsCenter)
 	if err != nil {
 		log.Error("Init block syncer p2p failed.")
 		return nil, fmt.Errorf("Init block syncer p2p failed. ")
 	}
-
 	blockSyncer, err := syncer.NewBlockSyncer(blockSyncerP2P, blkSwitch.InPort(port.LocalInPortId).Channel(), eventsCenter)
 	if err != nil {
 		log.Error("Init block syncer failed.")
 		return nil, fmt.Errorf("Init block syncer failed. ")
 	}
-
 	blockP2P, err := p2p.NewP2P(nodeConf.P2PConf[config.BLOCK_P2P], eventsCenter)
 	if err != nil {
 		log.Error("Init block p2p failed.")
 		return nil, fmt.Errorf("Init block p2p failed. ")
 	}
-
 	blockPropagator, err := propagator.NewBlockPropagator(blockP2P, blkSwitch.InPort(port.RemoteInPortId).Channel(), eventsCenter)
 	if err != nil {
 		log.Error("Init block propagator failed.")
 		return nil, fmt.Errorf("Init block propagator failed. ")
 	}
-
 	txP2P, err := p2p.NewP2P(nodeConf.P2PConf[config.TX_P2P], eventsCenter)
 	if err != nil {
 		log.Error("Init tx p2p failed.")
 		return nil, fmt.Errorf("Init tx p2p failed. ")
 	}
-
 	txPropagator, err := propagator.NewTxPropagator(txP2P, txSwitch.InPort(port.RemoteInPortId).Channel())
 	if err != nil {
 		log.Error("Init tx propagator failed.")
 		return nil, fmt.Errorf("Init tx propagator failed. ")
 	}
 	txSwitch.OutPort(port.RemoteOutPortId).BindToPort(txPropagator.TxSwitchOutPutFunc())
-
-	participates, err := participates.NewParticipates(nodeConf.ParticipatesConf)
-	if nil != err {
-		log.Error("Init participates failed.")
-		return nil, fmt.Errorf("participates init failed")
-	}
-
-	role, err := role.NewRole(nodeConf.RoleConf)
-	if nil != err {
-		log.Error("Init role failed.")
-		return nil, fmt.Errorf("role init failed")
-	}
-
-	consensus, err := consensus.NewConsensus(participates, nodeConf.ConsensusConf, nodeConf.Account, blkSwitch.InPort(port.LocalInPortId).Channel())
-	if nil != err {
-		log.Error("Init consensus failed.")
-		return nil, fmt.Errorf("consensus init failed")
-	}
 	node := &Node{
 		config:          nodeConf,
 		txpool:          pool,
-		participates:    participates,
-		role:            role,
-		consensus:       consensus,
 		txSwitch:        txSwitch,
 		blockSwitch:     blkSwitch,
 		eventCenter:     eventsCenter,
@@ -194,31 +166,52 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 		txP2P:           txP2P,
 		txPropagator:    txPropagator,
 	}
+	if common.ConsensusNode == nodeConf.NodeType {
+		galaxyConfig := galaxyCommon.GalaxyPluginConf{
+			Account:         nodeConf.Account,
+			BlockSwitch:     blkSwitch.InPort(port.LocalInPortId).Channel(),
+			ParticipateConf: nodeConf.ParticipatesConf,
+			RoleConf:        nodeConf.RoleConf,
+			ConsensusConf:   nodeConf.ConsensusConf,
+		}
+		galaxyPlugin, err := galaxy.NewGalaxyPlugin(galaxyConfig)
+		if err != nil {
+			log.Error("Init galaxy plugin failed.")
+			return node, fmt.Errorf("init galaxy plugin failed with error %v", err)
+		}
+		node.participates = galaxyPlugin.Participates
+		node.role = galaxyPlugin.Role
+		node.consensus = galaxyPlugin.Consensus
+	}
 	node.eventsRegister()
 	return node, nil
 }
 
 func (self *Node) eventsRegister() {
 	self.eventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
-		self.msgChannel <- common.MsgBlockCommitSuccess
 		if nil != v {
 			block := v.(*types.Block)
 			log.Info("begin delete txs after block %d committed success.", block.Header.Height)
 			self.txpool.DelTxs(block.Transactions)
 		}
 	})
-	self.eventCenter.Subscribe(types.EventBlockVerifyFailed, func(v interface{}) {
-		self.msgChannel <- common.MsgBlockVerifyFailed
-	})
-	self.eventCenter.Subscribe(types.EventBlockCommitFailed, func(v interface{}) {
-		self.msgChannel <- common.MsgBlockCommitFailed
-	})
-	self.eventCenter.Subscribe(types.EventConsensusFailed, func(v interface{}) {
-		self.msgChannel <- common.MsgToConsensusFailed
-	})
-	self.eventCenter.Subscribe(types.EventMasterChange, func(v interface{}) {
-		self.msgChannel <- common.MsgChangeMaster
-	})
+	if common.ConsensusNode == self.config.NodeType {
+		self.eventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
+			self.msgChannel <- common.MsgBlockCommitSuccess
+		})
+		self.eventCenter.Subscribe(types.EventBlockVerifyFailed, func(v interface{}) {
+			self.msgChannel <- common.MsgBlockVerifyFailed
+		})
+		self.eventCenter.Subscribe(types.EventBlockCommitFailed, func(v interface{}) {
+			self.msgChannel <- common.MsgBlockCommitFailed
+		})
+		self.eventCenter.Subscribe(types.EventConsensusFailed, func(v interface{}) {
+			self.msgChannel <- common.MsgToConsensusFailed
+		})
+		self.eventCenter.Subscribe(types.EventMasterChange, func(v interface{}) {
+			self.msgChannel <- common.MsgChangeMaster
+		})
+	}
 }
 
 func (self *Node) eventUnregister() {
@@ -387,21 +380,21 @@ func (self *Node) Start() {
 	self.startTxPropagator()
 	monitor.StartPrometheusServer(self.config.PrometheusConf)
 	monitor.StartExpvarServer(self.config.ExpvarConf)
-	go self.consensus.Start()
-	go self.mainLoop()
+	if self.config.NodeType == common.ConsensusNode {
+		go self.consensus.Start()
+		go self.mainLoop()
+	}
 }
 
 func (self *Node) Stop() error {
 	log.Warn("Stop node service.")
 	close(self.serviceChannel)
-	self.msgChannel <- common.MsgNodeServiceStopped
 	for _, listener := range self.rpcListeners {
 		if err := listener.Close(); err != nil {
 			log.Error("Stop rpc listeners failed with error %v.", err)
 			return fmt.Errorf("closing listener error")
 		}
 	}
-	monitor.StopPrometheusServer()
 	self.blockSyncerP2P.Stop()
 	self.blockSyncer.Stop()
 	self.blockP2P.Stop()
@@ -411,6 +404,10 @@ func (self *Node) Stop() error {
 	self.blockSwitch.Stop()
 	self.txSwitch.Stop()
 	self.eventUnregister()
+	if self.config.NodeType == common.ConsensusNode {
+		self.msgChannel <- common.MsgNodeServiceStopped
+		monitor.StopPrometheusServer()
+	}
 	return nil
 }
 
