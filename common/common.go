@@ -15,9 +15,9 @@ type NodeType int
 const (
 	UnknownNode   NodeType = iota // UnknownNode --> 0, Unknown node type
 	ConsensusNode                 // ConsensusNode --> 1, Consensus function node
-	FullNode                       // FullNode --> 2, Full node
-	LightNode                      // LightNode --> 3, Light node with simply function
-	MaxNodeType                    // MaxNodeType is the boundary of node type
+	FullNode                      // FullNode --> 2, Full node
+	LightNode                     // LightNode --> 3, Light node with simply function
+	MaxNodeType                   // MaxNodeType is the boundary of node type
 )
 
 const (

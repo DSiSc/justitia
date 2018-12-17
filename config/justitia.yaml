@@ -8,7 +8,7 @@
 ################################################################################
 general:
 
-    # Node type,  which in { 0: UnknownNode, 1: FullNode, 2: CandidateNode, 3: LightNode}
+    # Node type,  which in { 0: UnknownNode, 1: ConsensusNode, 2: FullNode, 3:LightNode, 4:MaxNodeType}
     nodeType: 1
 
     # Operational algorithm: "SHA256", "Keccak512", "Keccak256", "SM3"
