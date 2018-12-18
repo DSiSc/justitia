@@ -282,7 +282,7 @@ func (self *Node) NextRound(msgType common.MsgType) {
 
 func (self *Node) Round() {
 	log.Debug("start a new round.")
-	time.Sleep(time.Duration(self.config.BlockInterval) * time.Second)
+	time.Sleep(time.Duration(self.config.BlockInterval) * time.Millisecond)
 	participates, err := self.participates.GetParticipates()
 	if err != nil {
 		log.Error("get participates failed with error %s.", err)

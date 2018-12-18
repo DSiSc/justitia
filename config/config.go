@@ -116,7 +116,7 @@ type NodeConfig struct {
 	// BlockChainConfig
 	BlockChainConf blockchainc.BlockChainConfig
 	// Block Produce Interval
-	BlockInterval uint8
+	BlockInterval int64
 	//algorithm config
 	AlgorithmConf AlgorithmConfig
 
@@ -271,9 +271,9 @@ func GetNodeAccount(conf *viper.Viper) account.Account {
 	}
 }
 
-func GetBlockProducerInterval(conf *viper.Viper) uint8 {
-	blockInterval := conf.GetInt(SOLO_TEST_BLOCK_PRODUCER_INTERVAL)
-	return uint8(blockInterval)
+func GetBlockProducerInterval(conf *viper.Viper) int64 {
+	blockInterval := conf.GetInt64(SOLO_TEST_BLOCK_PRODUCER_INTERVAL)
+	return blockInterval
 }
 
 func GetPrometheusConf(conf *viper.Viper) monitor.PrometheusConfig {

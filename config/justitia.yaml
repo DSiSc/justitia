@@ -54,8 +54,8 @@ general:
         policy: solo
         timeout: 10
 
-    # Block produce interval for solo mode
-    soloModeBlockProducedInterval: 2
+    # Block produce interval for solo mode in Millisecond
+    soloModeBlockProducedInterval: 2000
 
     # p2p setting
     # Operational plugin: memorydb or leveldb
