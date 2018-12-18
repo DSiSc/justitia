@@ -211,6 +211,9 @@ func (self *Node) eventsRegister() {
 		self.eventCenter.Subscribe(types.EventMasterChange, func(v interface{}) {
 			self.msgChannel <- common.MsgChangeMaster
 		})
+		self.eventCenter.Subscribe(types.EventOnline, func(v interface{}) {
+			self.msgChannel <- common.MsgOnline
+		})
 	}
 }
 
@@ -268,7 +271,9 @@ func (self *Node) NextRound(msgType common.MsgType) {
 	case *fbft.FBFTPolicy:
 		consensusResult := self.consensus.GetConsensusResult()
 		log.Debug("get participate %v and role %v.", consensusResult.Participate, consensusResult.Roles)
-		time.Sleep(common.FBFTRoundInterval * time.Millisecond)
+		if common.MsgBlockCommitSuccess == msgType {
+			time.Sleep(common.FBFTRoundInterval * time.Millisecond)
+		}
 		self.blockFactory(consensusResult.Roles, consensusResult.Participate)
 	default:
 		self.Round()
@@ -293,8 +298,26 @@ func (self *Node) Round() {
 	self.blockFactory(assignments, participates)
 }
 
+func (self *Node) OnlineWizard() {
+	log.Info("start online wizard.")
+	participates, err := self.participates.GetParticipates()
+	if err != nil {
+		log.Error("get participates failed with error %s.", err)
+		self.notify()
+		return
+	}
+	assignments, err := self.role.RoleAssignments(participates)
+	if nil != err {
+		log.Error("Role assignments failed with err %v.", err)
+		self.notify()
+		return
+	}
+	self.consensus.Initialization(assignments, participates, self.eventCenter)
+	self.consensus.Online()
+}
+
 func (self *Node) mainLoop() {
-	self.Round()
+	self.OnlineWizard()
 	for {
 		msg := <-self.msgChannel
 		switch msg {
@@ -302,17 +325,23 @@ func (self *Node) mainLoop() {
 			log.Info("Receive msg from switch is success.")
 			self.NextRound(common.MsgBlockCommitSuccess)
 		case common.MsgBlockCommitFailed:
+			self.NextRound(common.MsgBlockCommitFailed)
 			log.Info("Receive msg from switch is commit failed.")
 		case common.MsgBlockVerifyFailed:
 			log.Info("Receive msg from switch is verify failed.")
+			self.NextRound(common.MsgBlockVerifyFailed)
 		case common.MsgRoundRunFailed:
 			log.Error("Receive msg from main loop is run failed.")
+			self.NextRound(common.MsgBlockVerifyFailed)
 		case common.MsgToConsensusFailed:
 			log.Error("Receive msg of to consensus failed.")
 			self.NextRound(common.MsgToConsensusFailed)
 		case common.MsgChangeMaster:
 			log.Error("Receive msg of change views.")
 			self.NextRound(common.MsgBlockCommitSuccess)
+		case common.MsgOnline:
+			log.Error("Receive msg of online.")
+			self.NextRound(common.MsgOnline)
 		case common.MsgNodeServiceStopped:
 			log.Warn("Stop node service.")
 			break

@@ -104,14 +104,15 @@ func NewTransaction(nonce uint64, to types.Address, amount *big.Int, gasLimit ui
 type MsgType uint8
 
 const (
-	MsgNull MsgType = iota
-	MsgBlockCommitSuccess
-	MsgBlockCommitFailed
-	MsgBlockVerifyFailed
-	MsgNodeServiceStopped
-	MsgRoundRunFailed
-	MsgToConsensusFailed
-	MsgChangeMaster
+	MsgNull               MsgType = iota // meaningless msg type
+	MsgBlockCommitSuccess                //  block commit success
+	MsgBlockCommitFailed                 //  block commit failed
+	MsgBlockVerifyFailed                 //  block verify failed
+	MsgNodeServiceStopped                //  stop node service
+	MsgRoundRunFailed                    //  round run failed with some reasons
+	MsgToConsensusFailed                 //  failed to consensus
+	MsgChangeMaster                      //  change master
+	MsgOnline                            //  node online
 )
 
 type SysConfig struct {
