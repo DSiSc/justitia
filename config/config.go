@@ -14,6 +14,7 @@ import (
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/validator/tools/account"
 	"github.com/spf13/viper"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -88,12 +89,18 @@ const (
 	PPROF_PORT    = "monitor.pprof.port"
 
 	// Log Setting
-	LOG_PATH            = "logging.path"
-	LOG_LEVEL           = "logging.level"
-	LOG_FORMAT          = "logging.format"
-	LOG_CALLER          = "logging.caller"
-	LOG_HOSTNAME        = "logging.hostname"
-	LOG_TIMEFIELDFORMAT = "logging.timeFieldFormat"
+	LOG_TIMEFIELDFORMAT  = "logging.timeFieldFormat"
+	LOG_CONSOLE_ENABLED  = "logging.console.enabled"
+	LOG_CONSOLE_LEVEL    = "logging.console.level"
+	LOG_CONSOLE_FORMAT   = "logging.console.format"
+	LOG_CONSOLE_CALLER   = "logging.console.caller"
+	LOG_CONSOLE_HOSTNAME = "logging.console.hostname"
+	LOG_FILE_ENABLED     = "logging.file.enabled"
+	LOG_FILE_PATH        = "logging.file.path"
+	LOG_FILE_LEVEL       = "logging.file.level"
+	LOG_FILE_FORMAT      = "logging.file.format"
+	LOG_FILE_CALLER      = "logging.file.caller"
+	LOG_FILE_HOSTNAME    = "logging.file.hostname"
 )
 
 type AlgorithmConfig struct {
@@ -131,7 +138,7 @@ type NodeConfig struct {
 	// pprof
 	PprofConf monitor.PprofConfig
 	// log setting
-	Logger log.AppenderConfig
+	Logger log.Config
 	//P2P config
 	P2PConf map[string]*p2pConf.P2PConfig
 }
@@ -315,21 +322,56 @@ func GetPprofConf(conf *viper.Viper) monitor.PprofConfig {
 	}
 }
 
-func GetLogSetting(conf *viper.Viper) log.AppenderConfig {
-	logPath := conf.GetString(LOG_PATH)
-	logLevel := conf.GetInt(LOG_LEVEL)
-	logFormat := conf.GetString(LOG_FORMAT)
-	logCaller := conf.GetBool(LOG_CALLER)
-	logHostname := conf.GetBool(LOG_HOSTNAME)
+func GetLogSetting(conf *viper.Viper) log.Config {
 	logTimestampFormat := conf.GetString(LOG_TIMEFIELDFORMAT)
-	return log.AppenderConfig{
-		Output:          logPath,
-		LogLevel:        log.Level(logLevel),
-		Format:          logFormat,
-		ShowCaller:      logCaller,
-		ShowHostname:    logHostname,
-		TimeFieldFormat: logTimestampFormat,
+	logConsoleEnabled := conf.GetBool(LOG_CONSOLE_ENABLED)
+	logConsoleLevel := conf.GetInt(LOG_CONSOLE_LEVEL)
+	logConsoleFormat := conf.GetString(LOG_CONSOLE_FORMAT)
+	logConsoleCaller := conf.GetBool(LOG_CONSOLE_CALLER)
+	logConsoleHostname := conf.GetBool(LOG_CONSOLE_HOSTNAME)
+	logFileEnabled := conf.GetBool(LOG_FILE_ENABLED)
+	logFilePath := conf.GetString(LOG_FILE_PATH)
+	logFileLevel := conf.GetInt(LOG_FILE_LEVEL)
+	logFileFormat := conf.GetString(LOG_FILE_FORMAT)
+	logFileCaller := conf.GetBool(LOG_FILE_CALLER)
+	logFileHostname := conf.GetBool(LOG_FILE_HOSTNAME)
+
+	consoleAppender := &log.Appender{
+		LogLevel:     log.Level(logConsoleLevel),
+		Output:       os.Stdout,
+		Format:       strings.ToUpper(logConsoleFormat),
+		ShowCaller:   logConsoleCaller,
+		ShowHostname: logConsoleHostname,
 	}
+	logfile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
+	if err != nil {
+		panic(err)
+	}
+	fileAppender := &log.Appender{
+		LogLevel:     log.Level(logFileLevel),
+		Output:       logfile,
+		Format:       strings.ToUpper(logFileFormat),
+		ShowCaller:   logFileCaller,
+		ShowHostname: logFileHostname,
+	}
+	globalLogConfig := log.Config{
+		Enabled: logConsoleEnabled && logFileEnabled,
+		Provider:        log.GetGlobalConfig().Provider,
+		//Provider:        log.Zerolog,
+		GlobalLogLevel:  log.Level(uint8(math.Max(float64(logConsoleLevel), float64(logFileLevel)))),
+		TimeFieldFormat: logTimestampFormat,
+		Appenders:       map[string]*log.Appender{"consolelog": consoleAppender, "filelog": fileAppender},
+		OutputFlags:     log.GetOutputFlags(),
+		//OutputFlags: &log.OutputFlags{
+		//	TimestampFieldName: "time",
+		//	LevelFieldName:     "level",
+		//	MessageFieldName:   "message",
+		//	ErrorFieldName:     "error",
+		//	CallerFieldName:    "caller",
+		//	HostnameFieldName:  "host",
+		//},
+	}
+	return globalLogConfig
 }
 
 func GetP2PConf(conf *viper.Viper) map[string]*p2pConf.P2PConfig {
