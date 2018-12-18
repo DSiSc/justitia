@@ -14,7 +14,7 @@ import (
 	"github.com/DSiSc/galaxy/consensus/policy/fbft"
 	"github.com/DSiSc/galaxy/consensus/policy/solo"
 	"github.com/DSiSc/galaxy/role/common"
-	solo2 "github.com/DSiSc/galaxy/role/policy/solo"
+	galaxySolo "github.com/DSiSc/galaxy/role/policy/solo"
 	"github.com/DSiSc/gossipswitch"
 	"github.com/DSiSc/gossipswitch/port"
 	justitiaCommon "github.com/DSiSc/justitia/common"
@@ -299,24 +299,24 @@ func TestNode_Round(t *testing.T) {
 	assert.NotNil(service)
 	node := service.(*Node)
 
-	var r *solo2.SoloPolicy
-	monkey.PatchInstanceMethod(reflect.TypeOf(r), "RoleAssignments", func(*solo2.SoloPolicy, []account.Account) (map[account.Account]common.Roler, error) {
-		return nil, fmt.Errorf("assignments failed")
+	var r *galaxySolo.SoloPolicy
+	monkey.PatchInstanceMethod(reflect.TypeOf(r), "RoleAssignments", func(*galaxySolo.SoloPolicy, []account.Account) (map[account.Account]common.Roler, account.Account, error) {
+		return nil, account.Account{}, fmt.Errorf("assignments failed")
 	})
 	node.Round()
 
-	monkey.PatchInstanceMethod(reflect.TypeOf(r), "RoleAssignments", func(*solo2.SoloPolicy, []account.Account) (map[account.Account]common.Roler, error) {
+	monkey.PatchInstanceMethod(reflect.TypeOf(r), "RoleAssignments", func(*galaxySolo.SoloPolicy, []account.Account) (map[account.Account]common.Roler, account.Account, error) {
 		role := make(map[account.Account]common.Roler)
 		role[node.config.Account] = common.Slave
-		return role, nil
+		return role, account.Account{}, nil
 	})
 	assert.Nil(node.validator)
 	node.Round()
 
-	monkey.PatchInstanceMethod(reflect.TypeOf(r), "RoleAssignments", func(*solo2.SoloPolicy, []account.Account) (map[account.Account]common.Roler, error) {
+	monkey.PatchInstanceMethod(reflect.TypeOf(r), "RoleAssignments", func(*galaxySolo.SoloPolicy, []account.Account) (map[account.Account]common.Roler, account.Account, error) {
 		role := make(map[account.Account]common.Roler)
 		role[node.config.Account] = common.Master
-		return role, nil
+		return role, account.Account{}, nil
 	})
 	var p *producer.Producer
 	monkey.PatchInstanceMethod(reflect.TypeOf(p), "MakeBlock", func(*producer.Producer) (*types.Block, error) {
@@ -355,16 +355,11 @@ func TestNode_NextRound(t *testing.T) {
 	assert.NotNil(bft)
 	node := service.(*Node)
 	node.consensus = bft
-	mockRole := make(map[account.Account]common.Roler)
-	mockRole[mockAccounts[0]] = common.Slave
-	mockRole[mockAccounts[1]] = common.Master
-	mockRole[mockAccounts[2]] = common.Slave
-	mockRole[mockAccounts[3]] = common.Slave
 	monkey.PatchInstanceMethod(reflect.TypeOf(bft), "GetConsensusResult", func(*dbft.DBFTPolicy) gcommon.ConsensusResult {
 		return gcommon.ConsensusResult{
 			View:        uint64(1),
 			Participate: mockAccounts,
-			Roles:       mockRole,
+			Master:      mockAccounts[1],
 		}
 	})
 	node.NextRound(justitiaCommon.MsgChangeMaster)
@@ -379,7 +374,7 @@ func TestNode_NextRound(t *testing.T) {
 		return gcommon.ConsensusResult{
 			View:        uint64(1),
 			Participate: mockAccounts,
-			Roles:       mockRole,
+			Master:      mockAccounts[1],
 		}
 	})
 	node.consensus = bft1

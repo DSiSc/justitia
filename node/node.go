@@ -17,7 +17,6 @@ import (
 	"github.com/DSiSc/galaxy/consensus/policy/fbft"
 	"github.com/DSiSc/galaxy/participates"
 	"github.com/DSiSc/galaxy/role"
-	commonr "github.com/DSiSc/galaxy/role/common"
 	"github.com/DSiSc/gossipswitch"
 	"github.com/DSiSc/gossipswitch/port"
 	"github.com/DSiSc/justitia/common"
@@ -227,10 +226,10 @@ func (self *Node) notify() {
 	}()
 }
 
-func (self *Node) blockFactory(assignments map[account.Account]commonr.Roler, participates []account.Account) {
-	self.consensus.Initialization(assignments, participates, self.eventCenter)
-	role, ok := assignments[self.config.Account]
-	if ok && (commonr.Master == role) {
+func (self *Node) blockFactory(master account.Account, participates []account.Account) {
+	self.consensus.Initialization(master, participates, self.eventCenter, false)
+	isMaster := master == self.config.Account
+	if isMaster {
 		log.Info("Master this round.")
 		if nil == self.producer {
 			self.producer = producer.NewProducer(self.txpool, &self.config.Account)
@@ -264,17 +263,18 @@ func (self *Node) NextRound(msgType common.MsgType) {
 	case *dbft.DBFTPolicy:
 		if common.MsgChangeMaster == msgType {
 			consensusResult := self.consensus.GetConsensusResult()
-			self.blockFactory(consensusResult.Roles, consensusResult.Participate)
+			self.blockFactory(consensusResult.Master, consensusResult.Participate)
 		} else {
 			self.Round()
 		}
 	case *fbft.FBFTPolicy:
 		consensusResult := self.consensus.GetConsensusResult()
-		log.Debug("get participate %v and role %v.", consensusResult.Participate, consensusResult.Roles)
+		log.Debug("get participate %v and master %v.",
+			consensusResult.Participate, consensusResult.Master.Extension.Id)
 		if common.MsgBlockCommitSuccess == msgType {
 			time.Sleep(common.FBFTRoundInterval * time.Millisecond)
 		}
-		self.blockFactory(consensusResult.Roles, consensusResult.Participate)
+		self.blockFactory(consensusResult.Master, consensusResult.Participate)
 	default:
 		self.Round()
 	}
@@ -289,13 +289,13 @@ func (self *Node) Round() {
 		self.notify()
 		return
 	}
-	assignments, err := self.role.RoleAssignments(participates)
+	_, master, err := self.role.RoleAssignments(participates)
 	if nil != err {
 		log.Error("Role assignments failed with err %v.", err)
 		self.notify()
 		return
 	}
-	self.blockFactory(assignments, participates)
+	self.blockFactory(master, participates)
 }
 
 func (self *Node) OnlineWizard() {
@@ -306,13 +306,13 @@ func (self *Node) OnlineWizard() {
 		self.notify()
 		return
 	}
-	assignments, err := self.role.RoleAssignments(participates)
+	_, master, err := self.role.RoleAssignments(participates)
 	if nil != err {
 		log.Error("Role assignments failed with err %v.", err)
 		self.notify()
 		return
 	}
-	self.consensus.Initialization(assignments, participates, self.eventCenter)
+	self.consensus.Initialization(master, participates, self.eventCenter, true)
 	self.consensus.Online()
 }
 
