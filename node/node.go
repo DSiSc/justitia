@@ -337,10 +337,10 @@ func (self *Node) mainLoop() {
 			log.Error("Receive msg of to consensus failed.")
 			self.NextRound(common.MsgToConsensusFailed)
 		case common.MsgChangeMaster:
-			log.Error("Receive msg of change views.")
+			log.Info("Receive msg of change views.")
 			self.NextRound(common.MsgBlockCommitSuccess)
 		case common.MsgOnline:
-			log.Error("Receive msg of online.")
+			log.Info("Receive msg of online.")
 			self.NextRound(common.MsgOnline)
 		case common.MsgNodeServiceStopped:
 			log.Warn("Stop node service.")
