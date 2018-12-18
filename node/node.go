@@ -409,6 +409,7 @@ func (self *Node) Start() {
 	self.startTxPropagator()
 	monitor.StartPrometheusServer(self.config.PrometheusConf)
 	monitor.StartExpvarServer(self.config.ExpvarConf)
+	monitor.StartPprofServer(self.config.PprofConf)
 	if self.config.NodeType == common.ConsensusNode {
 		go self.consensus.Start()
 		go self.mainLoop()

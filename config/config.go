@@ -83,6 +83,10 @@ const (
 	EXPVAR_PORT    = "monitor.expvar.port"
 	EXPVAR_PATH    = "monitor.expvar.path"
 
+	// pprof
+	PPROF_ENABLED = "monitor.pprof.enabled"
+	PPROF_PORT    = "monitor.pprof.port"
+
 	// Log Setting
 	LOG_PATH            = "logging.path"
 	LOG_LEVEL           = "logging.level"
@@ -124,6 +128,8 @@ type NodeConfig struct {
 	PrometheusConf monitor.PrometheusConfig
 	// expvar
 	ExpvarConf monitor.ExpvarConfig
+	// pprof
+	PprofConf monitor.PprofConfig
 	// log setting
 	Logger log.AppenderConfig
 	//P2P config
@@ -173,6 +179,7 @@ func NewNodeConfig() NodeConfig {
 	blockIntervalTime := GetBlockProducerInterval(config)
 	prometheusConf := GetPrometheusConf(config)
 	expvarConf := GetExpvarConf(config)
+	pprofConf := GetPprofConf(config)
 	logConf := GetLogSetting(config)
 	p2pConfs := GetP2PConf(config)
 
@@ -189,6 +196,7 @@ func NewNodeConfig() NodeConfig {
 		AlgorithmConf:    algorithmConf,
 		PrometheusConf:   prometheusConf,
 		ExpvarConf:       expvarConf,
+		PprofConf:        pprofConf,
 		Logger:           logConf,
 		P2PConf:          p2pConfs,
 	}
@@ -295,6 +303,15 @@ func GetExpvarConf(conf *viper.Viper) monitor.ExpvarConfig {
 		ExpvarEnabled: enabled,
 		ExpvarPort:    prometheusPort,
 		ExpvarPath:    ExpvarPath,
+	}
+}
+
+func GetPprofConf(conf *viper.Viper) monitor.PprofConfig {
+	enabled := conf.GetBool(PPROF_ENABLED)
+	pprofPort := conf.GetString(PPROF_PORT)
+	return monitor.PprofConfig{
+		PprofEnabled: enabled,
+		PprofPort:    pprofPort,
 	}
 }
 
