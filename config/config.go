@@ -355,8 +355,8 @@ func GetLogSetting(conf *viper.Viper) log.Config {
 		ShowHostname: logFileHostname,
 	}
 	globalLogConfig := log.Config{
-		Enabled: logConsoleEnabled && logFileEnabled,
-		Provider:        log.GetGlobalConfig().Provider,
+		Enabled:  logConsoleEnabled && logFileEnabled,
+		Provider: log.GetGlobalConfig().Provider,
 		//Provider:        log.Zerolog,
 		GlobalLogLevel:  log.Level(uint8(math.Max(float64(logConsoleLevel), float64(logFileLevel)))),
 		TimeFieldFormat: logTimestampFormat,

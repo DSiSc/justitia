@@ -81,7 +81,7 @@ func InitLog(args common.SysConfig, conf config.NodeConfig) {
 	}
 	var logLevel = args.LogLevel
 	if common.InvalidInt != int(logLevel) {
-		conf.Logger.Appenders["filelog"].LogLevel= log.Level(uint8(logLevel))
+		conf.Logger.Appenders["filelog"].LogLevel = log.Level(uint8(logLevel))
 	}
 
 	log.SetGlobalConfig(&conf.Logger)
@@ -120,32 +120,32 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 	blockSyncerP2P, err := p2p.NewP2P(nodeConf.P2PConf[config.BLOCK_SYNCER_P2P], eventsCenter)
 	if err != nil {
 		log.Error("Init block syncer p2p failed.")
-		return nil, fmt.Errorf("Init block syncer p2p failed. ")
+		return nil, fmt.Errorf("init block syncer p2p failed")
 	}
 	blockSyncer, err := syncer.NewBlockSyncer(blockSyncerP2P, blkSwitch.InPort(port.LocalInPortId).Channel(), eventsCenter)
 	if err != nil {
 		log.Error("Init block syncer failed.")
-		return nil, fmt.Errorf("Init block syncer failed. ")
+		return nil, fmt.Errorf("init block syncer failed")
 	}
 	blockP2P, err := p2p.NewP2P(nodeConf.P2PConf[config.BLOCK_P2P], eventsCenter)
 	if err != nil {
 		log.Error("Init block p2p failed.")
-		return nil, fmt.Errorf("Init block p2p failed. ")
+		return nil, fmt.Errorf("init block p2p failed")
 	}
 	blockPropagator, err := propagator.NewBlockPropagator(blockP2P, blkSwitch.InPort(port.RemoteInPortId).Channel(), eventsCenter)
 	if err != nil {
 		log.Error("Init block propagator failed.")
-		return nil, fmt.Errorf("Init block propagator failed. ")
+		return nil, fmt.Errorf("init block propagator failed")
 	}
 	txP2P, err := p2p.NewP2P(nodeConf.P2PConf[config.TX_P2P], eventsCenter)
 	if err != nil {
 		log.Error("Init tx p2p failed.")
-		return nil, fmt.Errorf("Init tx p2p failed. ")
+		return nil, fmt.Errorf("init tx p2p failed")
 	}
 	txPropagator, err := propagator.NewTxPropagator(txP2P, txSwitch.InPort(port.RemoteInPortId).Channel())
 	if err != nil {
 		log.Error("Init tx propagator failed.")
-		return nil, fmt.Errorf("Init tx propagator failed. ")
+		return nil, fmt.Errorf("init tx propagator failed")
 	}
 	txSwitch.OutPort(port.RemoteOutPortId).BindToPort(txPropagator.TxSwitchOutPutFunc())
 	node := &Node{
@@ -310,7 +310,7 @@ func (self *Node) OnlineWizard() {
 		self.notify()
 		return
 	}
-	self.consensus.Initialization(master, participates, self.eventCenter, true)
+	self.consensus.Initialization(master, participates, self.eventCenter, false)
 	self.consensus.Online()
 }
 

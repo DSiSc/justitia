@@ -23,6 +23,7 @@ import (
 	"github.com/DSiSc/justitia/tools/events"
 	"github.com/DSiSc/monkey"
 	"github.com/DSiSc/p2p"
+	p2pConfig "github.com/DSiSc/p2p/config"
 	"github.com/DSiSc/producer"
 	"github.com/DSiSc/syncer"
 	"github.com/DSiSc/validator/tools/account"
@@ -39,19 +40,38 @@ var defaultConf = justitiaCommon.SysConfig{
 	LogStyle: "json",
 }
 
+func TestInitLog(t *testing.T) {
+	nodeConfig := config.NodeConfig{
+		Logger: log.Config{
+			Enabled:         true,
+			TimeFieldFormat: "2006-01-02 15:04:05.000",
+			Appenders:       make(map[string]*log.Appender),
+		},
+	}
+	nodeConfig.Logger.Appenders["filelog"] = &log.Appender{}
+	monkey.Patch(log.SetGlobalConfig, func(config *log.Config) {
+		return
+	})
+	InitLog(defaultConf, nodeConfig)
+	fileLog := nodeConfig.Logger.Appenders["filelog"]
+	assert.Equal(t, defaultConf.LogLevel, fileLog.LogLevel)
+	assert.Equal(t, defaultConf.LogStyle, fileLog.Format)
+	monkey.Unpatch(log.SetGlobalConfig)
+}
+
 func TestNewNode(t *testing.T) {
 	assert := assert.New(t)
-	monkey.Patch(gossipswitch.NewGossipSwitchByType, func(switchType gossipswitch.SwitchType, _ types.EventCenter) (*gossipswitch.GossipSwitch, error) {
-		if gossipswitch.TxSwitch == switchType {
-			return nil, fmt.Errorf("mock gossipswitch error")
-		}
-		return nil, nil
-	})
 	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
 		return log.Config{}
 	})
 	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
 		return
+	})
+	monkey.Patch(gossipswitch.NewGossipSwitchByType, func(switchType gossipswitch.SwitchType, _ types.EventCenter) (*gossipswitch.GossipSwitch, error) {
+		if gossipswitch.TxSwitch == switchType {
+			return nil, fmt.Errorf("mock gossipswitch error")
+		}
+		return nil, nil
 	})
 	service, err := NewNode(defaultConf)
 	assert.NotNil(err)
@@ -67,7 +87,6 @@ func TestNewNode(t *testing.T) {
 	assert.NotNil(err)
 	assert.Nil(service)
 	assert.Equal(err, fmt.Errorf("registe txpool failed"))
-	monkey.UnpatchInstanceMethod(reflect.TypeOf(op), "BindToPort")
 
 	monkey.PatchInstanceMethod(reflect.TypeOf(op), "BindToPort", func(_ *port.OutPort, _ port.OutPutFunc) error {
 		return nil
@@ -79,176 +98,137 @@ func TestNewNode(t *testing.T) {
 	assert.NotNil(err)
 	assert.Nil(service)
 	assert.Equal(err, fmt.Errorf("blockchain init failed"))
-	monkey.Unpatch(blockchain.InitBlockChain)
-	monkey.UnpatchInstanceMethod(reflect.TypeOf(op), "BindToPort")
-	/*
-		monkey.Patch(participates.NewParticipates, func(conf config.ParticipateConfig) (participates.Participates, error) {
-			return nil, fmt.Errorf("mock participates error")
-		})
-		service, err = NewNode(defaultConf)
-		assert.NotNil(err)
-		assert.Nil(service)
-		assert.Equal(err, fmt.Errorf("participates init failed"))
-		monkey.Unpatch(participates.NewParticipates)
 
-		monkey.Patch(role.NewRole, func(rolec.RoleConfig) (role.Role, error) {
-			return nil, fmt.Errorf("mock role error")
-		})
-		service, err = NewNode(defaultConf)
-		assert.NotNil(err)
-		assert.Nil(service)
-		assert.Equal(err, fmt.Errorf("role init failed"))
-		monkey.Unpatch(role.NewRole)
-
-		monkey.Patch(consensus.NewConsensus, func(participates.Participates, consensusc.ConsensusConfig, account.Account, chan<- interface{}) (consensus.Consensus, error) {
-			return nil, fmt.Errorf("mock consensus error")
-		})
-		service, err = NewNode(defaultConf)
-		assert.NotNil(err)
-		assert.Nil(service)
-		assert.Equal(err, fmt.Errorf("consensus init failed"))
-		monkey.Unpatch(consensus.NewConsensus)
-    */
+	monkey.Patch(blockchain.InitBlockChain, func(blockchainc.BlockChainConfig, types.EventCenter) error {
+		return nil
+	})
+	monkey.Patch(p2p.NewP2P, func(*p2pConfig.P2PConfig, types.EventCenter) (*p2p.P2P, error) {
+		return nil, fmt.Errorf("new p2p failed")
+	})
 	service, err = NewNode(defaultConf)
-	assert.Nil(err)
-	assert.NotNil(service)
+	assert.NotNil(err)
+	assert.Nil(service)
+	assert.Equal(err, fmt.Errorf("init block syncer p2p failed"))
 
-	nodeService := service.(*Node)
-	assert.NotNil(nodeService.txpool)
-	assert.NotNil(nodeService.participates)
-	assert.NotNil(nodeService.txSwitch)
-	assert.NotNil(nodeService.blockSwitch)
-	assert.NotNil(nodeService.consensus)
-	assert.NotNil(nodeService.config)
-	assert.NotNil(nodeService.role)
-	assert.Nil(nodeService.producer)
-	assert.Nil(nodeService.validator)
-	event := nodeService.eventCenter.(*events.Event)
-	assert.Equal(6, len(event.Subscribers))
+	monkey.Patch(p2p.NewP2P, func(*p2pConfig.P2PConfig, types.EventCenter) (*p2p.P2P, error) {
+		return nil, nil
+	})
+	monkey.Patch(syncer.NewBlockSyncer, func(p2p.P2PAPI, chan<- interface{}, types.EventCenter) (*syncer.BlockSyncer, error) {
+		return nil, fmt.Errorf("new block syncer failed")
+	})
+	service, err = NewNode(defaultConf)
+	assert.NotNil(err)
+	assert.Nil(service)
+	assert.Equal(err, fmt.Errorf("init block syncer failed"))
 
+	monkey.Patch(syncer.NewBlockSyncer, func(p2p.P2PAPI, chan<- interface{}, types.EventCenter) (*syncer.BlockSyncer, error) {
+		return nil, nil
+	})
+	monkey.Patch(propagator.NewBlockPropagator, func(p2p.P2PAPI, chan<- interface{}, types.EventCenter) (*propagator.BlockPropagator, error) {
+		return nil, nil
+	})
 	monkey.Patch(galaxy.NewGalaxyPlugin, func(galaxyCommon.GalaxyPluginConf) (*galaxyCommon.GalaxyPlugin, error) {
 		return nil, fmt.Errorf("error of NewGalaxyPlugin")
 	})
 	service, err = NewNode(defaultConf)
 	assert.Equal(err, fmt.Errorf("init galaxy plugin failed with error error of NewGalaxyPlugin"))
 	assert.NotNil(service)
-	monkey.Unpatch(galaxy.NewGalaxyPlugin)
 
+	monkey.Patch(galaxy.NewGalaxyPlugin, func(galaxyCommon.GalaxyPluginConf) (*galaxyCommon.GalaxyPlugin, error) {
+		return nil, nil
+	})
 	nodeConf := config.NewNodeConfig()
 	monkey.Patch(config.NewNodeConfig, func() config.NodeConfig {
 		nodeConf.NodeType = justitiaCommon.FullNode
 		return nodeConf
 	})
 	service, err = NewNode(defaultConf)
-	nodeService = service.(*Node)
-	event = nodeService.eventCenter.(*events.Event)
+	nodeService := service.(*Node)
+	event := nodeService.eventCenter.(*events.Event)
 	assert.Equal(1, len(event.Subscribers))
-	assert.Nil(nodeService.participates)
-	assert.Nil(nodeService.consensus)
-	assert.Nil(nodeService.role)
+	assert.NotNil(service)
+	monkey.Unpatch(blockchain.InitBlockChain)
+	monkey.UnpatchInstanceMethod(reflect.TypeOf(op), "BindToPort")
+	monkey.Unpatch(p2p.NewP2P)
+	monkey.Unpatch(syncer.NewBlockSyncer)
+	monkey.Unpatch(propagator.NewBlockPropagator)
+	monkey.Unpatch(galaxy.NewGalaxyPlugin)
+	monkey.Unpatch(InitLog)
 	monkey.Unpatch(config.NewNodeConfig)
 	monkey.Unpatch(config.GetLogSetting)
-	monkey.Unpatch(InitLog)
 }
 
 func TestNode_Start(t *testing.T) {
 	assert := assert.New(t)
-	monkey.Patch(log.Error, func(mtmsg string, a ...interface{}) {
-		return
-	})
-	monkey.Patch(log.Info, func(mtmsg string, a ...interface{}) {
-		return
-	})
-	monkey.Patch(log.Debug, func(mtmsg string, a ...interface{}) {
-		return
-	})
-	monkey.Patch(log.Warn, func(mtmsg string, a ...interface{}) {
+	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
 		return
 	})
 	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
 		return log.Config{}
 	})
-	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
-		return
-	})
 	monkey.Patch(blockchain.InitBlockChain, func(blockchainc.BlockChainConfig, types.EventCenter) error {
 		return nil
+	})
+	monkey.Patch(syncer.NewBlockSyncer, func(p2p.P2PAPI, chan<- interface{}, types.EventCenter) (*syncer.BlockSyncer, error) {
+		return nil, nil
 	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
 	assert.NotNil(service)
 	var ch = make(chan int)
+	monkey.Patch(apigateway.StartRPC, func(string) ([]net.Listener, error) {
+		return make([]net.Listener, 0), nil
+	})
+	var c *solo.SoloPolicy
+	monkey.PatchInstanceMethod(reflect.TypeOf(c), "Start", func(*solo.SoloPolicy) {
+		return
+	})
+	var p *p2p.P2P
+	monkey.PatchInstanceMethod(reflect.TypeOf(p), "Start", func(*p2p.P2P) error {
+		return nil
+	})
+	monkey.PatchInstanceMethod(reflect.TypeOf(p), "Stop", func(*p2p.P2P) {
+		return
+	})
+	var s *syncer.BlockSyncer
+	monkey.PatchInstanceMethod(reflect.TypeOf(s), "Start", func(*syncer.BlockSyncer) error {
+		return nil
+	})
+	monkey.PatchInstanceMethod(reflect.TypeOf(s), "Stop", func(*syncer.BlockSyncer) {
+		return
+	})
+	var pb *propagator.BlockPropagator
+	monkey.PatchInstanceMethod(reflect.TypeOf(pb), "Start", func(*propagator.BlockPropagator) error {
+		return nil
+	})
+	monkey.PatchInstanceMethod(reflect.TypeOf(pb), "Stop", func(*propagator.BlockPropagator) {
+		return
+	})
+	var pt *propagator.TxPropagator
+	monkey.PatchInstanceMethod(reflect.TypeOf(pt), "Start", func(*propagator.TxPropagator) error {
+		return nil
+	})
+	monkey.PatchInstanceMethod(reflect.TypeOf(pt), "Stop", func(*propagator.TxPropagator) {
+		return
+	})
 	go func() {
-		monkey.Patch(log.Error, func(mtmsg string, a ...interface{}) {
-			return
-		})
-		monkey.Patch(log.Info, func(mtmsg string, a ...interface{}) {
-			return
-		})
-		monkey.Patch(log.Debug, func(mtmsg string, a ...interface{}) {
-			return
-		})
-		monkey.Patch(log.Warn, func(mtmsg string, a ...interface{}) {
-			return
-		})
-		monkey.Patch(log.SetGlobalConfig, func(config *log.Config) {
-			return
-		})
-		monkey.Patch(apigateway.StartRPC, func(string) ([]net.Listener, error) {
-			return make([]net.Listener, 0), nil
-		})
-		var c *solo.SoloPolicy
-		monkey.PatchInstanceMethod(reflect.TypeOf(c), "Start", func(*solo.SoloPolicy) {
-			return
-		})
-		var p *p2p.P2P
-		monkey.PatchInstanceMethod(reflect.TypeOf(p), "Start", func(*p2p.P2P) error {
-			return nil
-		})
-		monkey.PatchInstanceMethod(reflect.TypeOf(p), "Stop", func(*p2p.P2P) {
-			return
-		})
-		var s *syncer.BlockSyncer
-		monkey.PatchInstanceMethod(reflect.TypeOf(s), "Start", func(*syncer.BlockSyncer) error {
-			return nil
-		})
-		monkey.PatchInstanceMethod(reflect.TypeOf(s), "Stop", func(*syncer.BlockSyncer) {
-			return
-		})
-		var pb *propagator.BlockPropagator
-		monkey.PatchInstanceMethod(reflect.TypeOf(pb), "Start", func(*propagator.BlockPropagator) error {
-			return nil
-		})
-		monkey.PatchInstanceMethod(reflect.TypeOf(pb), "Stop", func(*propagator.BlockPropagator) {
-			return
-		})
-		var pt *propagator.TxPropagator
-		monkey.PatchInstanceMethod(reflect.TypeOf(pt), "Start", func(*propagator.TxPropagator) error {
-			return nil
-		})
-		monkey.PatchInstanceMethod(reflect.TypeOf(pt), "Stop", func(*propagator.TxPropagator) {
-			return
-		})
-
 		service.Start()
 		ch <- 1
 		nodeService := service.(*Node)
 		assert.NotNil(nodeService.rpcListeners)
 		assert.Equal(0, len(nodeService.rpcListeners))
-		monkey.Unpatch(apigateway.StartRPC)
-		monkey.UnpatchInstanceMethod(reflect.TypeOf(c), "Start")
-		monkey.UnpatchInstanceMethod(reflect.TypeOf(p), "Start")
-		monkey.UnpatchInstanceMethod(reflect.TypeOf(p), "Stop")
-		monkey.UnpatchInstanceMethod(reflect.TypeOf(s), "Start")
-		monkey.UnpatchInstanceMethod(reflect.TypeOf(s), "Stop")
-		monkey.UnpatchInstanceMethod(reflect.TypeOf(pb), "Start")
-		monkey.UnpatchInstanceMethod(reflect.TypeOf(pb), "Stop")
-		monkey.UnpatchInstanceMethod(reflect.TypeOf(pt), "Start")
-		monkey.UnpatchInstanceMethod(reflect.TypeOf(pt), "Stop")
-		monkey.UnpatchAll()
 	}()
 	<-ch
 	service.Stop()
+	monkey.UnpatchInstanceMethod(reflect.TypeOf(c), "Start")
+	monkey.UnpatchInstanceMethod(reflect.TypeOf(p), "Start")
+	monkey.UnpatchInstanceMethod(reflect.TypeOf(p), "Stop")
+	monkey.UnpatchInstanceMethod(reflect.TypeOf(s), "Start")
+	monkey.UnpatchInstanceMethod(reflect.TypeOf(s), "Stop")
+	monkey.UnpatchInstanceMethod(reflect.TypeOf(pb), "Start")
+	monkey.UnpatchInstanceMethod(reflect.TypeOf(pb), "Stop")
+	monkey.UnpatchInstanceMethod(reflect.TypeOf(pt), "Start")
+	monkey.UnpatchInstanceMethod(reflect.TypeOf(pt), "Stop")
 	monkey.UnpatchAll()
 }
 
@@ -321,6 +301,9 @@ func TestNode_Round(t *testing.T) {
 	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
 		return log.Config{}
 	})
+	monkey.Patch(syncer.NewBlockSyncer, func(p2p.P2PAPI, chan<- interface{}, types.EventCenter) (*syncer.BlockSyncer, error) {
+		return nil, nil
+	})
 	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
 		return
 	})
@@ -375,6 +358,9 @@ func TestNode_Round(t *testing.T) {
 
 func TestNode_NextRound(t *testing.T) {
 	assert := assert.New(t)
+	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
+		return log.Config{}
+	})
 	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
 		return log.Config{}
 	})

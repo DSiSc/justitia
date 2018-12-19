@@ -31,7 +31,7 @@ type RPCResponse struct {
 var (
 	client    = &http.Client{}
 	endpoints []string
-	port string
+	port      string
 )
 
 // main process goes here.
