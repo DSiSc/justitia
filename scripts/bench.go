@@ -29,8 +29,9 @@ type RPCResponse struct {
 }
 
 var (
-	client   = &http.Client{}
-	endpoint string
+	client    = &http.Client{}
+	endpoints []string
+	port string
 )
 
 // main process goes here.
@@ -44,11 +45,12 @@ func main() {
 	// flagSet handles command flags.
 	//////////////////////////////////
 	flagSet := flag.NewFlagSet("jt-bench", flag.ExitOnError)
-	flagSet.UintVar(&durationInt, "t", 60, "Exit after the specified amount of time in seconds(0 means forever)")
-	flagSet.UintVar(&txsRate, "r", 200, "Txs per second to send in a connection")
-	flagSet.BoolVar(&verbose, "v", false, "Verbose output")
-	flagSet.BoolVar(&showHelp, "h", false, "Display help")
-	flagSet.BoolVar(&random, "R", false, "Random number of tx")
+	flagSet.UintVar(&durationInt, "t", 60, "Exit after the specified amount of time in seconds(0 means forever).")
+	flagSet.UintVar(&txsRate, "r", 200, "Txs per second to send in a connection.")
+	flagSet.StringVar(&port, "p", "47768", "Port of api gateway (default to 47768).")
+	flagSet.BoolVar(&verbose, "v", false, "Verbose output.")
+	flagSet.BoolVar(&showHelp, "h", false, "Display help.")
+	flagSet.BoolVar(&random, "R", false, "Random number of tx.")
 	flagSet.BoolVar(&statistic, "s", false, "The switch of statistic and bench.")
 	flagSet.UintVar(&blockStart, "b", 1, "The number of starting statistics.")
 	flagSet.UintVar(&blockEnd, "e", 1, "The number of ending statistics.")
@@ -57,8 +59,8 @@ func main() {
 		fmt.Println(`Justitia blockchain benchmarking tool.
 
 Usage:
-    Send TXs:  go run bench.go [-t 60] [-r 200] [-R] [-v] [endpoint]
-    Statistic: go run bench.go -s -b 100 -e 200 [-v] [endpoint]
+    Send TXs:  go run bench.go [-t 60] [-r 200] [-p 47768] [-R] [-v] [host1,host2,host3,host4]
+    Statistic: go run bench.go -s -b 100 -e 200 [-p 47768] [-v] [host]
 
 Examples:
     There are two ways to use this tools.
@@ -66,7 +68,7 @@ Examples:
     First is to bench, simulate send 200 txs/s in 60 second
     It will output starting, ending block number and tps, bps at the same time.
 
-        go run bench.go -t 60 -r 200 -v http://127.0.0.1:47768
+        go run bench.go -t 60 -r 200 -v 192.168.1.100,192.168.1.101,192.168.1.102,192.168.1.103
 
         Or keep sending random number of tx forever
 
@@ -90,9 +92,9 @@ Examples:
 	}
 
 	if flagSet.NArg() == 0 {
-		endpoint = "http://127.0.0.1:47768"
+		endpoints = []string{"127.0.0.1"}
 	} else {
-		endpoint = flagSet.Arg(0)
+		endpoints = strings.Split(flagSet.Arg(0), ",")
 	}
 
 	//////////////////////////////////
@@ -205,7 +207,7 @@ func latestBlockNumber() int64 {
 // timestampOfBlockByNumber returns the time when specified block was created.
 func timestampOfBlockByNumber(blockNum int64) int64 {
 	reqData := fmt.Sprintf(`{"jsonrpc": "2.0", "method": "eth_getBlockByNumber", "id": 1, "params": ["0x%x", true]}`, blockNum)
-	resp, err := http.Post(endpoint, "application/json", strings.NewReader(reqData))
+	resp, err := http.Post(randomEndpoint(), "application/json", strings.NewReader(reqData))
 	if err != nil {
 		panic(nil)
 	}
@@ -214,6 +216,10 @@ func timestampOfBlockByNumber(blockNum int64) int64 {
 	bodystr := string(blob)
 	index := strings.Index(bodystr, "timestamp")
 	return hexstr2dec(bodystr[index+13 : index+23])
+}
+
+func randomEndpoint() string {
+	return "http://" + endpoints[rand.Intn(len(endpoints))] + ":" + port
 }
 
 // txNumOfBlock gets tx number of given block number.
@@ -237,6 +243,7 @@ func sendTXs(count int) {
 
 // doPost is a tool function used to talk to justitia API.
 func doPost(reqData string) *RPCResponse {
+	endpoint := randomEndpoint()
 	request, err := http.NewRequest("POST", endpoint, strings.NewReader(reqData))
 	if err != nil {
 		log.Error("New request error, please check.")
@@ -284,11 +291,11 @@ func hexstr2dec(hex string) int64 {
 // the start block, to the end time.
 func statisticBetweenBlock(beginningHeight int64, endingHeight int64) {
 
-	timeS := timestampOfBlockByNumber(beginningHeight)
-	timeE := timestampOfBlockByNumber(endingHeight)
-
 	log.Info(fmt.Sprintf("Beginning block height: %d", beginningHeight))
 	log.Info(fmt.Sprintf("Ending block height:    %d", endingHeight))
+
+	timeS := timestampOfBlockByNumber(beginningHeight)
+	timeE := timestampOfBlockByNumber(endingHeight)
 
 	log.Debug("Calculating...")
 	var totalTxNum int64

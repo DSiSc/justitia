@@ -26,12 +26,11 @@ import (
 	"github.com/DSiSc/producer"
 	"github.com/DSiSc/syncer"
 	"github.com/DSiSc/validator/tools/account"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	"io"
 	"net"
 	"reflect"
 	"testing"
-	"time"
 )
 
 var defaultConf = justitiaCommon.SysConfig{
@@ -48,10 +47,10 @@ func TestNewNode(t *testing.T) {
 		}
 		return nil, nil
 	})
-	monkey.Patch(log.AddAppender, func(appenderName string, output io.Writer, logLevel log.Level, format string, showCaller bool, showHostname bool) {
-		return
+	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
+		return log.Config{}
 	})
-	monkey.Patch(log.SetTimestampFormat, func(string) {
+	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
 		return
 	})
 	service, err := NewNode(defaultConf)
@@ -109,7 +108,7 @@ func TestNewNode(t *testing.T) {
 		assert.Nil(service)
 		assert.Equal(err, fmt.Errorf("consensus init failed"))
 		monkey.Unpatch(consensus.NewConsensus)
-	*/
+    */
 	service, err = NewNode(defaultConf)
 	assert.Nil(err)
 	assert.NotNil(service)
@@ -126,8 +125,6 @@ func TestNewNode(t *testing.T) {
 	assert.Nil(nodeService.validator)
 	event := nodeService.eventCenter.(*events.Event)
 	assert.Equal(6, len(event.Subscribers))
-	monkey.Unpatch(log.SetTimestampFormat)
-	monkey.Unpatch(log.AddAppender)
 
 	monkey.Patch(galaxy.NewGalaxyPlugin, func(galaxyCommon.GalaxyPluginConf) (*galaxyCommon.GalaxyPlugin, error) {
 		return nil, fmt.Errorf("error of NewGalaxyPlugin")
@@ -150,21 +147,53 @@ func TestNewNode(t *testing.T) {
 	assert.Nil(nodeService.consensus)
 	assert.Nil(nodeService.role)
 	monkey.Unpatch(config.NewNodeConfig)
+	monkey.Unpatch(config.GetLogSetting)
+	monkey.Unpatch(InitLog)
 }
 
 func TestNode_Start(t *testing.T) {
 	assert := assert.New(t)
-	monkey.Patch(log.AddAppender, func(appenderName string, output io.Writer, logLevel log.Level, format string, showCaller bool, showHostname bool) {
+	monkey.Patch(log.Error, func(mtmsg string, a ...interface{}) {
 		return
 	})
-	monkey.Patch(log.SetTimestampFormat, func(string) {
+	monkey.Patch(log.Info, func(mtmsg string, a ...interface{}) {
 		return
 	})
-
+	monkey.Patch(log.Debug, func(mtmsg string, a ...interface{}) {
+		return
+	})
+	monkey.Patch(log.Warn, func(mtmsg string, a ...interface{}) {
+		return
+	})
+	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
+		return log.Config{}
+	})
+	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
+		return
+	})
+	monkey.Patch(blockchain.InitBlockChain, func(blockchainc.BlockChainConfig, types.EventCenter) error {
+		return nil
+	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
 	assert.NotNil(service)
+	var ch = make(chan int)
 	go func() {
+		monkey.Patch(log.Error, func(mtmsg string, a ...interface{}) {
+			return
+		})
+		monkey.Patch(log.Info, func(mtmsg string, a ...interface{}) {
+			return
+		})
+		monkey.Patch(log.Debug, func(mtmsg string, a ...interface{}) {
+			return
+		})
+		monkey.Patch(log.Warn, func(mtmsg string, a ...interface{}) {
+			return
+		})
+		monkey.Patch(log.SetGlobalConfig, func(config *log.Config) {
+			return
+		})
 		monkey.Patch(apigateway.StartRPC, func(string) ([]net.Listener, error) {
 			return make([]net.Listener, 0), nil
 		})
@@ -202,6 +231,7 @@ func TestNode_Start(t *testing.T) {
 		})
 
 		service.Start()
+		ch <- 1
 		nodeService := service.(*Node)
 		assert.NotNil(nodeService.rpcListeners)
 		assert.Equal(0, len(nodeService.rpcListeners))
@@ -215,11 +245,11 @@ func TestNode_Start(t *testing.T) {
 		monkey.UnpatchInstanceMethod(reflect.TypeOf(pb), "Stop")
 		monkey.UnpatchInstanceMethod(reflect.TypeOf(pt), "Start")
 		monkey.UnpatchInstanceMethod(reflect.TypeOf(pt), "Stop")
+		monkey.UnpatchAll()
 	}()
-	time.Sleep(2 * time.Second)
+	<-ch
 	service.Stop()
-	monkey.Unpatch(log.AddAppender)
-	monkey.Unpatch(log.SetTimestampFormat)
+	monkey.UnpatchAll()
 }
 
 func TestNode_Restart(t *testing.T) {
@@ -288,11 +318,18 @@ var mockAccounts = []account.Account{
 
 func TestNode_Round(t *testing.T) {
 	assert := assert.New(t)
-	monkey.Patch(log.AddAppender, func(appenderName string, output io.Writer, logLevel log.Level, format string, showCaller bool, showHostname bool) {
+	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
+		return log.Config{}
+	})
+	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
 		return
 	})
-	monkey.Patch(log.SetTimestampFormat, func(string) {
-		return
+	monkey.Patch(blockchain.InitBlockChain, func(blockchainc.BlockChainConfig, types.EventCenter) error {
+		return nil
+	})
+	var op *port.OutPort
+	monkey.PatchInstanceMethod(reflect.TypeOf(op), "BindToPort", func(*port.OutPort, port.OutPutFunc) error {
+		return nil
 	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
@@ -333,14 +370,15 @@ func TestNode_Round(t *testing.T) {
 		return fmt.Errorf("consensus failed")
 	})
 	node.Round()
+	monkey.UnpatchAll()
 }
 
 func TestNode_NextRound(t *testing.T) {
 	assert := assert.New(t)
-	monkey.Patch(log.AddAppender, func(appenderName string, output io.Writer, logLevel log.Level, format string, showCaller bool, showHostname bool) {
-		return
+	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
+		return log.Config{}
 	})
-	monkey.Patch(log.SetTimestampFormat, func(string) {
+	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
 		return
 	})
 	var op *port.OutPort
@@ -380,4 +418,5 @@ func TestNode_NextRound(t *testing.T) {
 	node.consensus = bft1
 	node.NextRound(justitiaCommon.MsgBlockCommitSuccess)
 	monkey.UnpatchAll()
+	monkey.UnpatchInstanceMethod(reflect.TypeOf(op), "BindToPort")
 }

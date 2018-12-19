@@ -100,6 +100,8 @@ func (e *Event) NotifyAll() (errs []error) {
 
 // unsubscribe all event and subscriber elegant
 func (e *Event) UnSubscribeAll() {
+	e.m.Lock()
+	defer e.m.Unlock()
 	for eventtype, _ := range e.Subscribers {
 		subs, ok := e.Subscribers[eventtype]
 		if !ok {

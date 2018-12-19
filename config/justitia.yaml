@@ -8,77 +8,77 @@
 ################################################################################
 general:
 
-    # Node type,  which in { 0: UnknownNode, 1: ConsensusNode, 2: FullNode, 3:LightNode, 4:MaxNodeType}
-    nodeType: 1
+  # Node type,  which in { 0: UnknownNode, 1: ConsensusNode, 2: FullNode, 3:LightNode, 4:MaxNodeType}
+  nodeType: 1
 
-    # Operational algorithm: "SHA256", "Keccak512", "Keccak256", "SM3"
-    hashAlgorithm: SHA256
+  # Operational algorithm: "SHA256", "Keccak512", "Keccak256", "SM3"
+  hashAlgorithm: SHA256
 
-    # Api gateway for api
-    apigateway: tcp://0.0.0.0:47768
+  # Api gateway for api
+  apigateway: tcp://0.0.0.0:47768
 
-    # Node info, specified node information
-    node:
-        address: 333c3310824b7c685133f2bedb2ca4b8b4df633d
-        id: 0
-        url: 127.0.0.1:8080
+  # Node info, specified node information
+  node:
+    address: 333c3310824b7c685133f2bedb2ca4b8b4df633d
+    id: 0
+    url: 127.0.0.1:8080
 
-    # Block chain setting
-    # Operational plugin: memorydb or leveldb
-    # When leveldb is choose, define statepath and datapath in absolute path
-    blockchain:
-        plugin: memorydb
-        statepath: /var/lib/justitia/state
-        datapath: /var/lib/justitia/block
+  # Block chain setting
+  # Operational plugin: memorydb or leveldb
+  # When leveldb is choose, define statepath and datapath in absolute path
+  blockchain:
+    plugin: memorydb
+    statepath: /var/lib/justitia/state
+    datapath: /var/lib/justitia/block
 
-    # Tx pool setting
-    txpool:
-        globalslots: 4096
-        txsPerBlock: 512
+  # Tx pool setting
+  txpool:
+    globalslots: 4096
+    txsPerBlock: 512
 
-    # Participates setting
-    # Operational policy: solo, dpos
-    participates:
-        policy: solo
-        participates: 4
+  # Participates setting
+  # Operational policy: solo, dpos
+  participates:
+    policy: solo
+    participates: 4
 
-    # Role setting
-    # Operational policy: solo, dpos
-    role:
-        policy: solo
+  # Role setting
+  # Operational policy: solo, dpos
+  role:
+    policy: solo
 
-    # Consensus setting
-    # Operational policy: solo, bft
-    # Timeout for one consensus
-    consensus:
-        policy: solo
-        timeout: 10
+  # Consensus setting
+  # Operational policy: solo, bft
+  # Timeout for one consensus
+  consensus:
+    policy: solo
+    timeout: 10
 
-    # Block produce interval for solo mode in Millisecond
-    soloModeBlockProducedInterval: 2000
+  # Block produce interval for solo mode in Millisecond
+  soloModeBlockProducedInterval: 2000
 
-    # p2p setting
-    # Operational plugin: memorydb or leveldb
-    # When leveldb is choose, define statepath and datapath in absolute path
-    p2p:
-        blockSyncer:
-          AddrBookFilePath: /var/log/justitia/syncer_address.json
-          ListenAddress:  tcp://0.0.0.0:46660
-          MaxConnOutBound:  24
-          MaxConnInBound: 24
-          PersistentPeers:
-        block:
-          AddrBookFilePath: /var/log/justitia/block_address.json
-          ListenAddress:  tcp://0.0.0.0:46661
-          MaxConnOutBound:  24
-          MaxConnInBound: 24
-          PersistentPeers:
-        tx:
-          AddrBookFilePath: /var/log/justitia/tx_address.json
-          ListenAddress:  tcp://0.0.0.0:46662
-          MaxConnOutBound:  24
-          MaxConnInBound: 24
-          PersistentPeers:
+  # p2p setting
+  # Operational plugin: memorydb or leveldb
+  # When leveldb is choose, define statepath and datapath in absolute path
+  p2p:
+    blockSyncer:
+      AddrBookFilePath: /var/log/justitia/syncer_address.json
+      ListenAddress:  tcp://0.0.0.0:46660
+      MaxConnOutBound:  24
+      MaxConnInBound: 24
+      PersistentPeers:
+    block:
+      AddrBookFilePath: /var/log/justitia/block_address.json
+      ListenAddress:  tcp://0.0.0.0:46661
+      MaxConnOutBound:  24
+      MaxConnInBound: 24
+      PersistentPeers:
+    tx:
+      AddrBookFilePath: /var/log/justitia/tx_address.json
+      ListenAddress:  tcp://0.0.0.0:46662
+      MaxConnOutBound:  24
+      MaxConnInBound: 24
+      PersistentPeers:
 
 ################################################################################
 #
@@ -89,16 +89,20 @@ general:
 ################################################################################
 monitor:
 
-    # The prometheus setting
-    prometheus:
-        enabled: true
-        port: 47780
-        maxOpenConnections: 3
+  # The prometheus setting
+  prometheus:
+    enabled: true
+    port: 47780
+    maxOpenConnections: 3
 
-    expvar:
-        enabled: true
-        port: 6060
-        path: /debug/vars
+  expvar:
+    enabled: true
+    port: 6060
+    path: /debug/vars
+
+  pprof:
+    enabled: true
+    port: 6666
 
 
 ################################################################################
@@ -110,20 +114,30 @@ monitor:
 ################################################################################
 logging:
 
-    # Define log output file path, in absolute path
-    path: /var/log/justitia/justitia.log
+  # Define the timestamp field format globally
+  timeFieldFormat: "2006-01-02 15:04:05.000"
 
+  console:
+    enabled: true
     # Define log level, which in { 0: debug, 1: info, 2: warn, 3: error, 4: fatal, 5: panic, 6: disable}
     level: 1
-
     # Define log print formation, which is json ot text
-    format: json
-
+    format: text
     # Define whether to show caller info in log output
     caller: true
+    # Define whether to show hostname info in log output
+    hostname: false
 
+
+  file:
+    enabled: true
+    # Define log output file path, in absolute path
+    path: /var/log/justitia/justitia.log
+    # Define log level, which in { 0: debug, 1: info, 2: warn, 3: error, 4: fatal, 5: panic, 6: disable}
+    level: 1
+    # Define log print formation, which is json ot text
+    format: text
+    # Define whether to show caller info in log output
+    caller: true
     # Define whether to show hostname info in log output
     hostname: true
-
-    # Define the timestamp filed format
-    timeFieldFormat: "2006-01-02 15:04:05.000"

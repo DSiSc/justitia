@@ -30,6 +30,7 @@ import (
 	"github.com/DSiSc/validator"
 	"github.com/DSiSc/validator/tools/account"
 	"net"
+	"os"
 	"sync"
 	"time"
 )
@@ -67,26 +68,23 @@ type Node struct {
 
 func InitLog(args common.SysConfig, conf config.NodeConfig) {
 	var logPath = args.LogPath
-	if common.BlankString == logPath {
-		logPath = conf.Logger.Output
+	if common.BlankString != logPath {
+		logfile, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
+		if err != nil {
+			panic(err)
+		}
+		conf.Logger.Appenders["filelog"].Output = logfile
 	}
 	var logFormat = args.LogStyle
-	if common.BlankString == logFormat {
-		logFormat = conf.Logger.Format
+	if common.BlankString != logFormat {
+		conf.Logger.Appenders["filelog"].Format = logFormat
 	}
 	var logLevel = args.LogLevel
-	if common.InvalidInt == int(logLevel) {
-		logLevel = log.Level(conf.Logger.LogLevel)
+	if common.InvalidInt != int(logLevel) {
+		conf.Logger.Appenders["filelog"].LogLevel= log.Level(uint8(logLevel))
 	}
 
-	log.SetTimestampFormat(conf.Logger.TimeFieldFormat)
-	log.AddFileAppender(
-		"filelog",
-		logPath,
-		logLevel,
-		logFormat,
-		conf.Logger.ShowCaller,
-		conf.Logger.ShowHostname)
+	log.SetGlobalConfig(&conf.Logger)
 }
 
 func NewNode(args common.SysConfig) (NodeService, error) {
@@ -409,6 +407,7 @@ func (self *Node) Start() {
 	self.startTxPropagator()
 	monitor.StartPrometheusServer(self.config.PrometheusConf)
 	monitor.StartExpvarServer(self.config.ExpvarConf)
+	monitor.StartPprofServer(self.config.PprofConf)
 	if self.config.NodeType == common.ConsensusNode {
 		go self.consensus.Start()
 		go self.mainLoop()
