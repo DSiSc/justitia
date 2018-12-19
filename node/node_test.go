@@ -82,14 +82,6 @@ func TestNewNode(t *testing.T) {
 
 	var op *port.OutPort
 	monkey.PatchInstanceMethod(reflect.TypeOf(op), "BindToPort", func(_ *port.OutPort, _ port.OutPutFunc) error {
-		return fmt.Errorf("bind error")
-	})
-	service, err = NewNode(defaultConf)
-	assert.NotNil(err)
-	assert.Nil(service)
-	assert.Equal(err, fmt.Errorf("registe txpool failed"))
-
-	monkey.PatchInstanceMethod(reflect.TypeOf(op), "BindToPort", func(_ *port.OutPort, _ port.OutPutFunc) error {
 		return nil
 	})
 	monkey.Patch(blockchain.InitBlockChain, func(blockchainc.BlockChainConfig, types.EventCenter) error {
@@ -214,10 +206,10 @@ func TestNode_Start(t *testing.T) {
 	})
 	go func() {
 		service.Start()
-		ch <- 1
 		nodeService := service.(*Node)
 		assert.NotNil(nodeService.rpcListeners)
 		assert.Equal(0, len(nodeService.rpcListeners))
+		ch <- 1
 	}()
 	<-ch
 	service.Stop()
@@ -460,5 +452,70 @@ func TestNode_Wait(t *testing.T) {
 		node.serviceChannel <- uint8(1)
 	}()
 	node.Wait()
+	monkey.UnpatchAll()
+}
+
+func TestNewNode2(t *testing.T) {
+	assert := assert.New(t)
+	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
+		return log.Config{}
+	})
+	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
+		return log.Config{}
+	})
+	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
+		return
+	})
+	service, err := NewNode(defaultConf)
+	assert.Nil(err)
+	node := service.(*Node)
+	node.eventsRegister()
+	go func() {
+		err := node.eventCenter.Notify(types.EventBlockCommitted, nil)
+		assert.Nil(err)
+	}()
+	ch := <-node.msgChannel
+	assert.Equal(justitiaCommon.MsgBlockCommitSuccess, ch)
+	monkey.UnpatchAll()
+}
+
+func MockNewTrans() []*types.Transaction {
+	txs := make([]*types.Transaction, 0, 11)
+	var tx *types.Transaction
+	for i := 0; i < 11; i++ {
+		tx = &types.Transaction{
+			Data: types.TxData{
+				AccountNonce: uint64(i),
+			},
+		}
+		txs = append(txs, tx)
+	}
+	return txs
+}
+
+func TestNewNode3(t *testing.T) {
+	assert := assert.New(t)
+	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
+		return log.Config{}
+	})
+	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
+		return log.Config{}
+	})
+	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
+		return
+	})
+	service, err := NewNode(defaultConf)
+	assert.Nil(err)
+	node := service.(*Node)
+	node.eventsRegister()
+	block := &types.Block{
+		Header: &types.Header{
+			Height: uint64(1),
+		},
+		Transactions: make([]*types.Transaction, 0),
+	}
+	node.config.NodeType = justitiaCommon.FullNode
+	err = node.eventCenter.Notify(types.EventBlockCommitted, block)
+	assert.Nil(err)
 	monkey.UnpatchAll()
 }
