@@ -26,6 +26,7 @@ func TestSignalSet_RegisterSysSignal(t *testing.T) {
 	ss.RegisterSysSignal(syscall.SIGINT, sigintHandler)
 	handler := ss.m[syscall.SIGINT]
 	assert.NotNil(handler)
+	ss.RegisterSysSignal(syscall.SIGINT, sigintHandler)
 }
 
 /*

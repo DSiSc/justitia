@@ -22,85 +22,85 @@ import (
 
 const (
 	// config file prefix
-	CONFIG_PREFIX = "justitia"
+	ConfigPrefix = "justitia"
 	// node type
 	NodeType = "general.nodeType"
 	// algorithm setting
-	HASH_ALGORITHM = "general.hashAlgorithm"
+	HashAlgorithm = "general.hashAlgorithm"
 	// txpool setting
-	TXPOOL_SLOTS  = "general.txpool.globalslots"
-	MAX_TXS_BLOCK = "general.txpool.txsPerBlock"
+	TxpoolSlots = "general.txpool.globalslots"
+	MaxTxBlock  = "general.txpool.txsPerBlock"
 	// consensus policy setting
-	CONSENSUS_POLICY    = "general.consensus.policy"
-	CONSENSUS_TIMEOUT   = "general.consensus.timeout"
-	PARTICIPATES_POLICY = "general.participates.policy"
-	PARTICIPATES_NUMBER = "general.participates.participates"
-	ROLE_POLICY         = "general.role.policy"
+	ConsensusPolicy    = "general.consensus.policy"
+	ConsensusTimeout   = "general.consensus.timeout"
+	ParticipatesPolicy = "general.participates.policy"
+	ParticipatesNumber = "general.participates.participates"
+	RolePolicy         = "general.role.policy"
 	// node info
-	NODE_ADDRESS = "general.node.address"
-	NODE_ID      = "general.node.id"
-	NODE_URL     = "general.node.url"
+	NodeAddress = "general.node.address"
+	NodeId      = "general.node.id"
+	NodeUrl     = "general.node.url"
 	// block chain
-	BLOCK_CHAIN_PLUGIN     = "general.blockchain.plugin"
-	BLOCK_CHAIN_STATE_PATH = "general.blockchain.statePath"
-	BLOCK_CHAIN_DATA_PATH  = "general.blockchain.dataPath"
+	BlockChainPlugin    = "general.blockchain.plugin"
+	BlockChainStatePath = "general.blockchain.statePath"
+	BlockChainDataPath  = "general.blockchain.dataPath"
 	// api gateway
-	API_GATEWAY_TCP_ADDR = "general.apigateway"
+	ApiGatewayAddr = "general.apigateway"
 	// Default parameter for solo block producer
-	SOLO_TEST_BLOCK_PRODUCER_INTERVAL = "general.soloModeBlockProducedInterval"
+	SoloModeProducerInterval = "general.soloModeBlockProducedInterval"
 
 	//P2P Setting
 	// block syncer p2p config
-	BLOCK_SYNCER_P2P                  = "block_syncer_p2p"
-	P2P_BLOCK_SYNCER_ADDR_BOOK        = "general.p2p.blockSyncer.AddrBookFilePath"
-	P2P_BLOCK_SYNCER_LISTEN_ADDR      = "general.p2p.blockSyncer.ListenAddress"
-	P2P_BLOCK_SYNCER_MAX_OUT          = "general.p2p.blockSyncer.MaxConnOutBound"
-	P2P_BLOCK_SYNCER_MAX_IN           = "general.p2p.blockSyncer.MaxConnInBound"
-	P2P_BLOCK_SYNCER_PERSISTENT_PEERS = "general.p2p.blockSyncer.PersistentPeers"
+	BlockSyncerP2p                = "block_syncer_p2p"
+	P2pBlockSyncerAddrBook        = "general.p2p.blockSyncer.AddrBookFilePath"
+	P2pBlockSyncerListenAddr      = "general.p2p.blockSyncer.ListenAddress"
+	P2pBlockSyncerMaxOut          = "general.p2p.blockSyncer.MaxConnOutBound"
+	P2pBlockSyncerMaxIn           = "general.p2p.blockSyncer.MaxConnInBound"
+	P2pBlockSyncerPersistentPeers = "general.p2p.blockSyncer.PersistentPeers"
 
 	// block p2p config
-	BLOCK_P2P                  = "block_p2p"
-	P2P_BLOCK_ADDR_BOOK        = "general.p2p.block.AddrBookFilePath"
-	P2P_BLOCK_LISTEN_ADDR      = "general.p2p.block.ListenAddress"
-	P2P_BLOCK_MAX_OUT          = "general.p2p.block.MaxConnOutBound"
-	P2P_BLOCK_MAX_IN           = "general.p2p.block.MaxConnInBound"
-	P2P_BLOCK_PERSISTENT_PEERS = "general.p2p.block.PersistentPeers"
+	BlockP2p                = "block_p2p"
+	P2pBlockAddrBook        = "general.p2p.block.AddrBookFilePath"
+	P2pBlockListenAddr      = "general.p2p.block.ListenAddress"
+	P2pBlockMaxOut          = "general.p2p.block.MaxConnOutBound"
+	P2pBlockMaxIn           = "general.p2p.block.MaxConnInBound"
+	P2pBlockPersistentPeers = "general.p2p.block.PersistentPeers"
 
 	// tx p2p config
-	TX_P2P                  = "tx_p2p"
-	P2P_TX_ADDR_BOOK        = "general.p2p.tx.AddrBookFilePath"
-	P2P_TX_LISTEN_ADDR      = "general.p2p.tx.ListenAddress"
-	P2P_TX_MAX_OUT          = "general.p2p.tx.MaxConnOutBound"
-	P2P_TX_MAX_IN           = "general.p2p.tx.MaxConnInBound"
-	P2P_TX_PERSISTENT_PEERS = "general.p2p.tx.PersistentPeers"
+	TxP2p                = "tx_p2p"
+	P2pTxAddrBook        = "general.p2p.tx.AddrBookFilePath"
+	P2pTxListenAddr      = "general.p2p.tx.ListenAddress"
+	P2pTxMaxOut          = "general.p2p.tx.MaxConnOutBound"
+	P2pTxMaxIn           = "general.p2p.tx.MaxConnInBound"
+	P2pTxPersistentPeers = "general.p2p.tx.PersistentPeers"
 
 	// prometheus
-	PROMETHEUS_ENABLED  = "monitor.prometheus.enabled"
-	PROMETHEUS_PORT     = "monitor.prometheus.port"
-	PROMETHEUS_MAX_CONN = "monitor.prometheus.maxOpenConnections"
+	PrometheusEnabled = "monitor.prometheus.enabled"
+	PrometheusPort    = "monitor.prometheus.port"
+	PrometheusMaxConn = "monitor.prometheus.maxOpenConnections"
 
 	// Expvar
-	EXPVAR_ENABLED = "monitor.expvar.enabled"
-	EXPVAR_PORT    = "monitor.expvar.port"
-	EXPVAR_PATH    = "monitor.expvar.path"
+	ExpvarEnabled = "monitor.expvar.enabled"
+	ExpvarPort    = "monitor.expvar.port"
+	ExpvarPath    = "monitor.expvar.path"
 
 	// pprof
-	PPROF_ENABLED = "monitor.pprof.enabled"
-	PPROF_PORT    = "monitor.pprof.port"
+	PprofEnabled = "monitor.pprof.enabled"
+	PprofPort    = "monitor.pprof.port"
 
 	// Log Setting
-	LOG_TIMEFIELDFORMAT  = "logging.timeFieldFormat"
-	LOG_CONSOLE_ENABLED  = "logging.console.enabled"
-	LOG_CONSOLE_LEVEL    = "logging.console.level"
-	LOG_CONSOLE_FORMAT   = "logging.console.format"
-	LOG_CONSOLE_CALLER   = "logging.console.caller"
-	LOG_CONSOLE_HOSTNAME = "logging.console.hostname"
-	LOG_FILE_ENABLED     = "logging.file.enabled"
-	LOG_FILE_PATH        = "logging.file.path"
-	LOG_FILE_LEVEL       = "logging.file.level"
-	LOG_FILE_FORMAT      = "logging.file.format"
-	LOG_FILE_CALLER      = "logging.file.caller"
-	LOG_FILE_HOSTNAME    = "logging.file.hostname"
+	LogTimeFieldFormat = "logging.timeFieldFormat"
+	LogConsoleEnabled  = "logging.console.enabled"
+	LogConsoleLevel    = "logging.console.level"
+	LogConsoleFormat   = "logging.console.format"
+	LogConsoleCaller   = "logging.console.caller"
+	LogConsoleHostname = "logging.console.hostname"
+	LogFileEnabled     = "logging.file.enabled"
+	LogFilePath        = "logging.file.path"
+	LogFileLevel       = "logging.file.level"
+	LogFileFormat      = "logging.file.format"
+	LogFileCaller      = "logging.file.caller"
+	LogFileHostname    = "logging.file.hostname"
 )
 
 type AlgorithmConfig struct {
@@ -151,7 +151,7 @@ type Config struct {
 func LoadConfig() (config *viper.Viper) {
 	config = viper.New()
 	// for environment variables
-	config.SetEnvPrefix(CONFIG_PREFIX)
+	config.SetEnvPrefix(ConfigPrefix)
 	config.AutomaticEnv()
 	replacer := strings.NewReplacer(".", "_")
 	config.SetEnvKeyReplacer(replacer)
@@ -210,7 +210,7 @@ func NewNodeConfig() NodeConfig {
 }
 
 func GetAlgorithmConf(config *viper.Viper) AlgorithmConfig {
-	policy := config.GetString(HASH_ALGORITHM)
+	policy := config.GetString(HashAlgorithm)
 	// TODO get sigure algotihm config
 	return AlgorithmConfig{
 		HashAlgorithm: policy,
@@ -218,8 +218,8 @@ func GetAlgorithmConf(config *viper.Viper) AlgorithmConfig {
 }
 
 func NewTxPoolConf(conf *viper.Viper) txpool.TxPoolConfig {
-	slots := conf.GetInt64(TXPOOL_SLOTS)
-	txPerBlock := conf.GetInt64(MAX_TXS_BLOCK)
+	slots := conf.GetInt64(TxpoolSlots)
+	txPerBlock := conf.GetInt64(MaxTxBlock)
 	txPoolConf := txpool.TxPoolConfig{
 		GlobalSlots:    uint64(slots),
 		MaxTrsPerBlock: uint64(txPerBlock),
@@ -228,8 +228,8 @@ func NewTxPoolConf(conf *viper.Viper) txpool.TxPoolConfig {
 }
 
 func NewParticipateConf(conf *viper.Viper) participatesc.ParticipateConfig {
-	policy := conf.GetString(PARTICIPATES_POLICY)
-	participates := conf.GetInt64(PARTICIPATES_NUMBER)
+	policy := conf.GetString(ParticipatesPolicy)
+	participates := conf.GetInt64(ParticipatesNumber)
 	participatesConf := participatesc.ParticipateConfig{
 		PolicyName: policy,
 		Delegates:  uint64(participates),
@@ -238,7 +238,7 @@ func NewParticipateConf(conf *viper.Viper) participatesc.ParticipateConfig {
 }
 
 func NewRoleConf(conf *viper.Viper) rolec.RoleConfig {
-	policy := conf.GetString(ROLE_POLICY)
+	policy := conf.GetString(RolePolicy)
 	roleConf := rolec.RoleConfig{
 		PolicyName: policy,
 	}
@@ -246,8 +246,8 @@ func NewRoleConf(conf *viper.Viper) rolec.RoleConfig {
 }
 
 func NewConsensusConf(conf *viper.Viper) consensusc.ConsensusConfig {
-	policy := conf.GetString(CONSENSUS_POLICY)
-	timeout := conf.GetInt64(CONSENSUS_TIMEOUT)
+	policy := conf.GetString(ConsensusPolicy)
+	timeout := conf.GetInt64(ConsensusTimeout)
 	consensusConf := consensusc.ConsensusConfig{
 		PolicyName: policy,
 		Timeout:    timeout,
@@ -256,9 +256,9 @@ func NewConsensusConf(conf *viper.Viper) consensusc.ConsensusConfig {
 }
 
 func NewBlockChainConf(conf *viper.Viper) blockchainc.BlockChainConfig {
-	policy := conf.GetString(BLOCK_CHAIN_PLUGIN)
-	dataPath := conf.GetString(BLOCK_CHAIN_DATA_PATH)
-	statePath := conf.GetString(BLOCK_CHAIN_STATE_PATH)
+	policy := conf.GetString(BlockChainPlugin)
+	dataPath := conf.GetString(BlockChainDataPath)
+	statePath := conf.GetString(BlockChainStatePath)
 	blockChainConf := blockchainc.BlockChainConfig{
 		PluginName:    policy,
 		StateDataPath: statePath,
@@ -268,15 +268,15 @@ func NewBlockChainConf(conf *viper.Viper) blockchainc.BlockChainConfig {
 }
 
 func GetApiGatewayTcpAddr(conf *viper.Viper) string {
-	apiGatewayAddr := conf.GetString(API_GATEWAY_TCP_ADDR)
+	apiGatewayAddr := conf.GetString(ApiGatewayAddr)
 	return apiGatewayAddr
 }
 
 func GetNodeAccount(conf *viper.Viper) account.Account {
-	nodeAddr := conf.GetString(NODE_ADDRESS)
+	nodeAddr := conf.GetString(NodeAddress)
 	address := tools.HexToAddress(nodeAddr)
-	id := conf.GetInt64(NODE_ID)
-	url := conf.GetString(NODE_URL)
+	id := conf.GetInt64(NodeId)
+	url := conf.GetString(NodeUrl)
 	return account.Account{
 		Address: address,
 		Extension: account.AccountExtension{
@@ -287,14 +287,14 @@ func GetNodeAccount(conf *viper.Viper) account.Account {
 }
 
 func GetBlockProducerInterval(conf *viper.Viper) int64 {
-	blockInterval := conf.GetInt64(SOLO_TEST_BLOCK_PRODUCER_INTERVAL)
+	blockInterval := conf.GetInt64(SoloModeProducerInterval)
 	return blockInterval
 }
 
 func GetPrometheusConf(conf *viper.Viper) monitor.PrometheusConfig {
-	enabled := conf.GetBool(PROMETHEUS_ENABLED)
-	prometheusPort := conf.GetString(PROMETHEUS_PORT)
-	prometheusMaxConn := conf.GetInt(PROMETHEUS_MAX_CONN)
+	enabled := conf.GetBool(PrometheusEnabled)
+	prometheusPort := conf.GetString(PrometheusPort)
+	prometheusMaxConn := conf.GetInt(PrometheusMaxConn)
 	return monitor.PrometheusConfig{
 		PrometheusEnabled: enabled,
 		PrometheusPort:    prometheusPort,
@@ -303,9 +303,9 @@ func GetPrometheusConf(conf *viper.Viper) monitor.PrometheusConfig {
 }
 
 func GetExpvarConf(conf *viper.Viper) monitor.ExpvarConfig {
-	enabled := conf.GetBool(EXPVAR_ENABLED)
-	prometheusPort := conf.GetString(EXPVAR_PORT)
-	ExpvarPath := conf.GetString(EXPVAR_PATH)
+	enabled := conf.GetBool(ExpvarEnabled)
+	prometheusPort := conf.GetString(ExpvarPort)
+	ExpvarPath := conf.GetString(ExpvarPath)
 	return monitor.ExpvarConfig{
 		ExpvarEnabled: enabled,
 		ExpvarPort:    prometheusPort,
@@ -314,8 +314,8 @@ func GetExpvarConf(conf *viper.Viper) monitor.ExpvarConfig {
 }
 
 func GetPprofConf(conf *viper.Viper) monitor.PprofConfig {
-	enabled := conf.GetBool(PPROF_ENABLED)
-	pprofPort := conf.GetString(PPROF_PORT)
+	enabled := conf.GetBool(PprofEnabled)
+	pprofPort := conf.GetString(PprofPort)
 	return monitor.PprofConfig{
 		PprofEnabled: enabled,
 		PprofPort:    pprofPort,
@@ -323,18 +323,18 @@ func GetPprofConf(conf *viper.Viper) monitor.PprofConfig {
 }
 
 func GetLogSetting(conf *viper.Viper) log.Config {
-	logTimestampFormat := conf.GetString(LOG_TIMEFIELDFORMAT)
-	logConsoleEnabled := conf.GetBool(LOG_CONSOLE_ENABLED)
-	logConsoleLevel := conf.GetInt(LOG_CONSOLE_LEVEL)
-	logConsoleFormat := conf.GetString(LOG_CONSOLE_FORMAT)
-	logConsoleCaller := conf.GetBool(LOG_CONSOLE_CALLER)
-	logConsoleHostname := conf.GetBool(LOG_CONSOLE_HOSTNAME)
-	logFileEnabled := conf.GetBool(LOG_FILE_ENABLED)
-	logFilePath := conf.GetString(LOG_FILE_PATH)
-	logFileLevel := conf.GetInt(LOG_FILE_LEVEL)
-	logFileFormat := conf.GetString(LOG_FILE_FORMAT)
-	logFileCaller := conf.GetBool(LOG_FILE_CALLER)
-	logFileHostname := conf.GetBool(LOG_FILE_HOSTNAME)
+	logTimestampFormat := conf.GetString(LogTimeFieldFormat)
+	logConsoleEnabled := conf.GetBool(LogConsoleEnabled)
+	logConsoleLevel := conf.GetInt(LogConsoleLevel)
+	logConsoleFormat := conf.GetString(LogTimeFieldFormat)
+	logConsoleCaller := conf.GetBool(LogConsoleCaller)
+	logConsoleHostname := conf.GetBool(LogConsoleHostname)
+	logFileEnabled := conf.GetBool(LogFileEnabled)
+	logFilePath := conf.GetString(LogFilePath)
+	logFileLevel := conf.GetInt(LogFileLevel)
+	logFileFormat := conf.GetString(LogFileFormat)
+	logFileCaller := conf.GetBool(LogFileCaller)
+	logFileHostname := conf.GetBool(LogFileHostname)
 
 	consoleAppender := &log.Appender{
 		LogLevel:     log.Level(logConsoleLevel),
@@ -376,18 +376,18 @@ func GetLogSetting(conf *viper.Viper) log.Config {
 
 func GetP2PConf(conf *viper.Viper) map[string]*p2pConf.P2PConfig {
 	p2pConfig := make(map[string]*p2pConf.P2PConfig)
-	p2pConfig[BLOCK_SYNCER_P2P] = getBlockSyncerP2PConf(conf)
-	p2pConfig[BLOCK_P2P] = getBlockP2PConf(conf)
-	p2pConfig[TX_P2P] = getTxP2PConf(conf)
+	p2pConfig[BlockSyncerP2p] = getBlockSyncerP2PConf(conf)
+	p2pConfig[BlockP2p] = getBlockP2PConf(conf)
+	p2pConfig[TxP2p] = getTxP2PConf(conf)
 	return p2pConfig
 }
 
 func getBlockSyncerP2PConf(conf *viper.Viper) *p2pConf.P2PConfig {
-	addrFile := conf.GetString(P2P_BLOCK_SYNCER_ADDR_BOOK)
-	listenAddr := conf.GetString(P2P_BLOCK_SYNCER_LISTEN_ADDR)
-	maxOut := conf.GetInt(P2P_BLOCK_SYNCER_MAX_OUT)
-	maxIn := conf.GetInt(P2P_BLOCK_SYNCER_MAX_IN)
-	persistentPeers := conf.GetString(P2P_BLOCK_SYNCER_PERSISTENT_PEERS)
+	addrFile := conf.GetString(P2pBlockSyncerAddrBook)
+	listenAddr := conf.GetString(P2pBlockListenAddr)
+	maxOut := conf.GetInt(P2pBlockMaxIn)
+	maxIn := conf.GetInt(P2pBlockMaxOut)
+	persistentPeers := conf.GetString(P2pBlockSyncerPersistentPeers)
 	return &p2pConf.P2PConfig{
 		AddrBookFilePath: addrFile,
 		ListenAddress:    listenAddr,
@@ -398,11 +398,11 @@ func getBlockSyncerP2PConf(conf *viper.Viper) *p2pConf.P2PConfig {
 }
 
 func getBlockP2PConf(conf *viper.Viper) *p2pConf.P2PConfig {
-	addrFile := conf.GetString(P2P_BLOCK_ADDR_BOOK)
-	listenAddr := conf.GetString(P2P_BLOCK_LISTEN_ADDR)
-	maxOut := conf.GetInt(P2P_BLOCK_MAX_OUT)
-	maxIn := conf.GetInt(P2P_BLOCK_MAX_IN)
-	persistentPeers := conf.GetString(P2P_BLOCK_PERSISTENT_PEERS)
+	addrFile := conf.GetString(P2pBlockAddrBook)
+	listenAddr := conf.GetString(P2pBlockListenAddr)
+	maxOut := conf.GetInt(P2pBlockMaxOut)
+	maxIn := conf.GetInt(P2pBlockMaxIn)
+	persistentPeers := conf.GetString(P2pBlockPersistentPeers)
 	return &p2pConf.P2PConfig{
 		AddrBookFilePath: addrFile,
 		ListenAddress:    listenAddr,
@@ -413,11 +413,11 @@ func getBlockP2PConf(conf *viper.Viper) *p2pConf.P2PConfig {
 }
 
 func getTxP2PConf(conf *viper.Viper) *p2pConf.P2PConfig {
-	addrFile := conf.GetString(P2P_TX_ADDR_BOOK)
-	listenAddr := conf.GetString(P2P_TX_LISTEN_ADDR)
-	maxOut := conf.GetInt(P2P_TX_MAX_OUT)
-	maxIn := conf.GetInt(P2P_TX_MAX_IN)
-	persistentPeers := conf.GetString(P2P_TX_PERSISTENT_PEERS)
+	addrFile := conf.GetString(P2pTxAddrBook)
+	listenAddr := conf.GetString(P2pTxListenAddr)
+	maxOut := conf.GetInt(P2pTxMaxIn)
+	maxIn := conf.GetInt(P2pTxMaxOut)
+	persistentPeers := conf.GetString(P2pTxPersistentPeers)
 	return &p2pConf.P2PConfig{
 		AddrBookFilePath: addrFile,
 		ListenAddress:    listenAddr,

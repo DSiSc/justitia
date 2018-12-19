@@ -117,7 +117,7 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 		log.Error("Init block chain failed.")
 		return nil, fmt.Errorf("blockchain init failed")
 	}
-	blockSyncerP2P, err := p2p.NewP2P(nodeConf.P2PConf[config.BLOCK_SYNCER_P2P], eventsCenter)
+	blockSyncerP2P, err := p2p.NewP2P(nodeConf.P2PConf[config.BlockSyncerP2p], eventsCenter)
 	if err != nil {
 		log.Error("Init block syncer p2p failed.")
 		return nil, fmt.Errorf("init block syncer p2p failed")
@@ -127,7 +127,7 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 		log.Error("Init block syncer failed.")
 		return nil, fmt.Errorf("init block syncer failed")
 	}
-	blockP2P, err := p2p.NewP2P(nodeConf.P2PConf[config.BLOCK_P2P], eventsCenter)
+	blockP2P, err := p2p.NewP2P(nodeConf.P2PConf[config.BlockP2p], eventsCenter)
 	if err != nil {
 		log.Error("Init block p2p failed.")
 		return nil, fmt.Errorf("init block p2p failed")
@@ -137,7 +137,7 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 		log.Error("Init block propagator failed.")
 		return nil, fmt.Errorf("init block propagator failed")
 	}
-	txP2P, err := p2p.NewP2P(nodeConf.P2PConf[config.TX_P2P], eventsCenter)
+	txP2P, err := p2p.NewP2P(nodeConf.P2PConf[config.TxP2p], eventsCenter)
 	if err != nil {
 		log.Error("Init tx p2p failed.")
 		return nil, fmt.Errorf("init tx p2p failed")

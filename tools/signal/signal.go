@@ -24,7 +24,7 @@ func (set *SignalSet) RegisterSysSignal(s os.Signal, handler signalHandler) {
 		set.m[s] = handler
 		return
 	}
-	log.Error("signal %v has register, please confirm", s)
+	log.Error("signal %v has register, please confirm.", s)
 }
 
 func (set *SignalSet) handle(sig os.Signal, arg interface{}) (err error) {
@@ -46,7 +46,7 @@ func (set *SignalSet) CatchSysSignal() {
 		sig := <-c
 		err := set.handle(sig, nil)
 		if err != nil {
-			log.Warn("unknown signal received: %v\n", sig)
+			log.Warn("unknown signal received: %v.", sig)
 		}
 	}
 }
