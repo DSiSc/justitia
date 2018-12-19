@@ -41,6 +41,9 @@ func Sum(bz []byte) []byte {
 }
 
 func TxHash(tx *types.Transaction) (hash types.Hash) {
+	if hash := tx.Hash.Load(); hash != nil {
+		return hash.(types.Hash)
+	}
 	jsonByte, _ := json.Marshal(tx)
 	sumByte := Sum(jsonByte)
 	copy(hash[:], sumByte)
