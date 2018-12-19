@@ -13,6 +13,7 @@ import (
 	"github.com/DSiSc/galaxy/consensus/policy/dbft"
 	"github.com/DSiSc/galaxy/consensus/policy/fbft"
 	"github.com/DSiSc/galaxy/consensus/policy/solo"
+	participatesSolo "github.com/DSiSc/galaxy/participates/policy/solo"
 	"github.com/DSiSc/galaxy/role/common"
 	galaxySolo "github.com/DSiSc/galaxy/role/policy/solo"
 	"github.com/DSiSc/gossipswitch"
@@ -310,10 +311,6 @@ func TestNode_Round(t *testing.T) {
 	monkey.Patch(blockchain.InitBlockChain, func(blockchainc.BlockChainConfig, types.EventCenter) error {
 		return nil
 	})
-	var op *port.OutPort
-	monkey.PatchInstanceMethod(reflect.TypeOf(op), "BindToPort", func(*port.OutPort, port.OutPutFunc) error {
-		return nil
-	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
 	assert.NotNil(service)
@@ -367,10 +364,6 @@ func TestNode_NextRound(t *testing.T) {
 	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
 		return
 	})
-	var op *port.OutPort
-	monkey.PatchInstanceMethod(reflect.TypeOf(op), "BindToPort", func(_ *port.OutPort, _ port.OutPutFunc) error {
-		return nil
-	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
 
@@ -404,5 +397,68 @@ func TestNode_NextRound(t *testing.T) {
 	node.consensus = bft1
 	node.NextRound(justitiaCommon.MsgBlockCommitSuccess)
 	monkey.UnpatchAll()
-	monkey.UnpatchInstanceMethod(reflect.TypeOf(op), "BindToPort")
+}
+
+func TestNode_OnlineWizard(t *testing.T) {
+	assert := assert.New(t)
+	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
+		return log.Config{}
+	})
+	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
+		return log.Config{}
+	})
+	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
+		return
+	})
+	service, err := NewNode(defaultConf)
+	assert.Nil(err)
+	node := service.(*Node)
+	var p *participatesSolo.SoloPolicy
+	monkey.PatchInstanceMethod(reflect.TypeOf(p), "GetParticipates", func(policy *participatesSolo.SoloPolicy) ([]account.Account, error) {
+		return make([]account.Account, 0), fmt.Errorf("get participte failed")
+	})
+	node.OnlineWizard()
+
+	monkey.PatchInstanceMethod(reflect.TypeOf(p), "GetParticipates", func(policy *participatesSolo.SoloPolicy) ([]account.Account, error) {
+		return make([]account.Account, 0), nil
+	})
+	var r *galaxySolo.SoloPolicy
+	monkey.PatchInstanceMethod(reflect.TypeOf(r), "RoleAssignments", func(*galaxySolo.SoloPolicy, []account.Account) (map[account.Account]common.Roler, account.Account, error) {
+		return nil, account.Account{}, fmt.Errorf("assignments failed")
+	})
+	node.OnlineWizard()
+
+	monkey.PatchInstanceMethod(reflect.TypeOf(r), "RoleAssignments", func(*galaxySolo.SoloPolicy, []account.Account) (map[account.Account]common.Roler, account.Account, error) {
+		return nil, account.Account{}, nil
+	})
+	var c *solo.SoloPolicy
+	monkey.PatchInstanceMethod(reflect.TypeOf(c), "Initialization", func(*solo.SoloPolicy, account.Account, []account.Account, types.EventCenter, bool) error {
+		return nil
+	})
+	monkey.PatchInstanceMethod(reflect.TypeOf(c), "Online", func(*solo.SoloPolicy) {
+		return
+	})
+	node.OnlineWizard()
+	monkey.UnpatchAll()
+}
+
+func TestNode_Wait(t *testing.T) {
+	assert := assert.New(t)
+	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
+		return log.Config{}
+	})
+	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
+		return log.Config{}
+	})
+	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
+		return
+	})
+	service, err := NewNode(defaultConf)
+	assert.Nil(err)
+	node := service.(*Node)
+	go func() {
+		node.serviceChannel <- uint8(1)
+	}()
+	node.Wait()
+	monkey.UnpatchAll()
 }
