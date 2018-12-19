@@ -188,7 +188,7 @@ func (self *Node) eventsRegister() {
 	self.eventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
 		if nil != v {
 			block := v.(*types.Block)
-			log.Info("begin delete txs after block %d committed success.", block.Header.Height)
+			log.Debug("begin delete txs after block %d committed success.", block.Header.Height)
 			self.txpool.DelTxs(block.Transactions)
 		}
 	})
@@ -249,10 +249,6 @@ func (self *Node) blockFactory(master account.Account, participates []account.Ac
 		}
 	} else {
 		log.Info("Slave this round.")
-		if self.validator == nil {
-			log.Info("validator is nil.")
-			self.validator = validator.NewValidator(&self.config.Account)
-		}
 	}
 }
 
@@ -350,52 +346,43 @@ func (self *Node) mainLoop() {
 func (self *Node) stratRpc() {
 	var err error
 	if self.rpcListeners, err = apigateway.StartRPC(self.config.ApiGatewayAddr); nil != err {
-		log.Error("Start rpc failed with error %v.", err)
-		panic("Rpc start failed.")
+		panic(fmt.Sprintf("Rpc start failed with %v.", err))
 	}
 }
 
 func (self *Node) startSwitch() {
 	if err := self.txSwitch.Start(); nil != err {
-		log.Error("Start txs witch failed with error %v.", err)
-		panic("TxSwitch start failed.")
+		panic(fmt.Sprintf("TxSwitch start failed with %v.", err))
 	}
 	if err := self.blockSwitch.Start(); nil != err {
-		log.Error("Start block switch failed with error %v.", err)
-		panic("BlockSwitch start failed.")
+		panic(fmt.Sprintf("BlockSwitch start failed with %v.", err))
 	}
 }
 
 func (self *Node) startBlockSyncer() {
 	if err := self.blockSyncerP2P.Start(); nil != err {
-		log.Error("Start block syncer p2p failed with error %v.", err)
-		panic("Start block syncer p2p failed.")
+		panic(fmt.Sprintf("Start block syncer p2p failed with error %v.", err))
 	}
 	if err := self.blockSyncer.Start(); nil != err {
-		log.Error("Start block syncer failed with error %v.", err)
-		panic("Start block syncer failed.")
+		panic(fmt.Sprintf("Start block syncer failed with error %v.", err))
 	}
 }
 
 func (self *Node) startBlockPropagator() {
 	if err := self.blockP2P.Start(); nil != err {
-		log.Error("Start block p2p failed with error %v.", err)
-		panic("Start block p2p failed.")
+		panic(fmt.Sprintf("Start block p2p failed with error %v.", err))
 	}
 	if err := self.blockPropagator.Start(); nil != err {
-		log.Error("Start block propagator failed with error %v.", err)
-		panic("Start block propagator failed.")
+		panic(fmt.Sprintf("Start block propagator failed with error %v.", err))
 	}
 }
 
 func (self *Node) startTxPropagator() {
 	if err := self.txP2P.Start(); nil != err {
-		log.Error("Start tx p2p failed with error %v.", err)
-		panic("Start tx p2p failed.")
+		panic(fmt.Sprintf("Start tx p2p failed with error %v.", err))
 	}
 	if err := self.txPropagator.Start(); nil != err {
-		log.Error("Start tx propagator failed with error %v.", err)
-		panic("Start tx propagator failed.")
+		panic(fmt.Sprintf("Start tx propagator failed with error %v.", err))
 	}
 }
 
@@ -417,10 +404,11 @@ func (self *Node) Start() {
 func (self *Node) Stop() error {
 	log.Warn("Stop node service.")
 	close(self.serviceChannel)
+	var err error
 	for _, listener := range self.rpcListeners {
 		if err := listener.Close(); err != nil {
 			log.Error("Stop rpc listeners failed with error %v.", err)
-			return fmt.Errorf("closing listener error")
+			continue
 		}
 	}
 	self.blockSyncerP2P.Stop()
@@ -436,7 +424,7 @@ func (self *Node) Stop() error {
 		self.msgChannel <- common.MsgNodeServiceStopped
 		monitor.StopPrometheusServer()
 	}
-	return nil
+	return err
 }
 
 func (self *Node) Wait() {
