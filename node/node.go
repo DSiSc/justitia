@@ -184,64 +184,64 @@ func NewNode(args common.SysConfig) (NodeService, error) {
 	return node, nil
 }
 
-func (self *Node) eventsRegister() {
-	self.eventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
+func (instance *Node) eventsRegister() {
+	instance.eventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
 		if nil != v {
 			block := v.(*types.Block)
 			log.Debug("begin delete txs after block %d committed success.", block.Header.Height)
-			self.txpool.DelTxs(block.Transactions)
+			instance.txpool.DelTxs(block.Transactions)
 		}
 	})
-	if common.ConsensusNode == self.config.NodeType {
-		self.eventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
-			self.msgChannel <- common.MsgBlockCommitSuccess
+	if common.ConsensusNode == instance.config.NodeType {
+		instance.eventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
+			instance.msgChannel <- common.MsgBlockCommitSuccess
 		})
-		self.eventCenter.Subscribe(types.EventBlockVerifyFailed, func(v interface{}) {
-			self.msgChannel <- common.MsgBlockVerifyFailed
+		instance.eventCenter.Subscribe(types.EventBlockVerifyFailed, func(v interface{}) {
+			instance.msgChannel <- common.MsgBlockVerifyFailed
 		})
-		self.eventCenter.Subscribe(types.EventBlockCommitFailed, func(v interface{}) {
-			self.msgChannel <- common.MsgBlockCommitFailed
+		instance.eventCenter.Subscribe(types.EventBlockCommitFailed, func(v interface{}) {
+			instance.msgChannel <- common.MsgBlockCommitFailed
 		})
-		self.eventCenter.Subscribe(types.EventConsensusFailed, func(v interface{}) {
-			self.msgChannel <- common.MsgToConsensusFailed
+		instance.eventCenter.Subscribe(types.EventConsensusFailed, func(v interface{}) {
+			instance.msgChannel <- common.MsgToConsensusFailed
 		})
-		self.eventCenter.Subscribe(types.EventMasterChange, func(v interface{}) {
-			self.msgChannel <- common.MsgChangeMaster
+		instance.eventCenter.Subscribe(types.EventMasterChange, func(v interface{}) {
+			instance.msgChannel <- common.MsgChangeMaster
 		})
-		self.eventCenter.Subscribe(types.EventOnline, func(v interface{}) {
-			self.msgChannel <- common.MsgOnline
+		instance.eventCenter.Subscribe(types.EventOnline, func(v interface{}) {
+			instance.msgChannel <- common.MsgOnline
 		})
 	}
 }
 
-func (self *Node) eventUnregister() {
-	self.eventCenter.UnSubscribeAll()
+func (instance *Node) eventUnregister() {
+	instance.eventCenter.UnSubscribeAll()
 }
 
-func (self *Node) notify() {
+func (instance *Node) notify() {
 	go func() {
-		self.msgChannel <- common.MsgRoundRunFailed
+		instance.msgChannel <- common.MsgRoundRunFailed
 	}()
 }
 
-func (self *Node) blockFactory(master account.Account, participates []account.Account) {
-	self.consensus.Initialization(master, participates, self.eventCenter, false)
-	isMaster := master == self.config.Account
+func (instance *Node) blockFactory(master account.Account, participates []account.Account) {
+	instance.consensus.Initialization(master, participates, instance.eventCenter, false)
+	isMaster := master == instance.config.Account
 	if isMaster {
 		log.Info("Master this round.")
-		if nil == self.producer {
-			self.producer = producer.NewProducer(self.txpool, &self.config.Account)
+		if nil == instance.producer {
+			instance.producer = producer.NewProducer(instance.txpool, &instance.config.Account)
 		}
-		block, err := self.producer.MakeBlock()
+		block, err := instance.producer.MakeBlock()
 		if err != nil {
 			log.Error("Make block failed with err %v.", err)
-			self.notify()
+			instance.notify()
 			return
 		}
 		proposal := &commonc.Proposal{
 			Block: block,
 		}
-		if err = self.consensus.ToConsensus(proposal); err != nil {
+		if err = instance.consensus.ToConsensus(proposal); err != nil {
 			log.Error("ToConsensus failed with err %v.", err)
 		} else {
 			log.Info("Block has been confirmed with height %d and hash %x.",
@@ -252,90 +252,90 @@ func (self *Node) blockFactory(master account.Account, participates []account.Ac
 	}
 }
 
-func (self *Node) NextRound(msgType common.MsgType) {
-	switch self.consensus.(type) {
+func (instance *Node) NextRound(msgType common.MsgType) {
+	switch instance.consensus.(type) {
 	case *dbft.DBFTPolicy:
 		if common.MsgChangeMaster == msgType {
-			consensusResult := self.consensus.GetConsensusResult()
-			self.blockFactory(consensusResult.Master, consensusResult.Participate)
+			consensusResult := instance.consensus.GetConsensusResult()
+			instance.blockFactory(consensusResult.Master, consensusResult.Participate)
 		} else {
-			self.Round()
+			instance.Round()
 		}
 	case *fbft.FBFTPolicy:
-		consensusResult := self.consensus.GetConsensusResult()
+		consensusResult := instance.consensus.GetConsensusResult()
 		log.Debug("get participate %v and master %v.",
 			consensusResult.Participate, consensusResult.Master.Extension.Id)
 		if common.MsgBlockCommitSuccess == msgType {
 			time.Sleep(common.FBFTRoundInterval * time.Millisecond)
 		}
-		self.blockFactory(consensusResult.Master, consensusResult.Participate)
+		instance.blockFactory(consensusResult.Master, consensusResult.Participate)
 	default:
-		self.Round()
+		instance.Round()
 	}
 }
 
-func (self *Node) Round() {
+func (instance *Node) Round() {
 	log.Debug("start a new round.")
-	time.Sleep(time.Duration(self.config.BlockInterval) * time.Millisecond)
-	participates, err := self.participates.GetParticipates()
+	time.Sleep(time.Duration(instance.config.BlockInterval) * time.Millisecond)
+	participates, err := instance.participates.GetParticipates()
 	if err != nil {
 		log.Error("get participates failed with error %s.", err)
-		self.notify()
+		instance.notify()
 		return
 	}
-	_, master, err := self.role.RoleAssignments(participates)
+	_, master, err := instance.role.RoleAssignments(participates)
 	if nil != err {
 		log.Error("Role assignments failed with err %v.", err)
-		self.notify()
+		instance.notify()
 		return
 	}
-	self.blockFactory(master, participates)
+	instance.blockFactory(master, participates)
 }
 
-func (self *Node) OnlineWizard() {
+func (instance *Node) OnlineWizard() {
 	log.Info("start online wizard.")
-	participates, err := self.participates.GetParticipates()
+	participates, err := instance.participates.GetParticipates()
 	if err != nil {
 		log.Error("get participates failed with error %s.", err)
-		self.notify()
+		instance.notify()
 		return
 	}
-	_, master, err := self.role.RoleAssignments(participates)
+	_, master, err := instance.role.RoleAssignments(participates)
 	if nil != err {
 		log.Error("Role assignments failed with err %v.", err)
-		self.notify()
+		instance.notify()
 		return
 	}
-	self.consensus.Initialization(master, participates, self.eventCenter, false)
-	self.consensus.Online()
+	instance.consensus.Initialization(master, participates, instance.eventCenter, false)
+	instance.consensus.Online()
 }
 
-func (self *Node) mainLoop() {
-	self.OnlineWizard()
+func (instance *Node) mainLoop() {
+	instance.OnlineWizard()
 	for {
-		msg := <-self.msgChannel
+		msg := <-instance.msgChannel
 		switch msg {
 		case common.MsgBlockCommitSuccess:
 			log.Info("Receive msg from switch is success.")
-			self.NextRound(common.MsgBlockCommitSuccess)
+			instance.NextRound(common.MsgBlockCommitSuccess)
 		case common.MsgBlockCommitFailed:
-			self.NextRound(common.MsgBlockCommitFailed)
+			instance.NextRound(common.MsgBlockCommitFailed)
 			log.Info("Receive msg from switch is commit failed.")
 		case common.MsgBlockVerifyFailed:
 			log.Info("Receive msg from switch is verify failed.")
-			self.NextRound(common.MsgBlockVerifyFailed)
+			instance.NextRound(common.MsgBlockVerifyFailed)
 		case common.MsgRoundRunFailed:
 			log.Error("Receive msg from main loop is run failed.")
-			self.NextRound(common.MsgBlockVerifyFailed)
+			instance.NextRound(common.MsgBlockVerifyFailed)
 		case common.MsgToConsensusFailed:
 			log.Error("Receive msg of to consensus failed.")
-			self.NextRound(common.MsgToConsensusFailed)
+			instance.NextRound(common.MsgToConsensusFailed)
 		case common.MsgChangeMaster:
 			log.Info("Receive msg of change views.")
-			self.NextRound(common.MsgBlockCommitSuccess)
+			instance.NextRound(common.MsgBlockCommitSuccess)
 		case common.MsgOnline:
 			log.Info("Receive msg of online.")
-			self.NextRound(common.MsgOnline)
+			instance.NextRound(common.MsgOnline)
 		case common.MsgNodeServiceStopped:
 			log.Warn("Stop node service.")
 			break
@@ -343,99 +343,99 @@ func (self *Node) mainLoop() {
 	}
 }
 
-func (self *Node) stratRpc() {
+func (instance *Node) stratRpc() {
 	var err error
-	if self.rpcListeners, err = apigateway.StartRPC(self.config.ApiGatewayAddr); nil != err {
+	if instance.rpcListeners, err = apigateway.StartRPC(instance.config.ApiGatewayAddr); nil != err {
 		panic(fmt.Sprintf("Rpc start failed with %v.", err))
 	}
 }
 
-func (self *Node) startSwitch() {
-	if err := self.txSwitch.Start(); nil != err {
+func (instance *Node) startSwitch() {
+	if err := instance.txSwitch.Start(); nil != err {
 		panic(fmt.Sprintf("TxSwitch start failed with %v.", err))
 	}
-	if err := self.blockSwitch.Start(); nil != err {
+	if err := instance.blockSwitch.Start(); nil != err {
 		panic(fmt.Sprintf("BlockSwitch start failed with %v.", err))
 	}
 }
 
-func (self *Node) startBlockSyncer() {
-	if err := self.blockSyncerP2P.Start(); nil != err {
+func (instance *Node) startBlockSyncer() {
+	if err := instance.blockSyncerP2P.Start(); nil != err {
 		panic(fmt.Sprintf("Start block syncer p2p failed with error %v.", err))
 	}
-	if err := self.blockSyncer.Start(); nil != err {
+	if err := instance.blockSyncer.Start(); nil != err {
 		panic(fmt.Sprintf("Start block syncer failed with error %v.", err))
 	}
 }
 
-func (self *Node) startBlockPropagator() {
-	if err := self.blockP2P.Start(); nil != err {
+func (instance *Node) startBlockPropagator() {
+	if err := instance.blockP2P.Start(); nil != err {
 		panic(fmt.Sprintf("Start block p2p failed with error %v.", err))
 	}
-	if err := self.blockPropagator.Start(); nil != err {
+	if err := instance.blockPropagator.Start(); nil != err {
 		panic(fmt.Sprintf("Start block propagator failed with error %v.", err))
 	}
 }
 
-func (self *Node) startTxPropagator() {
-	if err := self.txP2P.Start(); nil != err {
+func (instance *Node) startTxPropagator() {
+	if err := instance.txP2P.Start(); nil != err {
 		panic(fmt.Sprintf("Start tx p2p failed with error %v.", err))
 	}
-	if err := self.txPropagator.Start(); nil != err {
+	if err := instance.txPropagator.Start(); nil != err {
 		panic(fmt.Sprintf("Start tx propagator failed with error %v.", err))
 	}
 }
 
-func (self *Node) Start() {
-	self.stratRpc()
-	self.startSwitch()
-	self.startBlockSyncer()
-	self.startBlockPropagator()
-	self.startTxPropagator()
-	monitor.StartPrometheusServer(self.config.PrometheusConf)
-	monitor.StartExpvarServer(self.config.ExpvarConf)
-	monitor.StartPprofServer(self.config.PprofConf)
-	if self.config.NodeType == common.ConsensusNode {
-		go self.consensus.Start()
-		go self.mainLoop()
+func (instance *Node) Start() {
+	instance.stratRpc()
+	instance.startSwitch()
+	instance.startBlockSyncer()
+	instance.startBlockPropagator()
+	instance.startTxPropagator()
+	monitor.StartPrometheusServer(instance.config.PrometheusConf)
+	monitor.StartExpvarServer(instance.config.ExpvarConf)
+	monitor.StartPprofServer(instance.config.PprofConf)
+	if instance.config.NodeType == common.ConsensusNode {
+		go instance.consensus.Start()
+		go instance.mainLoop()
 	}
 }
 
-func (self *Node) Stop() error {
+func (instance *Node) Stop() error {
 	log.Warn("Stop node service.")
-	close(self.serviceChannel)
+	close(instance.serviceChannel)
 	var err error
-	for _, listener := range self.rpcListeners {
+	for _, listener := range instance.rpcListeners {
 		if err := listener.Close(); err != nil {
 			log.Error("Stop rpc listeners failed with error %v.", err)
 			continue
 		}
 	}
-	self.blockSyncerP2P.Stop()
-	self.blockSyncer.Stop()
-	self.blockP2P.Stop()
-	self.blockPropagator.Stop()
-	self.txP2P.Stop()
-	self.txPropagator.Stop()
-	self.blockSwitch.Stop()
-	self.txSwitch.Stop()
-	self.eventUnregister()
-	if self.config.NodeType == common.ConsensusNode {
-		self.msgChannel <- common.MsgNodeServiceStopped
+	instance.blockSyncerP2P.Stop()
+	instance.blockSyncer.Stop()
+	instance.blockP2P.Stop()
+	instance.blockPropagator.Stop()
+	instance.txP2P.Stop()
+	instance.txPropagator.Stop()
+	instance.blockSwitch.Stop()
+	instance.txSwitch.Stop()
+	instance.eventUnregister()
+	if instance.config.NodeType == common.ConsensusNode {
+		instance.msgChannel <- common.MsgNodeServiceStopped
 		monitor.StopPrometheusServer()
 	}
 	return err
 }
 
-func (self *Node) Wait() {
-	<-self.serviceChannel
+func (instance *Node) Wait() {
+	<-instance.serviceChannel
 }
 
-func (self *Node) Restart() error {
-	if err := self.Stop(); err != nil {
+func (instance *Node) Restart() error {
+	if err := instance.Stop(); err != nil {
 		log.Error("restart service failed with err %v.", err)
 		return err
 	}
-	self.Start()
+	instance.Start()
 	return nil
 }
