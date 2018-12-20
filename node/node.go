@@ -22,6 +22,7 @@ import (
 	"github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/justitia/config"
 	"github.com/DSiSc/justitia/propagator"
+	"github.com/DSiSc/justitia/tools"
 	"github.com/DSiSc/justitia/tools/events"
 	"github.com/DSiSc/p2p"
 	"github.com/DSiSc/producer"
@@ -31,6 +32,7 @@ import (
 	"github.com/DSiSc/validator/tools/account"
 	"net"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -69,19 +71,20 @@ type Node struct {
 func InitLog(args common.SysConfig, conf config.NodeConfig) {
 	var logPath = args.LogPath
 	if common.BlankString != logPath {
+		tools.EnsureFolderExist(logPath[0:strings.LastIndex(logPath, "/")])
 		logfile, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
 		if err != nil {
 			panic(err)
 		}
-		conf.Logger.Appenders["filelog"].Output = logfile
+		conf.Logger.Appenders[config.FileLogAppender].Output = logfile
 	}
 	var logFormat = args.LogStyle
 	if common.BlankString != logFormat {
-		conf.Logger.Appenders["filelog"].Format = logFormat
+		conf.Logger.Appenders[config.FileLogAppender].Format = logFormat
 	}
 	var logLevel = args.LogLevel
 	if common.InvalidInt != int(logLevel) {
-		conf.Logger.Appenders["filelog"].LogLevel = log.Level(uint8(logLevel))
+		conf.Logger.Appenders[config.FileLogAppender].LogLevel = log.Level(uint8(logLevel))
 	}
 
 	log.SetGlobalConfig(&conf.Logger)

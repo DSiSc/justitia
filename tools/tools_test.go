@@ -77,3 +77,10 @@ func TestHome(t *testing.T) {
 	asserts.Nil(err1)
 	asserts.Equal(home, home1)
 }
+
+func TestEnsureFolderExist(t *testing.T) {
+	asserts := assert.New(t)
+	folderPath := "/tmp/test_ensure_folder_exist"
+	EnsureFolderExist(folderPath)
+	asserts.DirExists(folderPath)
+}

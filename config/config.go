@@ -90,11 +90,13 @@ const (
 
 	// Log Setting
 	LogTimeFieldFormat = "logging.timeFieldFormat"
+	ConsoleLogAppender = "logging.console"
 	LogConsoleEnabled  = "logging.console.enabled"
 	LogConsoleLevel    = "logging.console.level"
 	LogConsoleFormat   = "logging.console.format"
 	LogConsoleCaller   = "logging.console.caller"
 	LogConsoleHostname = "logging.console.hostname"
+	FileLogAppender    = "logging.file"
 	LogFileEnabled     = "logging.file.enabled"
 	LogFilePath        = "logging.file.path"
 	LogFileLevel       = "logging.file.level"
@@ -343,6 +345,7 @@ func GetLogSetting(conf *viper.Viper) log.Config {
 		ShowCaller:   logConsoleCaller,
 		ShowHostname: logConsoleHostname,
 	}
+	tools.EnsureFolderExist(logFilePath[0:strings.LastIndex(logFilePath, "/")])
 	logfile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
 	if err != nil {
 		panic(err)
@@ -359,7 +362,7 @@ func GetLogSetting(conf *viper.Viper) log.Config {
 		Provider:        log.GetGlobalConfig().Provider,
 		GlobalLogLevel:  log.Level(uint8(math.Max(float64(logConsoleLevel), float64(logFileLevel)))),
 		TimeFieldFormat: logTimestampFormat,
-		Appenders:       map[string]*log.Appender{"consolelog": consoleAppender, "filelog": fileAppender},
+		Appenders:       map[string]*log.Appender{ConsoleLogAppender: consoleAppender, FileLogAppender: fileAppender},
 		OutputFlags:     log.GetOutputFlags(),
 	}
 	return globalLogConfig
