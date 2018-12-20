@@ -384,9 +384,9 @@ func GetP2PConf(conf *viper.Viper) map[string]*p2pConf.P2PConfig {
 
 func getBlockSyncerP2PConf(conf *viper.Viper) *p2pConf.P2PConfig {
 	addrFile := conf.GetString(P2pBlockSyncerAddrBook)
-	listenAddr := conf.GetString(P2pBlockListenAddr)
-	maxOut := conf.GetInt(P2pBlockMaxIn)
-	maxIn := conf.GetInt(P2pBlockMaxOut)
+	listenAddr := conf.GetString(P2pBlockSyncerListenAddr)
+	maxOut := conf.GetInt(P2pBlockSyncerMaxIn)
+	maxIn := conf.GetInt(P2pBlockSyncerMaxOut)
 	persistentPeers := conf.GetString(P2pBlockSyncerPersistentPeers)
 	return &p2pConf.P2PConfig{
 		AddrBookFilePath: addrFile,
