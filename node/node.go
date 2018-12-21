@@ -225,6 +225,8 @@ func (instance *Node) notify() {
 }
 
 func (instance *Node) blockFactory(master account.Account, participates []account.Account) {
+	monitor.JTMetrics.ConsensusPeerId.Set(float64(instance.config.Account.Extension.Id))
+	monitor.JTMetrics.ConsensusMasterId.Set(float64(master.Extension.Id))
 	instance.consensus.Initialization(master, participates, instance.eventCenter, false)
 	isMaster := master == instance.config.Account
 	if isMaster {
