@@ -326,7 +326,7 @@ func GetLogSetting(conf *viper.Viper) log.Config {
 	logTimestampFormat := conf.GetString(LogTimeFieldFormat)
 	logConsoleEnabled := conf.GetBool(LogConsoleEnabled)
 	logConsoleLevel := conf.GetInt(LogConsoleLevel)
-	logConsoleFormat := conf.GetString(LogTimeFieldFormat)
+	logConsoleFormat := conf.GetString(LogConsoleFormat)
 	logConsoleCaller := conf.GetBool(LogConsoleCaller)
 	logConsoleHostname := conf.GetBool(LogConsoleHostname)
 	logFileEnabled := conf.GetBool(LogFileEnabled)
