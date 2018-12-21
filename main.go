@@ -10,7 +10,7 @@ import (
 	"syscall"
 )
 
-func sysSignalProcess(node node.NodeService) {
+func sysSignalProcess(node node.NodesService) {
 	sysSignalProcess := signal.NewSignalSet()
 	sysSignalProcess.RegisterSysSignal(syscall.SIGINT, func(os.Signal, interface{}) {
 		log.Warn("handle signal SIGINT.")

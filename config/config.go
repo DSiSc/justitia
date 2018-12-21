@@ -2,12 +2,12 @@ package config
 
 import (
 	"fmt"
-	blockchainc "github.com/DSiSc/blockchain/config"
+	blockchainConfig "github.com/DSiSc/blockchain/config"
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/monitor"
-	consensusc "github.com/DSiSc/galaxy/consensus/config"
-	participatesc "github.com/DSiSc/galaxy/participates/config"
-	rolec "github.com/DSiSc/galaxy/role/config"
+	consensusConfig "github.com/DSiSc/galaxy/consensus/config"
+	participatesConfig "github.com/DSiSc/galaxy/participates/config"
+	roleConfig "github.com/DSiSc/galaxy/role/config"
 	"github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/justitia/tools"
 	p2pConf "github.com/DSiSc/p2p/config"
@@ -28,11 +28,14 @@ const (
 	// algorithm setting
 	HashAlgorithm = "general.hashAlgorithm"
 	// txpool setting
-	TxpoolSlots = "general.txpool.globalslots"
+	TxpoolSlots = "general.txpool.globalSlots"
 	MaxTxBlock  = "general.txpool.txsPerBlock"
 	// consensus policy setting
-	ConsensusPolicy    = "general.consensus.policy"
-	ConsensusTimeout   = "general.consensus.timeout"
+	ConsensusPolicy                   = "general.consensus.policy"
+	ConsensusTimeoutToCollectResponse = "general.consensus.timeoutToCollectResponse"
+	ConsensusTimeoutWaitCommit        = "general.consensus.timeoutToWaitCommit"
+	ConsensusTimeoutViewChange        = "general.consensus.timeoutToViewChange"
+
 	ParticipatesPolicy = "general.participates.policy"
 	ParticipatesNumber = "general.participates.participates"
 	RolePolicy         = "general.role.policy"
@@ -47,7 +50,7 @@ const (
 	// api gateway
 	ApiGatewayAddr = "general.apigateway"
 	// Default parameter for solo block producer
-	SoloModeProducerInterval = "general.soloModeBlockProducedInterval"
+	BlockProducedTimeInterval = "general.BlockProducedInterval"
 
 	//P2P Setting
 	// block syncer p2p config
@@ -130,13 +133,13 @@ type NodeConfig struct {
 	// txpool
 	TxPoolConf txpool.TxPoolConfig
 	// participates
-	ParticipatesConf participatesc.ParticipateConfig
+	ParticipatesConf participatesConfig.ParticipateConfig
 	// role
-	RoleConf rolec.RoleConfig
+	RoleConf roleConfig.RoleConfig
 	// consensus
-	ConsensusConf consensusc.ConsensusConfig
+	ConsensusConf consensusConfig.ConsensusConfig
 	// BlockChainConfig
-	BlockChainConf blockchainc.BlockChainConfig
+	BlockChainConf blockchainConfig.BlockChainConfig
 	// Block Produce Interval
 	BlockInterval int64
 	//algorithm config
@@ -199,7 +202,7 @@ func NewNodeConfig() NodeConfig {
 	expvarConf := GetExpvarConf(config)
 	pprofConf := GetPprofConf(config)
 	logConf := GetLogSetting(config)
-	p2pConfs := GetP2PConf(config)
+	p2pConf := GetP2PConf(config)
 
 	return NodeConfig{
 		Account:          nodeAccount,
@@ -216,7 +219,7 @@ func NewNodeConfig() NodeConfig {
 		ExpvarConf:       expvarConf,
 		PprofConf:        pprofConf,
 		Logger:           logConf,
-		P2PConf:          p2pConfs,
+		P2PConf:          p2pConf,
 	}
 }
 
@@ -238,39 +241,44 @@ func NewTxPoolConf(conf *viper.Viper) txpool.TxPoolConfig {
 	return txPoolConf
 }
 
-func NewParticipateConf(conf *viper.Viper) participatesc.ParticipateConfig {
+func NewParticipateConf(conf *viper.Viper) participatesConfig.ParticipateConfig {
 	policy := conf.GetString(ParticipatesPolicy)
 	participates := conf.GetInt64(ParticipatesNumber)
-	participatesConf := participatesc.ParticipateConfig{
+	participatesConf := participatesConfig.ParticipateConfig{
 		PolicyName: policy,
 		Delegates:  uint64(participates),
 	}
 	return participatesConf
 }
 
-func NewRoleConf(conf *viper.Viper) rolec.RoleConfig {
+func NewRoleConf(conf *viper.Viper) roleConfig.RoleConfig {
 	policy := conf.GetString(RolePolicy)
-	roleConf := rolec.RoleConfig{
+	roleConf := roleConfig.RoleConfig{
 		PolicyName: policy,
 	}
 	return roleConf
 }
 
-func NewConsensusConf(conf *viper.Viper) consensusc.ConsensusConfig {
+func NewConsensusConf(conf *viper.Viper) consensusConfig.ConsensusConfig {
 	policy := conf.GetString(ConsensusPolicy)
-	timeout := conf.GetInt64(ConsensusTimeout)
-	consensusConf := consensusc.ConsensusConfig{
+	responseTimeout := conf.GetInt64(ConsensusTimeoutToCollectResponse)
+	commitTimeout := conf.GetInt64(ConsensusTimeoutWaitCommit)
+	viewChangeTimeout := conf.GetInt64(ConsensusTimeoutViewChange)
+	return consensusConfig.ConsensusConfig{
 		PolicyName: policy,
-		Timeout:    timeout,
+		Timeout: consensusConfig.ConsensusTimeout{
+			TimeoutToCollectResponseMsg: responseTimeout,
+			TimeoutToWaitCommitMsg:      commitTimeout,
+			TimeoutToChangeView:         viewChangeTimeout,
+		},
 	}
-	return consensusConf
 }
 
-func NewBlockChainConf(conf *viper.Viper) blockchainc.BlockChainConfig {
+func NewBlockChainConf(conf *viper.Viper) blockchainConfig.BlockChainConfig {
 	policy := conf.GetString(BlockChainPlugin)
 	dataPath := conf.GetString(BlockChainDataPath)
 	statePath := conf.GetString(BlockChainStatePath)
-	blockChainConf := blockchainc.BlockChainConfig{
+	blockChainConf := blockchainConfig.BlockChainConfig{
 		PluginName:    policy,
 		StateDataPath: statePath,
 		BlockDataPath: dataPath,
@@ -298,7 +306,7 @@ func GetNodeAccount(conf *viper.Viper) account.Account {
 }
 
 func GetBlockProducerInterval(conf *viper.Viper) int64 {
-	blockInterval := conf.GetInt64(SoloModeProducerInterval)
+	blockInterval := conf.GetInt64(BlockProducedTimeInterval)
 	return blockInterval
 }
 

@@ -5,14 +5,14 @@ import (
 	"github.com/DSiSc/apigateway"
 	rpc "github.com/DSiSc/apigateway/rpc/core"
 	"github.com/DSiSc/blockchain"
-	gconfing "github.com/DSiSc/craft/config"
+	craftConfig "github.com/DSiSc/craft/config"
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/monitor"
 	"github.com/DSiSc/craft/types"
 	"github.com/DSiSc/galaxy"
 	galaxyCommon "github.com/DSiSc/galaxy/common"
 	"github.com/DSiSc/galaxy/consensus"
-	commonc "github.com/DSiSc/galaxy/consensus/common"
+	consensusCommon "github.com/DSiSc/galaxy/consensus/common"
 	"github.com/DSiSc/galaxy/consensus/policy/dbft"
 	"github.com/DSiSc/galaxy/consensus/policy/fbft"
 	"github.com/DSiSc/galaxy/participates"
@@ -37,7 +37,7 @@ import (
 	"time"
 )
 
-type NodeService interface {
+type NodesService interface {
 	Start()
 	Stop() error
 	Wait()
@@ -90,10 +90,10 @@ func InitLog(args common.SysConfig, conf config.NodeConfig) {
 	log.SetGlobalConfig(&conf.Logger)
 }
 
-func NewNode(args common.SysConfig) (NodeService, error) {
+func NewNode(args common.SysConfig) (NodesService, error) {
 	nodeConf := config.NewNodeConfig()
 	InitLog(args, nodeConf)
-	gconfing.GlobalConfig.Store(gconfing.HashAlgName, nodeConf.AlgorithmConf.HashAlgorithm)
+	craftConfig.GlobalConfig.Store(craftConfig.HashAlgName, nodeConf.AlgorithmConf.HashAlgorithm)
 	pool := txpool.NewTxPool(nodeConf.TxPoolConf)
 	eventsCenter := events.NewEvent()
 	txSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.TxSwitch, eventsCenter)
@@ -243,7 +243,7 @@ func (instance *Node) blockFactory(master account.Account, participates []accoun
 			instance.notify()
 			return
 		}
-		proposal := &commonc.Proposal{
+		proposal := &consensusCommon.Proposal{
 			Block: block,
 		}
 		if err = instance.consensus.ToConsensus(proposal); err != nil {
@@ -271,7 +271,7 @@ func (instance *Node) NextRound(msgType common.MsgType) {
 		log.Debug("get participate %v and master %v.",
 			consensusResult.Participate, consensusResult.Master.Extension.Id)
 		if common.MsgBlockCommitSuccess == msgType {
-			time.Sleep(common.FBFTRoundInterval * time.Millisecond)
+			time.Sleep(time.Duration(instance.config.BlockInterval) * time.Millisecond)
 		}
 		instance.blockFactory(consensusResult.Master, consensusResult.Participate)
 	default:
@@ -282,36 +282,36 @@ func (instance *Node) NextRound(msgType common.MsgType) {
 func (instance *Node) Round() {
 	log.Debug("start a new round.")
 	time.Sleep(time.Duration(instance.config.BlockInterval) * time.Millisecond)
-	participates, err := instance.participates.GetParticipates()
+	participate, err := instance.participates.GetParticipates()
 	if err != nil {
 		log.Error("get participates failed with error %s.", err)
 		instance.notify()
 		return
 	}
-	_, master, err := instance.role.RoleAssignments(participates)
+	_, master, err := instance.role.RoleAssignments(participate)
 	if nil != err {
 		log.Error("Role assignments failed with err %v.", err)
 		instance.notify()
 		return
 	}
-	instance.blockFactory(master, participates)
+	instance.blockFactory(master, participate)
 }
 
 func (instance *Node) OnlineWizard() {
 	log.Info("start online wizard.")
-	participates, err := instance.participates.GetParticipates()
+	participate, err := instance.participates.GetParticipates()
 	if err != nil {
 		log.Error("get participates failed with error %s.", err)
 		instance.notify()
 		return
 	}
-	_, master, err := instance.role.RoleAssignments(participates)
+	_, master, err := instance.role.RoleAssignments(participate)
 	if nil != err {
 		log.Error("Role assignments failed with err %v.", err)
 		instance.notify()
 		return
 	}
-	instance.consensus.Initialization(master, participates, instance.eventCenter, false)
+	instance.consensus.Initialization(master, participate, instance.eventCenter, false)
 	instance.consensus.Online()
 }
 

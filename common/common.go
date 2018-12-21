@@ -21,9 +21,8 @@ const (
 )
 
 const (
-	InvalidInt        int    = 255
-	BlankString       string = ""
-	FBFTRoundInterval        = 500
+	InvalidInt  int    = 255
+	BlankString string = ""
 )
 
 // Sum returns the first 32 bytes of hash of the bz.

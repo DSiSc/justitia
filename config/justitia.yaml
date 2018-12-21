@@ -33,7 +33,7 @@ general:
 
   # Tx pool setting
   txpool:
-    globalslots: 4096
+    globalSlots: 4096
     txsPerBlock: 512
 
   # Participates setting
@@ -49,13 +49,15 @@ general:
 
   # Consensus setting
   # Operational policy: solo, bft
-  # Timeout for one consensus
+  # Timeout to consensus, all time setting in millisecond
   consensus:
     policy: solo
-    timeout: 10
+    timeoutToCollectResponse: 5000
+    timeoutToWaitCommit: 5000
+    timeoutToViewChange: 30000
 
   # Block produce interval for solo mode in Millisecond
-  soloModeBlockProducedInterval: 2000
+  BlockProducedInterval: 2000
 
   # p2p setting
   # Operational plugin: memorydb or leveldb

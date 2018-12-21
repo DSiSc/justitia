@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"github.com/DSiSc/apigateway"
 	"github.com/DSiSc/blockchain"
-	blockchainc "github.com/DSiSc/blockchain/config"
+	blockChainConfig "github.com/DSiSc/blockchain/config"
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/types"
 	"github.com/DSiSc/galaxy"
 	galaxyCommon "github.com/DSiSc/galaxy/common"
-	gcommon "github.com/DSiSc/galaxy/consensus/common"
+	consensusCommon "github.com/DSiSc/galaxy/consensus/common"
+	consensusConfig "github.com/DSiSc/galaxy/consensus/config"
 	"github.com/DSiSc/galaxy/consensus/policy/dbft"
 	"github.com/DSiSc/galaxy/consensus/policy/fbft"
 	"github.com/DSiSc/galaxy/consensus/policy/solo"
@@ -84,7 +85,7 @@ func TestNewNode(t *testing.T) {
 	monkey.PatchInstanceMethod(reflect.TypeOf(op), "BindToPort", func(_ *port.OutPort, _ port.OutPutFunc) error {
 		return nil
 	})
-	monkey.Patch(blockchain.InitBlockChain, func(blockchainc.BlockChainConfig, types.EventCenter) error {
+	monkey.Patch(blockchain.InitBlockChain, func(blockChainConfig.BlockChainConfig, types.EventCenter) error {
 		return fmt.Errorf("mock blockchain error")
 	})
 	service, err = NewNode(defaultConf)
@@ -92,7 +93,7 @@ func TestNewNode(t *testing.T) {
 	assert.Nil(service)
 	assert.Equal(err, fmt.Errorf("blockchain init failed"))
 
-	monkey.Patch(blockchain.InitBlockChain, func(blockchainc.BlockChainConfig, types.EventCenter) error {
+	monkey.Patch(blockchain.InitBlockChain, func(blockChainConfig.BlockChainConfig, types.EventCenter) error {
 		return nil
 	})
 	monkey.Patch(p2p.NewP2P, func(*p2pConfig.P2PConfig, types.EventCenter) (*p2p.P2P, error) {
@@ -159,7 +160,7 @@ func TestNode_Start(t *testing.T) {
 	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
 		return log.Config{}
 	})
-	monkey.Patch(blockchain.InitBlockChain, func(blockchainc.BlockChainConfig, types.EventCenter) error {
+	monkey.Patch(blockchain.InitBlockChain, func(blockChainConfig.BlockChainConfig, types.EventCenter) error {
 		return nil
 	})
 	monkey.Patch(syncer.NewBlockSyncer, func(p2p.P2PAPI, chan<- interface{}, types.EventCenter) (*syncer.BlockSyncer, error) {
@@ -300,7 +301,7 @@ func TestNode_Round(t *testing.T) {
 	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
 		return
 	})
-	monkey.Patch(blockchain.InitBlockChain, func(blockchainc.BlockChainConfig, types.EventCenter) error {
+	monkey.Patch(blockchain.InitBlockChain, func(blockChainConfig.BlockChainConfig, types.EventCenter) error {
 		return nil
 	})
 	service, err := NewNode(defaultConf)
@@ -338,7 +339,7 @@ func TestNode_Round(t *testing.T) {
 		return &types.Block{}, nil
 	})
 	var c *solo.SoloPolicy
-	monkey.PatchInstanceMethod(reflect.TypeOf(c), "ToConsensus", func(*solo.SoloPolicy, *gcommon.Proposal) error {
+	monkey.PatchInstanceMethod(reflect.TypeOf(c), "ToConsensus", func(*solo.SoloPolicy, *consensusCommon.Proposal) error {
 		return fmt.Errorf("consensus failed")
 	})
 	node.Round()
@@ -346,6 +347,9 @@ func TestNode_Round(t *testing.T) {
 }
 
 func TestNode_NextRound(t *testing.T) {
+	var timeout = consensusConfig.ConsensusTimeout{
+		TimeoutToChangeView: int64(1000),
+	}
 	assert := assert.New(t)
 	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
 		return log.Config{}
@@ -359,13 +363,13 @@ func TestNode_NextRound(t *testing.T) {
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
 
-	bft, err := dbft.NewDBFTPolicy(mockAccounts[0], int64(10))
+	bft, err := dbft.NewDBFTPolicy(mockAccounts[0], timeout)
 	assert.Nil(err)
 	assert.NotNil(bft)
 	node := service.(*Node)
 	node.consensus = bft
-	monkey.PatchInstanceMethod(reflect.TypeOf(bft), "GetConsensusResult", func(*dbft.DBFTPolicy) gcommon.ConsensusResult {
-		return gcommon.ConsensusResult{
+	monkey.PatchInstanceMethod(reflect.TypeOf(bft), "GetConsensusResult", func(*dbft.DBFTPolicy) consensusCommon.ConsensusResult {
+		return consensusCommon.ConsensusResult{
 			View:        uint64(1),
 			Participate: mockAccounts,
 			Master:      mockAccounts[1],
@@ -378,9 +382,9 @@ func TestNode_NextRound(t *testing.T) {
 	})
 	node.NextRound(justitiaCommon.MsgBlockCommitSuccess)
 
-	bft1, err := fbft.NewFBFTPolicy(mockAccounts[0], int64(10), nil)
-	monkey.PatchInstanceMethod(reflect.TypeOf(bft1), "GetConsensusResult", func(*fbft.FBFTPolicy) gcommon.ConsensusResult {
-		return gcommon.ConsensusResult{
+	bft1, err := fbft.NewFBFTPolicy(mockAccounts[0], timeout, nil)
+	monkey.PatchInstanceMethod(reflect.TypeOf(bft1), "GetConsensusResult", func(*fbft.FBFTPolicy) consensusCommon.ConsensusResult {
+		return consensusCommon.ConsensusResult{
 			View:        uint64(1),
 			Participate: mockAccounts,
 			Master:      mockAccounts[1],
@@ -424,8 +428,8 @@ func TestNode_OnlineWizard(t *testing.T) {
 		return nil, account.Account{}, nil
 	})
 	var c *solo.SoloPolicy
-	monkey.PatchInstanceMethod(reflect.TypeOf(c), "Initialization", func(*solo.SoloPolicy, account.Account, []account.Account, types.EventCenter, bool) error {
-		return nil
+	monkey.PatchInstanceMethod(reflect.TypeOf(c), "Initialization", func(*solo.SoloPolicy, account.Account, []account.Account, types.EventCenter, bool) {
+		return
 	})
 	monkey.PatchInstanceMethod(reflect.TypeOf(c), "Online", func(*solo.SoloPolicy) {
 		return
