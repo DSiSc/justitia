@@ -106,3 +106,17 @@ func homeWindows() (string, error) {
 
 	return home, nil
 }
+
+func EnsureFolderExist(folderPath string) {
+	_, err := os.Stat(folderPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			err := os.MkdirAll(folderPath, 0755)
+			if err != nil {
+				log.Error("Can not create folder %s: %v", folderPath, err)
+			}
+		} else {
+			log.Error("Can not create folder %s: %v", folderPath, err)
+		}
+	}
+}

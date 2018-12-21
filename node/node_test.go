@@ -49,12 +49,12 @@ func TestInitLog(t *testing.T) {
 			Appenders:       make(map[string]*log.Appender),
 		},
 	}
-	nodeConfig.Logger.Appenders["filelog"] = &log.Appender{}
+	nodeConfig.Logger.Appenders[config.FileLogAppender] = &log.Appender{}
 	monkey.Patch(log.SetGlobalConfig, func(config *log.Config) {
 		return
 	})
 	InitLog(defaultConf, nodeConfig)
-	fileLog := nodeConfig.Logger.Appenders["filelog"]
+	fileLog := nodeConfig.Logger.Appenders[config.FileLogAppender]
 	assert.Equal(t, defaultConf.LogLevel, fileLog.LogLevel)
 	assert.Equal(t, defaultConf.LogStyle, fileLog.Format)
 	monkey.Unpatch(log.SetGlobalConfig)
