@@ -87,6 +87,7 @@ func InitLog(args common.SysConfig, conf config.NodeConfig) {
 
 	if conf.Logger.Appenders[config.FileLogAppender].Enabled {
 		// initialize logfile
+		logPath = conf.Logger.Appenders[config.FileLogAppender].LogPath
 		tools.EnsureFolderExist(logPath[0:strings.LastIndex(logPath, "/")])
 		logfile, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
 		if err != nil {

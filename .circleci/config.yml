@@ -50,7 +50,7 @@ jobs:
         name: run justitia and rpc test
         command: |
           mkdir -p /home/circleci/.justitia && curl -q -o /home/circleci/.justitia/justitia.yml https://raw.githubusercontent.com/DSiSc/justitia/master/config/justitia.yaml
-          ./justitia --log_path=/tmp/justitia.log > /dev/null &
+          ./justitia -log_path=/tmp/justitia.log > /dev/null &
           curl -q -O https://raw.githubusercontent.com/DSiSc/tester/master/JTtests/RPCtests/testcases_tx.yaml
           pyresttest http://localhost:47768 testcases_tx.yaml
           pkill justitia
