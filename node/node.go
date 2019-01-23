@@ -71,20 +71,28 @@ type Node struct {
 func InitLog(args common.SysConfig, conf config.NodeConfig) {
 	var logPath = args.LogPath
 	if common.BlankString != logPath {
+		conf.Logger.Appenders[config.FileLogAppender].Enabled = true
+		conf.Logger.Appenders[config.FileLogAppender].LogPath = logPath
+	}
+	var logFormat = args.LogStyle
+	if common.BlankString != logFormat {
+		conf.Logger.Appenders[config.FileLogAppender].Enabled = true
+		conf.Logger.Appenders[config.FileLogAppender].Format = logFormat
+	}
+	var logLevel = args.LogLevel
+	if common.InvalidInt != int(logLevel) {
+		conf.Logger.Appenders[config.FileLogAppender].Enabled = true
+		conf.Logger.Appenders[config.FileLogAppender].LogLevel = log.Level(uint8(logLevel))
+	}
+
+	if conf.Logger.Appenders[config.FileLogAppender].Enabled {
+		// initialize logfile
 		tools.EnsureFolderExist(logPath[0:strings.LastIndex(logPath, "/")])
 		logfile, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
 		if err != nil {
 			panic(err)
 		}
 		conf.Logger.Appenders[config.FileLogAppender].Output = logfile
-	}
-	var logFormat = args.LogStyle
-	if common.BlankString != logFormat {
-		conf.Logger.Appenders[config.FileLogAppender].Format = logFormat
-	}
-	var logLevel = args.LogLevel
-	if common.InvalidInt != int(logLevel) {
-		conf.Logger.Appenders[config.FileLogAppender].LogLevel = log.Level(uint8(logLevel))
 	}
 
 	log.SetGlobalConfig(&conf.Logger)

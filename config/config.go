@@ -356,26 +356,33 @@ func GetLogSetting(conf *viper.Viper) log.Config {
 	logFileHostname := conf.GetBool(LogFileHostname)
 
 	consoleAppender := &log.Appender{
+		Enabled:      logConsoleEnabled,
 		LogLevel:     log.Level(logConsoleLevel),
+		LogType:      log.ConsoleLog,
+		LogPath:      log.ConsoleStdout,
 		Output:       os.Stdout,
 		Format:       strings.ToUpper(logConsoleFormat),
 		ShowCaller:   logConsoleCaller,
 		ShowHostname: logConsoleHostname,
 	}
-	tools.EnsureFolderExist(logFilePath[0:strings.LastIndex(logFilePath, "/")])
-	logfile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
-	if err != nil {
-		panic(err)
-	}
+	//tools.EnsureFolderExist(logFilePath[0:strings.LastIndex(logFilePath, "/")])
+	//logfile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
+	//if err != nil {
+	//	panic(err)
+	//}
 	fileAppender := &log.Appender{
+		Enabled:      logFileEnabled,
 		LogLevel:     log.Level(logFileLevel),
-		Output:       logfile,
+		LogType:      log.FileLog,
+		LogPath:      logFilePath,
+		Output:       nil,
 		Format:       strings.ToUpper(logFileFormat),
 		ShowCaller:   logFileCaller,
 		ShowHostname: logFileHostname,
 	}
+
 	globalLogConfig := log.Config{
-		Enabled:         logConsoleEnabled && logFileEnabled,
+		Enabled:         logConsoleEnabled || logFileEnabled,
 		Provider:        log.GetGlobalConfig().Provider,
 		GlobalLogLevel:  log.Level(uint8(math.Max(float64(logConsoleLevel), float64(logFileLevel)))),
 		TimeFieldFormat: logTimestampFormat,
