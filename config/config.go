@@ -6,6 +6,7 @@ import (
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/monitor"
 	consensusConfig "github.com/DSiSc/galaxy/consensus/config"
+	participatesCommon "github.com/DSiSc/galaxy/participates/common"
 	participatesConfig "github.com/DSiSc/galaxy/participates/config"
 	roleConfig "github.com/DSiSc/galaxy/role/config"
 	"github.com/DSiSc/justitia/common"
@@ -36,9 +37,10 @@ const (
 	ConsensusTimeoutWaitCommit        = "general.consensus.timeoutToWaitCommit"
 	ConsensusTimeoutViewChange        = "general.consensus.timeoutToViewChange"
 
-	ParticipatesPolicy = "general.participates.policy"
-	ParticipatesNumber = "general.participates.participates"
-	RolePolicy         = "general.role.policy"
+	ParticipatesPolicy   = "general.participates.policy"
+	ParticipatesNumber   = "general.participates.participates"
+	ParticipatesNodeInfo = "general.participates.node"
+	RolePolicy           = "general.role.policy"
 	// node info
 	NodeAddress = "general.node.address"
 	NodeId      = "general.node.id"
@@ -247,6 +249,26 @@ func NewParticipateConf(conf *viper.Viper) participatesConfig.ParticipateConfig 
 	participatesConf := participatesConfig.ParticipateConfig{
 		PolicyName: policy,
 		Delegates:  uint64(participates),
+	}
+	if policy != participatesCommon.SoloPolicy {
+		accounts := make([]account.Account, 0)
+		for index := int64(0); index < participates; index++ {
+			nodePath := fmt.Sprintf("%s%d", ParticipatesNodeInfo, index)
+			addressPath := nodePath + ".address"
+			address := conf.GetString(addressPath)
+			idPath := nodePath + ".id"
+			id := conf.GetInt64(idPath)
+			urlPath := nodePath + ".url"
+			url := conf.GetString(urlPath)
+			accounts = append(accounts, account.Account{
+				Address: tools.HexToAddress(address),
+				Extension: account.AccountExtension{
+					Id:  uint64(id),
+					Url: url,
+				},
+			})
+		}
+		participatesConf.Participates = accounts
 	}
 	return participatesConf
 }

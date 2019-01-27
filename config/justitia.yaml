@@ -41,6 +41,22 @@ general:
   participates:
     policy: solo
     participates: 4
+    node0:
+        address: 333c3310824b7c685133f2bedb2ca4b8b4df633d
+        id: 1
+        url: 127.0.0.1:8080
+    node1:
+        address: 343c3310824b7c685133f2bedb2ca4b8b4df633d
+        id: 2
+        url: 127.0.0.2:8080
+    node2:
+        address: 353c3310824b7c685133f2bedb2ca4b8b4df633d
+        id: 3
+        url: 127.0.0.3:8080
+    node3:
+        address: 363c3310824b7c685133f2bedb2ca4b8b4df633d
+        id: 4
+        url: 127.0.0.4:8080
 
   # Role setting
   # Operational policy: solo, dpos
