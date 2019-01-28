@@ -223,6 +223,9 @@ func (instance *Node) eventsRegister() {
 		instance.eventCenter.Subscribe(types.EventOnline, func(v interface{}) {
 			instance.msgChannel <- common.MsgOnline
 		})
+		instance.eventCenter.Subscribe(types.EventBlockWithoutTxs, func(v interface{}) {
+			instance.msgChannel <- common.MsgBlockWithoutTx
+		})
 	}
 }
 
@@ -350,6 +353,9 @@ func (instance *Node) mainLoop() {
 		case common.MsgOnline:
 			log.Info("Receive msg of online.")
 			instance.NextRound(common.MsgOnline)
+		case common.MsgBlockWithoutTx:
+			log.Info("Receive msg of block without transaction.")
+			instance.NextRound(common.MsgBlockCommitSuccess)
 		case common.MsgNodeServiceStopped:
 			log.Warn("Stop node service.")
 			break

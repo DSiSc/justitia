@@ -115,6 +115,7 @@ const (
 	MsgToConsensusFailed                 //  failed to consensus
 	MsgChangeMaster                      //  change master
 	MsgOnline                            //  node online
+	MsgBlockWithoutTx                    // block without transaction
 )
 
 type SysConfig struct {
