@@ -382,7 +382,7 @@ func TestNode_NextRound(t *testing.T) {
 	})
 	node.NextRound(justitiaCommon.MsgBlockCommitSuccess)
 
-	bft1, err := fbft.NewFBFTPolicy(mockAccounts[0], timeout, nil)
+	bft1, err := fbft.NewFBFTPolicy(mockAccounts[0], timeout, nil, true)
 	monkey.PatchInstanceMethod(reflect.TypeOf(bft1), "GetConsensusResult", func(*fbft.FBFTPolicy) consensusCommon.ConsensusResult {
 		return consensusCommon.ConsensusResult{
 			View:        uint64(1),

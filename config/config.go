@@ -33,6 +33,7 @@ const (
 	MaxTxBlock  = "general.txpool.txsPerBlock"
 	// consensus policy setting
 	ConsensusPolicy                   = "general.consensus.policy"
+	ConsensusEnableEmptyBlock         = "general.consensus.enableEmptyBlock"
 	ConsensusTimeoutToCollectResponse = "general.consensus.timeoutToCollectResponse"
 	ConsensusTimeoutWaitCommit        = "general.consensus.timeoutToWaitCommit"
 	ConsensusTimeoutViewChange        = "general.consensus.timeoutToViewChange"
@@ -286,8 +287,10 @@ func NewConsensusConf(conf *viper.Viper) consensusConfig.ConsensusConfig {
 	responseTimeout := conf.GetInt64(ConsensusTimeoutToCollectResponse)
 	commitTimeout := conf.GetInt64(ConsensusTimeoutWaitCommit)
 	viewChangeTimeout := conf.GetInt64(ConsensusTimeoutViewChange)
+	enableEmptyBlock := conf.GetBool(ConsensusEnableEmptyBlock)
 	return consensusConfig.ConsensusConfig{
-		PolicyName: policy,
+		PolicyName:       policy,
+		EnableEmptyBlock: enableEmptyBlock,
 		Timeout: consensusConfig.ConsensusTimeout{
 			TimeoutToCollectResponseMsg: responseTimeout,
 			TimeoutToWaitCommitMsg:      commitTimeout,

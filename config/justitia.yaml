@@ -68,6 +68,7 @@ general:
   # Timeout to consensus, all time setting in millisecond
   consensus:
     policy: solo
+    enableEmptyBlock: false
     timeoutToCollectResponse: 5000
     timeoutToWaitCommit: 5000
     timeoutToViewChange: 30000
