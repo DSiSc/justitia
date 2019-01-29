@@ -76,6 +76,13 @@ general:
   # Block produce interval for solo mode in Millisecond
   BlockProducedInterval: 2000
 
+  # signature switch
+  signature:
+      producer: false
+      txswitch: false
+      validator: false
+      blockswitch: false
+
   # p2p setting
   # Operational plugin: memorydb or leveldb
   # When leveldb is choose, define statepath and datapath in absolute path

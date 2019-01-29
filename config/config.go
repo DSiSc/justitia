@@ -118,6 +118,12 @@ const (
 	LogFileFormat      = "logging.file.format"
 	LogFileCaller      = "logging.file.caller"
 	LogFileHostname    = "logging.file.hostname"
+
+	// signature switch
+	ProducerSignatureVerifySwitch    = "general.signature.producer"
+	TxSwitchSignatureVerifySwitch    = "general.signature.txswitch"
+	ValidatorSignatureVerifySwitch   = "general.signature.validator"
+	BlockSwitchSignatureVerifySwitch = "general.signature.blockswitch"
 )
 
 type AlgorithmConfig struct {
