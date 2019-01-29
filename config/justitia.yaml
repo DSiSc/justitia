@@ -69,9 +69,11 @@ general:
   consensus:
     policy: solo
     enableEmptyBlock: false
-    timeoutToCollectResponse: 5000
+    localSignatureVerify: false
+    syncSignatureVerify: false
     timeoutToWaitCommit: 5000
     timeoutToViewChange: 30000
+    timeoutToCollectResponse: 5000
 
   # Block produce interval for solo mode in Millisecond
   BlockProducedInterval: 2000
@@ -80,7 +82,6 @@ general:
   signature:
       producer: false
       txswitch: false
-      validator: false
       blockswitch: false
 
   # p2p setting

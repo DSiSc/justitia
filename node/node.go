@@ -247,7 +247,7 @@ func (instance *Node) blockFactory(master account.Account, participates []accoun
 	if isMaster {
 		log.Info("Master this round.")
 		if nil == instance.producer {
-			instance.producer = producer.NewProducer(instance.txpool, &instance.config.Account)
+			instance.producer = producer.NewProducer(instance.txpool, instance.config.Account, instance.config.ProducerConf)
 		}
 		block, err := instance.producer.MakeBlock()
 		if err != nil {

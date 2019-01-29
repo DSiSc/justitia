@@ -12,6 +12,7 @@ import (
 	"github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/justitia/tools"
 	p2pConf "github.com/DSiSc/p2p/config"
+	producerConfig "github.com/DSiSc/producer/config"
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/validator/tools/account"
 	"github.com/spf13/viper"
@@ -37,6 +38,8 @@ const (
 	ConsensusTimeoutToCollectResponse = "general.consensus.timeoutToCollectResponse"
 	ConsensusTimeoutWaitCommit        = "general.consensus.timeoutToWaitCommit"
 	ConsensusTimeoutViewChange        = "general.consensus.timeoutToViewChange"
+	ConsensusLocalSignatureVerify     = "general.consensus.localSignatureVerify"
+	ConsensusSyncSignatureVerify      = "general.consensus.syncSignatureVerify"
 
 	ParticipatesPolicy   = "general.participates.policy"
 	ParticipatesNumber   = "general.participates.participates"
@@ -153,6 +156,8 @@ type NodeConfig struct {
 	BlockInterval int64
 	//algorithm config
 	AlgorithmConf AlgorithmConfig
+	// producer config
+	ProducerConf producerConfig.ProducerConfig
 
 	// prometheus
 	PrometheusConf monitor.PrometheusConfig
@@ -212,6 +217,7 @@ func NewNodeConfig() NodeConfig {
 	pprofConf := GetPprofConf(config)
 	logConf := GetLogSetting(config)
 	p2pConf := GetP2PConf(config)
+	producerConf := GetProducerConf(config)
 
 	return NodeConfig{
 		Account:          nodeAccount,
@@ -229,6 +235,7 @@ func NewNodeConfig() NodeConfig {
 		PprofConf:        pprofConf,
 		Logger:           logConf,
 		P2PConf:          p2pConf,
+		ProducerConf:     producerConf,
 	}
 }
 
@@ -294,9 +301,15 @@ func NewConsensusConf(conf *viper.Viper) consensusConfig.ConsensusConfig {
 	commitTimeout := conf.GetInt64(ConsensusTimeoutWaitCommit)
 	viewChangeTimeout := conf.GetInt64(ConsensusTimeoutViewChange)
 	enableEmptyBlock := conf.GetBool(ConsensusEnableEmptyBlock)
+	enableLocalSignatureVerify := conf.GetBool(ConsensusLocalSignatureVerify)
+	enableSyncSignatureVerify := conf.GetBool(ConsensusSyncSignatureVerify)
 	return consensusConfig.ConsensusConfig{
 		PolicyName:       policy,
 		EnableEmptyBlock: enableEmptyBlock,
+		SignVerifySwitch: consensusConfig.SignatureVerifySwitch{
+			LocalVerifySignature: enableLocalSignatureVerify,
+			SyncVerifySignature:  enableSyncSignatureVerify,
+		},
 		Timeout: consensusConfig.ConsensusTimeout{
 			TimeoutToCollectResponseMsg: responseTimeout,
 			TimeoutToWaitCommitMsg:      commitTimeout,
@@ -500,4 +513,11 @@ func getNodeType(conf *viper.Viper) common.NodeType {
 		panic(fmt.Errorf("unknown node type of %d", nodeType))
 	}
 	return nodeType
+}
+
+func GetProducerConf(conf *viper.Viper) producerConfig.ProducerConfig {
+	enableSignVerify := conf.GetBool(ProducerSignatureVerifySwitch)
+	return producerConfig.ProducerConfig{
+		EnableSignatureVerify: enableSignVerify,
+	}
 }
