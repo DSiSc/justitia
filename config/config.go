@@ -9,6 +9,7 @@ import (
 	participatesCommon "github.com/DSiSc/galaxy/participates/common"
 	participatesConfig "github.com/DSiSc/galaxy/participates/config"
 	roleConfig "github.com/DSiSc/galaxy/role/config"
+	swConf "github.com/DSiSc/gossipswitch/config"
 	"github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/justitia/tools"
 	p2pConf "github.com/DSiSc/p2p/config"
@@ -123,9 +124,13 @@ const (
 	LogFileHostname    = "logging.file.hostname"
 
 	// signature switch
-	ProducerSignatureVerifySwitch    = "general.signature.producer"
+	ProducerSignatureVerifySwitch  = "general.signature.producer"
+	ValidatorSignatureVerifySwitch = "general.signature.validator"
+
+	// switch config
+	TxSwitxh                         = "tx_switch"
 	TxSwitchSignatureVerifySwitch    = "general.signature.txswitch"
-	ValidatorSignatureVerifySwitch   = "general.signature.validator"
+	BlockSwitch                      = "block_switch"
 	BlockSwitchSignatureVerifySwitch = "general.signature.blockswitch"
 )
 
@@ -169,6 +174,8 @@ type NodeConfig struct {
 	Logger log.Config
 	//P2P config
 	P2PConf map[string]*p2pConf.P2PConfig
+	//Switch config
+	SwitchConf map[string]*swConf.SwitchConfig
 }
 
 type Config struct {
@@ -218,6 +225,7 @@ func NewNodeConfig() NodeConfig {
 	logConf := GetLogSetting(config)
 	p2pConf := GetP2PConf(config)
 	producerConf := GetProducerConf(config)
+	switchConf := GetSwitchConf(config)
 
 	return NodeConfig{
 		Account:          nodeAccount,
@@ -236,6 +244,7 @@ func NewNodeConfig() NodeConfig {
 		Logger:           logConf,
 		P2PConf:          p2pConf,
 		ProducerConf:     producerConf,
+		SwitchConf:       switchConf,
 	}
 }
 
@@ -504,6 +513,27 @@ func getTxP2PConf(conf *viper.Viper) *p2pConf.P2PConfig {
 		DebugP2P:         debugP2P,
 		DebugServer:      debugServer,
 		DebugAddr:        debugAddr,
+	}
+}
+
+func GetSwitchConf(conf *viper.Viper) map[string]*swConf.SwitchConfig {
+	swConfig := make(map[string]*swConf.SwitchConfig)
+	swConfig[TxSwitxh] = getTxSwitchConf(conf)
+	swConfig[BlockSwitch] = getBlockSwitchConf(conf)
+	return swConfig
+}
+
+func getTxSwitchConf(conf *viper.Viper) *swConf.SwitchConfig {
+	enableSignVerify := conf.GetBool(TxSwitchSignatureVerifySwitch)
+	return &swConf.SwitchConfig{
+		VerifySignature: enableSignVerify,
+	}
+}
+
+func getBlockSwitchConf(conf *viper.Viper) *swConf.SwitchConfig {
+	enableSignVerify := conf.GetBool(BlockSwitchSignatureVerifySwitch)
+	return &swConf.SwitchConfig{
+		VerifySignature: enableSignVerify,
 	}
 }
 
