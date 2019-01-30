@@ -105,7 +105,7 @@ func NewNode(args common.SysConfig) (NodesService, error) {
 	craftConfig.GlobalConfig.Store(craftConfig.HashAlgName, nodeConf.AlgorithmConf.HashAlgorithm)
 	pool := txpool.NewTxPool(nodeConf.TxPoolConf)
 	eventsCenter := events.NewEvent()
-	txSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.TxSwitch, eventsCenter)
+	txSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.TxSwitch, eventsCenter, nodeConf.SwitchConf[config.TxSwitxh])
 	if err != nil {
 		log.Error("Init txSwitch failed.")
 		return nil, fmt.Errorf("txswitch init failed")
@@ -119,7 +119,7 @@ func NewNode(args common.SysConfig) (NodesService, error) {
 		log.Error("Register txpool failed.")
 		return nil, fmt.Errorf("registe txpool failed")
 	}
-	blkSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.BlockSwitch, eventsCenter)
+	blkSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.BlockSwitch, eventsCenter, nodeConf.SwitchConf[config.BlockSwitch])
 	if err != nil {
 		log.Error("Init block switch failed.")
 		return nil, fmt.Errorf("blkSwitch init failed")

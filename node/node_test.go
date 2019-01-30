@@ -18,6 +18,7 @@ import (
 	"github.com/DSiSc/galaxy/role/common"
 	galaxySolo "github.com/DSiSc/galaxy/role/policy/solo"
 	"github.com/DSiSc/gossipswitch"
+	swConfig "github.com/DSiSc/gossipswitch/config"
 	"github.com/DSiSc/gossipswitch/port"
 	justitiaCommon "github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/justitia/config"
@@ -69,7 +70,7 @@ func TestNewNode(t *testing.T) {
 	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
 		return
 	})
-	monkey.Patch(gossipswitch.NewGossipSwitchByType, func(switchType gossipswitch.SwitchType, _ types.EventCenter) (*gossipswitch.GossipSwitch, error) {
+	monkey.Patch(gossipswitch.NewGossipSwitchByType, func(switchType gossipswitch.SwitchType, _ types.EventCenter, _ *swConfig.SwitchConfig) (*gossipswitch.GossipSwitch, error) {
 		if gossipswitch.TxSwitch == switchType {
 			return nil, fmt.Errorf("mock gossipswitch error")
 		}
