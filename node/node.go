@@ -103,8 +103,8 @@ func NewNode(args common.SysConfig) (NodesService, error) {
 	nodeConf := config.NewNodeConfig()
 	InitLog(args, nodeConf)
 	craftConfig.GlobalConfig.Store(craftConfig.HashAlgName, nodeConf.AlgorithmConf.HashAlgorithm)
-	pool := txpool.NewTxPool(nodeConf.TxPoolConf)
 	eventsCenter := events.NewEvent()
+	pool := txpool.NewTxPool(nodeConf.TxPoolConf, eventsCenter)
 	txSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.TxSwitch, eventsCenter, nodeConf.SwitchConf[config.TxSwitxh])
 	if err != nil {
 		log.Error("Init txSwitch failed.")
