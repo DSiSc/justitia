@@ -365,7 +365,7 @@ func (instance *Node) mainLoop() {
 
 func (instance *Node) stratRpc() {
 	var err error
-	if instance.rpcListeners, err = apigateway.StartRPC(instance.config.ApiGatewayAddr); nil != err {
+	if instance.rpcListeners, err = apigateway.StartRPC(instance.config.ApiGatewayAddr, instance.eventCenter); nil != err {
 		panic(fmt.Sprintf("Rpc start failed with %v.", err))
 	}
 }
