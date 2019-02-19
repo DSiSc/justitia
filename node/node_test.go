@@ -171,7 +171,7 @@ func TestNode_Start(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(service)
 	var ch = make(chan int)
-	monkey.Patch(apigateway.StartRPC, func(string) ([]net.Listener, error) {
+	monkey.Patch(apigateway.StartRPC, func(string, types.EventCenter) ([]net.Listener, error) {
 		return make([]net.Listener, 0), nil
 	})
 	var c *solo.SoloPolicy
