@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/justitia/common"
+	"github.com/DSiSc/justitia/config"
 	"github.com/DSiSc/justitia/node"
 	"github.com/DSiSc/justitia/tools/signal"
 	"os"
@@ -25,7 +26,7 @@ func sysSignalProcess(node node.NodesService) {
 	go sysSignalProcess.CatchSysSignal()
 }
 
-func argsParse() common.SysConfig {
+func argsParse() config.SysConfig {
 	logLevel := flag.Int("log_level", common.InvalidInt, "Log level [0: debug, 1: info, 2: warn, 3: error, 4: fatal, 5: panic, 6: disable].")
 	logPath := flag.String("log_path", common.BlankString, "Log output file in absolute path.")
 	logStyle := flag.String("log_style", common.BlankString, "Log output style in json or text, which choose from [json, text].")
@@ -37,7 +38,7 @@ func argsParse() common.SysConfig {
 	case "json":
 		style = log.JsonFmt
 	}
-	return common.SysConfig{
+	return config.SysConfig{
 		LogLevel: log.Level(*logLevel),
 		LogPath:  *logPath,
 		LogStyle: style,

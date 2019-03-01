@@ -37,7 +37,7 @@ import (
 	"testing"
 )
 
-var defaultConf = justitiaCommon.SysConfig{
+var defaultConf = config.SysConfig{
 	LogLevel: log.InfoLevel,
 	LogPath:  "/tmp/justitia.log",
 	LogStyle: "json",
@@ -67,7 +67,7 @@ func TestNewNode(t *testing.T) {
 	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
 		return log.Config{}
 	})
-	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
+	monkey.Patch(InitLog, func(config.SysConfig, config.NodeConfig) {
 		return
 	})
 	monkey.Patch(gossipswitch.NewGossipSwitchByType, func(switchType gossipswitch.SwitchType, _ types.EventCenter, _ *swConfig.SwitchConfig) (*gossipswitch.GossipSwitch, error) {
@@ -155,7 +155,7 @@ func TestNewNode(t *testing.T) {
 
 func TestNode_Start(t *testing.T) {
 	assert := assert.New(t)
-	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
+	monkey.Patch(InitLog, func(config.SysConfig, config.NodeConfig) {
 		return
 	})
 	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
@@ -299,7 +299,7 @@ func TestNode_Round(t *testing.T) {
 	monkey.Patch(syncer.NewBlockSyncer, func(p2p.P2PAPI, chan<- interface{}, types.EventCenter) (*syncer.BlockSyncer, error) {
 		return nil, nil
 	})
-	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
+	monkey.Patch(InitLog, func(config.SysConfig, config.NodeConfig) {
 		return
 	})
 	monkey.Patch(blockchain.InitBlockChain, func(blockChainConfig.BlockChainConfig, types.EventCenter) error {
@@ -358,7 +358,7 @@ func TestNode_NextRound(t *testing.T) {
 	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
 		return log.Config{}
 	})
-	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
+	monkey.Patch(InitLog, func(config.SysConfig, config.NodeConfig) {
 		return
 	})
 	service, err := NewNode(defaultConf)
@@ -404,7 +404,7 @@ func TestNode_OnlineWizard(t *testing.T) {
 	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
 		return log.Config{}
 	})
-	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
+	monkey.Patch(InitLog, func(config.SysConfig, config.NodeConfig) {
 		return
 	})
 	service, err := NewNode(defaultConf)
@@ -447,7 +447,7 @@ func TestNode_Wait(t *testing.T) {
 	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
 		return log.Config{}
 	})
-	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
+	monkey.Patch(InitLog, func(config.SysConfig, config.NodeConfig) {
 		return
 	})
 	service, err := NewNode(defaultConf)
@@ -468,7 +468,7 @@ func TestNewNode2(t *testing.T) {
 	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
 		return log.Config{}
 	})
-	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
+	monkey.Patch(InitLog, func(config.SysConfig, config.NodeConfig) {
 		return
 	})
 	service, err := NewNode(defaultConf)
@@ -506,7 +506,7 @@ func TestNewNode3(t *testing.T) {
 	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
 		return log.Config{}
 	})
-	monkey.Patch(InitLog, func(justitiaCommon.SysConfig, config.NodeConfig) {
+	monkey.Patch(InitLog, func(config.SysConfig, config.NodeConfig) {
 		return
 	})
 	service, err := NewNode(defaultConf)

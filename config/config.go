@@ -141,6 +141,12 @@ type AlgorithmConfig struct {
 	SignAlgorithm string
 }
 
+type SysConfig struct {
+	LogLevel log.Level
+	LogPath  string
+	LogStyle string
+}
+
 type NodeConfig struct {
 	NodeType common.NodeType
 	// default

@@ -120,9 +120,3 @@ const (
 	MsgOnline                            //  node online
 	MsgBlockWithoutTx                    // block without transaction
 )
-
-type SysConfig struct {
-	LogLevel log.Level
-	LogPath  string
-	LogStyle string
-}

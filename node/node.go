@@ -68,7 +68,7 @@ type Node struct {
 	txPropagator    *propagator.TxPropagator
 }
 
-func InitLog(args common.SysConfig, conf config.NodeConfig) {
+func InitLog(args config.SysConfig, conf config.NodeConfig) {
 	var logPath = args.LogPath
 	if common.BlankString != logPath {
 		conf.Logger.Appenders[config.FileLogAppender].Enabled = true
@@ -99,7 +99,7 @@ func InitLog(args common.SysConfig, conf config.NodeConfig) {
 	log.SetGlobalConfig(&conf.Logger)
 }
 
-func NewNode(args common.SysConfig) (NodesService, error) {
+func NewNode(args config.SysConfig) (NodesService, error) {
 	nodeConf := config.NewNodeConfig()
 	InitLog(args, nodeConf)
 	craftConfig.GlobalConfig.Store(craftConfig.HashAlgName, nodeConf.AlgorithmConf.HashAlgorithm)
