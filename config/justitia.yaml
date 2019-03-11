@@ -68,7 +68,7 @@ general:
   # Timeout to consensus, all time setting in millisecond
   consensus:
     policy: solo
-    enableEmptyBlock: false
+    enableEmptyBlock: true
     localSignatureVerify: false
     syncSignatureVerify: false
     timeoutToWaitCommit: 5000

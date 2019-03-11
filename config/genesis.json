@@ -1,0 +1,18 @@
+{
+  "Block": {
+    "Header": {
+      "chainId": 0
+    }
+  },
+  "GenesisAccounts": [
+    {
+      "addr": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+      "balance": 50000
+    },
+    {
+      "addr": "0x9f3bF1348179451ACCdc43Cb751c1CA88A7dB086",
+      "code": "23efg34"
+    }
+  ],
+  "extra_data": null
+}
