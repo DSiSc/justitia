@@ -74,6 +74,7 @@ const (
 	P2PNAT             = "Nat"
 	P2PDisableDNSSeed  = "DisableDNSSeed"
 	P2PDNSSeeds        = "DNSSeeds"
+	P2PService         = "Service"
 
 	// prometheus
 	PrometheusEnabled = "monitor.prometheus.enabled"
@@ -453,6 +454,7 @@ func getP2PConf(p2pType string, conf *viper.Viper) *p2pConf.P2PConfig {
 	nat := conf.GetString(p2pType + "." + P2PNAT)
 	disableDNSSeed := conf.GetBool(p2pType + "." + P2PDisableDNSSeed)
 	dnsSeeds := conf.GetString(p2pType + "." + P2PDNSSeeds)
+	service := conf.GetInt(p2pType + "." + P2PService)
 	return &p2pConf.P2PConfig{
 		AddrBookFilePath: addrFile,
 		ListenAddress:    listenAddr,
@@ -465,6 +467,7 @@ func getP2PConf(p2pType string, conf *viper.Viper) *p2pConf.P2PConfig {
 		NAT:              nat,
 		DisableDNSSeed:   disableDNSSeed,
 		DNSSeeds:         dnsSeeds,
+		Service:          p2pConf.ServiceFlag(service),
 	}
 }
 

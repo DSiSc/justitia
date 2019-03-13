@@ -97,6 +97,7 @@ general:
       DebugP2P: false
       DebugServer:
       DebugAddr:
+      Service: 2
     block:
       AddrBookFilePath: /var/log/justitia/block_address.json
       ListenAddress:  tcp://0.0.0.0:46661
@@ -106,6 +107,7 @@ general:
       DebugP2P: false
       DebugServer:
       DebugAddr:
+      Service: 1
     tx:
       AddrBookFilePath: /var/log/justitia/tx_address.json
       ListenAddress:  tcp://0.0.0.0:46662
@@ -115,6 +117,7 @@ general:
       DebugP2P: false
       DebugServer:
       DebugAddr:
+      Service: 0
 
 ################################################################################
 #
