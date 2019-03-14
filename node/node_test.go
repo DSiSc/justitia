@@ -100,6 +100,9 @@ func TestNewNode(t *testing.T) {
 	monkey.Patch(p2p.NewP2P, func(*p2pConfig.P2PConfig, types.EventCenter) (*p2p.P2P, error) {
 		return nil, fmt.Errorf("new p2p failed")
 	})
+	monkey.Patch(config.ImportGenesisBlock, func() {
+		return
+	})
 	service, err = NewNode(defaultConf)
 	assert.NotNil(err)
 	assert.Nil(service)
@@ -304,6 +307,9 @@ func TestNode_Round(t *testing.T) {
 	})
 	monkey.Patch(blockchain.InitBlockChain, func(blockChainConfig.BlockChainConfig, types.EventCenter) error {
 		return nil
+	})
+	monkey.Patch(config.ImportGenesisBlock, func() {
+		return
 	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)

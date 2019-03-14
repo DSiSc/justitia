@@ -129,6 +129,7 @@ func NewNode(args config.SysConfig) (NodesService, error) {
 		log.Error("Init block chain failed.")
 		return nil, fmt.Errorf("blockchain init failed")
 	}
+	config.ImportGenesisBlock()
 	blockSyncerP2P, err := p2p.NewP2P(nodeConf.P2PConf[config.BlockSyncerP2P], eventsCenter)
 	if err != nil {
 		log.Error("Init block syncer p2p failed.")

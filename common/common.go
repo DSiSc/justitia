@@ -120,3 +120,17 @@ const (
 	MsgOnline                            //  node online
 	MsgBlockWithoutTx                    // block without transaction
 )
+
+// define specified type of system contract
+const (
+	Null                       = "null"
+	MemberShipProviderContract = "MemberShipProvider"
+)
+
+func SystemContractType(contractType string) string {
+	var contract = Null
+	if contractType == MemberShipProviderContract {
+		contract = MemberShipProviderContract
+	}
+	return contract
+}
