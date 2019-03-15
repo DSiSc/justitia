@@ -83,9 +83,9 @@ func genesisFilePath() string {
 
 // add tx to genesis block
 func (genesis *GenesisBlock) addTxToGenesisBlock() {
-	for _, key := range genesis.GenesisAccounts {
+	for index, key := range genesis.GenesisAccounts {
 		if 0 != len(key.Code) {
-			tx := types2.NewTransaction(uint64(0), nil, big.NewInt(0), uint64(0), big.NewInt(0), key.Code, types2.Address{})
+			tx := types2.NewTransaction(uint64(index-1), nil, big.NewInt(0), uint64(0), big.NewInt(0), key.Code, types2.Address{})
 			genesis.Block.Transactions = append(genesis.Block.Transactions, tx)
 		}
 	}

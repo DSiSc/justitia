@@ -123,14 +123,17 @@ const (
 
 // define specified type of system contract
 const (
-	Null                       = "null"
-	MemberShipProviderContract = "MemberShipProvider"
+	Null               = "Null"
+	JustitiaRightToken = "JustitiaRight"
+	JustitiaVoting     = "Voting"
 )
 
 func SystemContractType(contractType string) string {
 	var contract = Null
-	if contractType == MemberShipProviderContract {
-		contract = MemberShipProviderContract
+	if contractType == JustitiaRightToken {
+		contract = JustitiaRightToken
+	} else if contractType == JustitiaVoting {
+		contract = JustitiaVoting
 	}
 	return contract
 }
