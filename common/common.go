@@ -121,19 +121,12 @@ const (
 	MsgBlockWithoutTx                    // block without transaction
 )
 
-// define specified type of system contract
-const (
-	Null               = "Null"
-	JustitiaRightToken = "JustitiaRight"
-	JustitiaVoting     = "Voting"
-)
-
 func SystemContractType(contractType string) string {
-	var contract = Null
-	if contractType == JustitiaRightToken {
-		contract = JustitiaRightToken
-	} else if contractType == JustitiaVoting {
-		contract = JustitiaVoting
+	var contract = types.Null
+	if contractType == types.JustitiaRightToken {
+		contract = types.JustitiaRightToken
+	} else if contractType == types.JustitiaVoting {
+		contract = types.JustitiaVoting
 	}
 	return contract
 }

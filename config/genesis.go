@@ -173,7 +173,7 @@ func ImportGenesisBlock() {
 		}
 		if len(account.Code) != 0 {
 			contractType := justitiac.SystemContractType(account.Label)
-			if justitiac.Null == contractType {
+			if types.Null == contractType {
 				panic("illegal parameter")
 			}
 			codeMapper[*(*string)(unsafe.Pointer(&account.Code))] = contractType

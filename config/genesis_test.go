@@ -25,7 +25,7 @@ func TestBuildGensisBlockFromFile(t *testing.T) {
 	block, err := GenerateGenesisBlock()
 	assert.NotNil(block)
 	assert.Nil(err)
-	assert.Equal(uint64(2), uint64(len(block.GenesisAccounts)))
+	assert.Equal(uint64(3), uint64(len(block.GenesisAccounts)))
 	assert.Equal(uint64(0), block.Block.Header.Height)
 }
 
