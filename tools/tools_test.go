@@ -47,8 +47,8 @@ func TestFromHex(t *testing.T) {
 
 func TestHex2Bytes(t *testing.T) {
 	assert := assert.New(t)
-	oddStr := "12"
-	var oddExcept = []byte{0x12}
+	oddStr := "9592d424"
+	var oddExcept = []byte{0x95, 0x92, 0xd4, 0x24}
 	bytes := Hex2Bytes(oddStr)
 	assert.Equal(oddExcept, bytes)
 }
