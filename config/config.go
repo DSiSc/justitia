@@ -311,15 +311,7 @@ func GetApiGatewayTcpAddr(conf *viper.Viper) string {
 func GetNodeAccount(conf *viper.Viper) account.Account {
 	nodeAddr := conf.GetString(NodeAddress)
 	address := tools.HexToAddress(nodeAddr)
-	id := conf.GetInt64(NodeId)
-	url := conf.GetString(NodeUrl)
-	return account.Account{
-		Address: address,
-		Extension: account.AccountExtension{
-			Id:  uint64(id),
-			Url: url,
-		},
-	}
+	return account.Account{Address: address}
 }
 
 func GetBlockProducerInterval(conf *viper.Viper) int64 {

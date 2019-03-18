@@ -20,7 +20,6 @@ general:
   # Node info, specified node information
   node:
     address: 333c3310824b7c685133f2bedb2ca4b8b4df633d
-    url: 127.0.0.1:8080
 
   # Block chain setting
   # Operational plugin: memorydb or leveldb

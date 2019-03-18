@@ -192,6 +192,25 @@ func NewNode(args config.SysConfig) (NodesService, error) {
 		node.participates = galaxyPlugin.Participates
 		node.role = galaxyPlugin.Role
 		node.consensus = galaxyPlugin.Consensus
+		// get node info
+		participates, err := node.participates.GetParticipates()
+		if err != nil {
+			log.Error("get participates failed with %v.", err)
+			return node, fmt.Errorf("get participates failed with %v", err)
+		}
+		exits := false
+		for _, participate := range participates {
+			if participate.Address == node.config.Account.Address {
+				node.config.Account.Extension.Url = participate.Extension.Url
+				node.config.Account.Extension.Id = participate.Extension.Id
+				exits = true
+				break
+			}
+		}
+		if !exits {
+			log.Error("node type is consensus, while not found it by contract called.")
+			return node, fmt.Errorf("node type is consensus, while not found it by contract called")
+		}
 	}
 	node.eventsRegister()
 	return node, nil
