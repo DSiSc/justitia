@@ -9,6 +9,7 @@ import (
 	"github.com/DSiSc/craft/types"
 	"github.com/DSiSc/evm-NG"
 	justitiac "github.com/DSiSc/justitia/common"
+	"github.com/DSiSc/justitia/compiler"
 	"github.com/DSiSc/justitia/tools"
 	"github.com/DSiSc/validator/worker"
 	"github.com/DSiSc/validator/worker/common"
@@ -17,7 +18,6 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-	"unsafe"
 )
 
 const (
@@ -26,10 +26,10 @@ const (
 )
 
 type GenesisAccountConfig struct {
-	Addr    string   `json:"addr"     gencodec:"required"`
-	Balance *big.Int `json:"balance"`
-	Code    string   `json:"code"`
-	Label   string   `json:"label"`
+	Addr     string   `json:"addr"     gencodec:"required"`
+	Balance  *big.Int `json:"balance"`
+	Code     string   `json:"code"`
+	Contract string   `json:"contract"`
 }
 
 type GenesisBlockConfig struct {
@@ -40,10 +40,10 @@ type GenesisBlockConfig struct {
 
 // GenesisAccount is the account in genesis block.
 type GenesisAccount struct {
-	Addr    types.Address `json:"addr"     gencodec:"required"`
-	Balance *big.Int      `json:"balance"`
-	Code    []byte        `json:"code"`
-	Label   string        `json:"label"`
+	Addr     types.Address `json:"addr"     gencodec:"required"`
+	Balance  *big.Int      `json:"balance"`
+	Code     []byte        `json:"code"`
+	Contract string        `json:"contract"`
 }
 
 // GenesisBlock is the genesis block struct of the chain.
@@ -87,6 +87,7 @@ func (genesis *GenesisBlock) addTxToGenesisBlock() {
 		if 0 != len(key.Code) {
 			tx := types2.NewTransaction(uint64(index-1), nil, big.NewInt(0), uint64(0), big.NewInt(0), key.Code, types2.Address{})
 			genesis.Block.Transactions = append(genesis.Block.Transactions, tx)
+			log.Error("nounce %d name is %s.", tx.Data.AccountNonce, key.Contract)
 		}
 	}
 }
@@ -111,11 +112,20 @@ func buildGenesisFromConfig(genesisPath string) (*GenesisBlock, error) {
 		ExtraData:       genesis.ExtraData,
 	}
 	for _, account := range genesis.GenesisAccounts {
+		contractByteCode := ""
 		genesisAccount := GenesisAccount{
-			Addr:    tools.HexToAddress(account.Addr),
-			Balance: account.Balance,
-			Code:    tools.Hex2Bytes(account.Code),
-			Label:   account.Label,
+			Addr:     tools.HexToAddress(account.Addr),
+			Balance:  account.Balance,
+			Contract: account.Contract,
+		}
+		if contractByteCode != account.Code {
+			genesisAccount.Code = tools.Hex2Bytes(account.Code)
+			log.Error("Error called.")
+		} else {
+			if contractByteCode != account.Contract {
+				contractByteCode = compiler.SolidityCompile(account.Contract)
+				genesisAccount.Code = tools.Hex2Bytes(contractByteCode)
+			}
 		}
 		genesisBlock.GenesisAccounts = append(genesisBlock.GenesisAccounts, genesisAccount)
 	}
@@ -156,42 +166,38 @@ func buildDefaultGenesis() (*GenesisBlock, error) {
 }
 
 func ImportGenesisBlock() {
-	var codeMapper = make(map[string]string)
 	chain, err := blockchain.NewLatestStateBlockChain()
 	if err != nil {
 		panic(fmt.Errorf("failed to create init-state block chain, as: %v", err))
 	}
+
 	genesisBlock, err := GenerateGenesisBlock()
 	if err != nil {
 		panic(fmt.Errorf("get genesis block failed with error %s", err))
 	}
-	// set balance
+
+	// set balance and record map
 	for _, account := range genesisBlock.GenesisAccounts {
 		if nil != account.Balance && account.Balance.Cmp(big.NewInt(0)) == 1 {
 			chain.CreateAccount(account.Addr)
 			chain.SetBalance(account.Addr, account.Balance)
 		}
 		if len(account.Code) != 0 {
-			contractType := justitiac.SystemContractType(account.Label)
-			if types.Null == contractType {
+			contractType := justitiac.SystemContractType(account.Contract)
+			if types.InitialContractType == contractType {
 				panic("illegal parameter")
 			}
-			codeMapper[*(*string)(unsafe.Pointer(&account.Code))] = contractType
 		}
 	}
 	// execute transaction
-	for _, tx := range genesisBlock.Block.Transactions {
+	for index, tx := range genesisBlock.Block.Transactions {
 		context := evm.NewEVMContext(*tx, genesisBlock.Block.Header, chain, types.Address{})
 		evmEnv := evm.NewEVM(context, chain)
 		_, _, _, err, contractAddress := worker.ApplyTransaction(evmEnv, tx, new(common.GasPool))
 		if err != nil {
 			panic("apply transaction failed")
 		}
-		err = chain.Put([]byte(codeMapper[*(*string)(unsafe.Pointer(&tx.Data.Payload))]), contractAddress[:])
-		if nil != err {
-			panic("error")
-		}
-		log.Error("contract address is: %x.", contractAddress)
+		log.Error("tx %d contract nounce %d address is: %x.", index, tx.Data.AccountNonce, contractAddress)
 	}
 	// update block header hash
 	genesisBlock.Block.HeaderHash = justitiac.HeaderHash(genesisBlock.Block)

@@ -121,12 +121,16 @@ const (
 	MsgBlockWithoutTx                    // block without transaction
 )
 
-func SystemContractType(contractType string) string {
-	var contract = types.Null
+func SystemContractType(contractType string) types.ContractType {
+	var contract = types.InitialContractType
 	if contractType == types.JustitiaRightToken {
-		contract = types.JustitiaRightToken
+		contract = types.JustitiaRightContractType
 	} else if contractType == types.JustitiaVoting {
-		contract = types.JustitiaVoting
+		contract = types.VoteContractType
+	} else if contractType == types.JustitiaWhiteList {
+		contract = types.WhiteListContractType
+	} else if contractType == types.JustitiaMetaData {
+		contract = types.MetaDataContractType
 	}
 	return contract
 }

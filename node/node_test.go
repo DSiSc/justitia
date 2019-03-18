@@ -21,6 +21,7 @@ import (
 	swConfig "github.com/DSiSc/gossipswitch/config"
 	"github.com/DSiSc/gossipswitch/port"
 	justitiaCommon "github.com/DSiSc/justitia/common"
+	"github.com/DSiSc/justitia/compiler"
 	"github.com/DSiSc/justitia/config"
 	"github.com/DSiSc/justitia/propagator"
 	"github.com/DSiSc/justitia/tools/events"
@@ -75,6 +76,9 @@ func TestNewNode(t *testing.T) {
 			return nil, fmt.Errorf("mock gossipswitch error")
 		}
 		return nil, nil
+	})
+	monkey.Patch(compiler.SolidityCompile, func(string) string {
+		return "608060405234801561001057600080fd5b506040805190810160405280600d81526020017f48656c6c6f2c20776f72"
 	})
 	service, err := NewNode(defaultConf)
 	assert.NotNil(err)
@@ -169,6 +173,9 @@ func TestNode_Start(t *testing.T) {
 	})
 	monkey.Patch(syncer.NewBlockSyncer, func(p2p.P2PAPI, chan<- interface{}, types.EventCenter) (*syncer.BlockSyncer, error) {
 		return nil, nil
+	})
+	monkey.Patch(compiler.SolidityCompile, func(string) string {
+		return "608060405234801561001057600080fd5b506040805190810160405280600d81526020017f48656c6c6f2c20776f72"
 	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
@@ -311,6 +318,9 @@ func TestNode_Round(t *testing.T) {
 	monkey.Patch(config.ImportGenesisBlock, func() {
 		return
 	})
+	monkey.Patch(compiler.SolidityCompile, func(string) string {
+		return "608060405234801561001057600080fd5b506040805190810160405280600d81526020017f48656c6c6f2c20776f72"
+	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
 	assert.NotNil(service)
@@ -367,6 +377,9 @@ func TestNode_NextRound(t *testing.T) {
 	monkey.Patch(InitLog, func(config.SysConfig, config.NodeConfig) {
 		return
 	})
+	monkey.Patch(compiler.SolidityCompile, func(string) string {
+		return "608060405234801561001057600080fd5b506040805190810160405280600d81526020017f48656c6c6f2c20776f72"
+	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
 
@@ -413,6 +426,9 @@ func TestNode_OnlineWizard(t *testing.T) {
 	monkey.Patch(InitLog, func(config.SysConfig, config.NodeConfig) {
 		return
 	})
+	monkey.Patch(compiler.SolidityCompile, func(string) string {
+		return "608060405234801561001057600080fd5b506040805190810160405280600d81526020017f48656c6c6f2c20776f72"
+	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
 	node := service.(*Node)
@@ -456,6 +472,9 @@ func TestNode_Wait(t *testing.T) {
 	monkey.Patch(InitLog, func(config.SysConfig, config.NodeConfig) {
 		return
 	})
+	monkey.Patch(compiler.SolidityCompile, func(string) string {
+		return "608060405234801561001057600080fd5b506040805190810160405280600d81526020017f48656c6c6f2c20776f72"
+	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
 	node := service.(*Node)
@@ -476,6 +495,9 @@ func TestNewNode2(t *testing.T) {
 	})
 	monkey.Patch(InitLog, func(config.SysConfig, config.NodeConfig) {
 		return
+	})
+	monkey.Patch(compiler.SolidityCompile, func(string) string {
+		return "608060405234801561001057600080fd5b506040805190810160405280600d81526020017f48656c6c6f2c20776f72"
 	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
@@ -514,6 +536,9 @@ func TestNewNode3(t *testing.T) {
 	})
 	monkey.Patch(InitLog, func(config.SysConfig, config.NodeConfig) {
 		return
+	})
+	monkey.Patch(compiler.SolidityCompile, func(string) string {
+		return "608060405234801561001057600080fd5b506040805190810160405280600d81526020017f48656c6c6f2c20776f72"
 	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
