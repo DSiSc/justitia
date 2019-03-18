@@ -41,10 +41,8 @@ const (
 	ConsensusLocalSignatureVerify     = "general.consensus.localSignatureVerify"
 	ConsensusSyncSignatureVerify      = "general.consensus.syncSignatureVerify"
 
-	ParticipatesPolicy   = "general.participates.policy"
-	ParticipatesNumber   = "general.participates.participates"
-	ParticipatesNodeInfo = "general.participates.node"
-	RolePolicy           = "general.role.policy"
+	ParticipatesPolicy = "general.participates.policy"
+	RolePolicy         = "general.role.policy"
 	// node info
 	NodeAddress = "general.node.address"
 	NodeId      = "general.node.id"
