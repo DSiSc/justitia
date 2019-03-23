@@ -87,7 +87,6 @@ func (genesis *GenesisBlock) addTxToGenesisBlock() {
 		if 0 != len(key.Code) {
 			tx := types2.NewTransaction(uint64(index-1), nil, big.NewInt(0), uint64(0), big.NewInt(0), key.Code, types2.Address{})
 			genesis.Block.Transactions = append(genesis.Block.Transactions, tx)
-			log.Error("nounce %d name is %s.", tx.Data.AccountNonce, key.Contract)
 		}
 	}
 }
@@ -120,7 +119,6 @@ func buildGenesisFromConfig(genesisPath string) (*GenesisBlock, error) {
 		}
 		if contractByteCode != account.Code {
 			genesisAccount.Code = tools.Hex2Bytes(account.Code)
-			log.Error("Error called.")
 		} else {
 			if contractByteCode != account.Contract {
 				contractByteCode = compiler.SolidityCompile(account.Contract)
@@ -190,14 +188,13 @@ func ImportGenesisBlock() {
 		}
 	}
 	// execute transaction
-	for index, tx := range genesisBlock.Block.Transactions {
+	for _, tx := range genesisBlock.Block.Transactions {
 		context := evm.NewEVMContext(*tx, genesisBlock.Block.Header, chain, types.Address{})
 		evmEnv := evm.NewEVM(context, chain)
-		_, _, _, err, contractAddress := worker.ApplyTransaction(evmEnv, tx, new(common.GasPool))
+		_, _, _, err, _ := worker.ApplyTransaction(evmEnv, tx, new(common.GasPool))
 		if err != nil {
 			panic("apply transaction failed")
 		}
-		log.Error("tx %d contract nounce %d address is: %x.", index, tx.Data.AccountNonce, contractAddress)
 	}
 	// update block header hash
 	genesisBlock.Block.HeaderHash = justitiac.HeaderHash(genesisBlock.Block)
