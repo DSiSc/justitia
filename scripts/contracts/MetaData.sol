@@ -21,7 +21,7 @@ contract MetaData {
     mapping(uint => contractState) public contractMetaData;
 
     constructor () public {
-        whiteListContractAddress = 0xe5a1185d39768f16ad55673e8e8445b2b314c2f4;
+        whiteListContractAddress = 0x47e9fbef8c83a1714f1951f142132e6e90f5fa5d;
         whilteList = WhiteList(whiteListContractAddress);
         registerContract(1, 0xbd770416a3345f91e4b34576cb804a576fa48eb1);
         registerContract(2, 0x5a443704dd4b594b382c22a083e2bd3090a6fef3);
