@@ -211,6 +211,7 @@ func NewNode(args config.SysConfig) (NodesService, error) {
 			log.Error("node type is consensus, while not found it by contract called.")
 			return node, fmt.Errorf("node type is consensus, while not found it by contract called")
 		}
+		node.consensus.Prepare(node.config.Account)
 	}
 	node.eventsRegister()
 	return node, nil
