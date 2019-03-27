@@ -14,7 +14,6 @@ import (
 	"github.com/DSiSc/galaxy/consensus/policy/dbft"
 	"github.com/DSiSc/galaxy/consensus/policy/fbft"
 	"github.com/DSiSc/galaxy/consensus/policy/solo"
-	participatesSolo "github.com/DSiSc/galaxy/participates/policy/solo"
 	"github.com/DSiSc/galaxy/role/common"
 	galaxySolo "github.com/DSiSc/galaxy/role/policy/solo"
 	"github.com/DSiSc/gossipswitch"
@@ -383,7 +382,8 @@ func TestNode_NextRound(t *testing.T) {
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
 
-	bft, err := dbft.NewDBFTPolicy(mockAccounts[0], timeout)
+	bft, err := dbft.NewDBFTPolicy(timeout)
+	bft.Initialization(mockAccounts[0], mockAccounts[0], make([]account.Account, 0), nil, true)
 	assert.Nil(err)
 	assert.NotNil(bft)
 	node := service.(*Node)
@@ -402,7 +402,8 @@ func TestNode_NextRound(t *testing.T) {
 	})
 	node.NextRound(justitiaCommon.MsgBlockCommitSuccess)
 
-	bft1, err := fbft.NewFBFTPolicy(mockAccounts[0], timeout, nil, true, consensusConfig.SignatureVerifySwitch{})
+	bft1, err := fbft.NewFBFTPolicy(timeout, nil, true, consensusConfig.SignatureVerifySwitch{})
+	bft1.Initialization(mockAccounts[0], mockAccounts[0], make([]account.Account, 0), nil, true)
 	monkey.PatchInstanceMethod(reflect.TypeOf(bft1), "GetConsensusResult", func(*fbft.FBFTPolicy) consensusCommon.ConsensusResult {
 		return consensusCommon.ConsensusResult{
 			View:        uint64(1),
@@ -412,52 +413,6 @@ func TestNode_NextRound(t *testing.T) {
 	})
 	node.consensus = bft1
 	node.NextRound(justitiaCommon.MsgBlockCommitSuccess)
-	monkey.UnpatchAll()
-}
-
-func TestNode_OnlineWizard(t *testing.T) {
-	assert := assert.New(t)
-	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
-		return log.Config{}
-	})
-	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
-		return log.Config{}
-	})
-	monkey.Patch(InitLog, func(config.SysConfig, config.NodeConfig) {
-		return
-	})
-	monkey.Patch(compiler.SolidityCompile, func(string) string {
-		return "608060405234801561001057600080fd5b506040805190810160405280600d81526020017f48656c6c6f2c20776f72"
-	})
-	service, err := NewNode(defaultConf)
-	assert.Nil(err)
-	node := service.(*Node)
-	var p *participatesSolo.SoloPolicy
-	monkey.PatchInstanceMethod(reflect.TypeOf(p), "GetParticipates", func(policy *participatesSolo.SoloPolicy) ([]account.Account, error) {
-		return make([]account.Account, 0), fmt.Errorf("get participte failed")
-	})
-	node.OnlineWizard()
-
-	monkey.PatchInstanceMethod(reflect.TypeOf(p), "GetParticipates", func(policy *participatesSolo.SoloPolicy) ([]account.Account, error) {
-		return make([]account.Account, 0), nil
-	})
-	var r *galaxySolo.SoloPolicy
-	monkey.PatchInstanceMethod(reflect.TypeOf(r), "RoleAssignments", func(*galaxySolo.SoloPolicy, []account.Account) (map[account.Account]common.Roler, account.Account, error) {
-		return nil, account.Account{}, fmt.Errorf("assignments failed")
-	})
-	node.OnlineWizard()
-
-	monkey.PatchInstanceMethod(reflect.TypeOf(r), "RoleAssignments", func(*galaxySolo.SoloPolicy, []account.Account) (map[account.Account]common.Roler, account.Account, error) {
-		return nil, account.Account{}, nil
-	})
-	var c *solo.SoloPolicy
-	monkey.PatchInstanceMethod(reflect.TypeOf(c), "Initialization", func(*solo.SoloPolicy, account.Account, []account.Account, types.EventCenter, bool) {
-		return
-	})
-	monkey.PatchInstanceMethod(reflect.TypeOf(c), "Online", func(*solo.SoloPolicy) {
-		return
-	})
-	node.OnlineWizard()
 	monkey.UnpatchAll()
 }
 

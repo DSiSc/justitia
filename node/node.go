@@ -178,7 +178,6 @@ func NewNode(args config.SysConfig) (NodesService, error) {
 	}
 	if common.ConsensusNode == nodeConf.NodeType {
 		galaxyConfig := galaxyCommon.GalaxyPluginConf{
-			Account:         nodeConf.Account,
 			BlockSwitch:     blkSwitch.InPort(port.LocalInPortId).Channel(),
 			ParticipateConf: nodeConf.ParticipatesConf,
 			RoleConf:        nodeConf.RoleConf,
@@ -208,10 +207,17 @@ func NewNode(args config.SysConfig) (NodesService, error) {
 			}
 		}
 		if !exits {
-			log.Error("node type is consensus, while not found it by contract called.")
-			return node, fmt.Errorf("node type is consensus, while not found it by contract called")
+			panic("node type is consensus, while not found it by contract called")
 		}
-		node.consensus.Prepare(node.config.Account)
+		participate, err := node.participates.GetParticipates()
+		if err != nil {
+			panic(fmt.Sprintf("get participates failed with error %s", err))
+		}
+		_, master, err := node.role.RoleAssignments(participate)
+		if nil != err {
+			panic(fmt.Sprintf("Role assignments failed with err %v.", err))
+		}
+		node.consensus.Initialization(node.config.Account, master, participate, node.eventCenter, false)
 	}
 	node.eventsRegister()
 	return node, nil
@@ -263,7 +269,7 @@ func (instance *Node) notify() {
 func (instance *Node) blockFactory(master account.Account, participates []account.Account) {
 	monitor.JTMetrics.ConsensusPeerId.Set(float64(instance.config.Account.Extension.Id))
 	monitor.JTMetrics.ConsensusMasterId.Set(float64(master.Extension.Id))
-	instance.consensus.Initialization(master, participates, instance.eventCenter, false)
+	instance.consensus.Initialization(instance.config.Account, master, participates, instance.eventCenter, false)
 	isMaster := master == instance.config.Account
 	if isMaster {
 		log.Info("Master this round.")
@@ -330,6 +336,7 @@ func (instance *Node) Round() {
 	instance.blockFactory(master, participate)
 }
 
+/*
 func (instance *Node) OnlineWizard() {
 	log.Info("start online wizard.")
 	participate, err := instance.participates.GetParticipates()
@@ -347,9 +354,9 @@ func (instance *Node) OnlineWizard() {
 	instance.consensus.Initialization(master, participate, instance.eventCenter, false)
 	instance.consensus.Online()
 }
-
+*/
 func (instance *Node) mainLoop() {
-	instance.OnlineWizard()
+	instance.consensus.Online()
 	for {
 		msg := <-instance.msgChannel
 		switch msg {
