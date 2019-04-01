@@ -33,6 +33,7 @@ general:
   txpool:
     globalSlots: 4096
     txsPerBlock: 512
+    txMaxCacheTime: 600
 
   # Participates setting
   # Operational policy: solo, dpos

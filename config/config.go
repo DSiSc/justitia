@@ -30,8 +30,9 @@ const (
 	// algorithm setting
 	HashAlgorithm = "general.hashAlgorithm"
 	// txpool setting
-	TxpoolSlots = "general.txpool.globalSlots"
-	MaxTxBlock  = "general.txpool.txsPerBlock"
+	TxpoolSlots    = "general.txpool.globalSlots"
+	MaxTxBlock     = "general.txpool.txsPerBlock"
+	TxMaxCacheTime = "general.txpool.txMaxCacheTime"
 	// consensus policy setting
 	ConsensusPolicy                   = "general.consensus.policy"
 	ConsensusEnableEmptyBlock         = "general.consensus.enableEmptyBlock"
@@ -245,9 +246,11 @@ func GetAlgorithmConf(config *viper.Viper) AlgorithmConfig {
 func NewTxPoolConf(conf *viper.Viper) txpool.TxPoolConfig {
 	slots := conf.GetInt64(TxpoolSlots)
 	txPerBlock := conf.GetInt64(MaxTxBlock)
+	txMaxCacheTime := conf.GetInt64(TxMaxCacheTime)
 	txPoolConf := txpool.TxPoolConfig{
 		GlobalSlots:    uint64(slots),
 		MaxTrsPerBlock: uint64(txPerBlock),
+		TxMaxCacheTime: uint64(txMaxCacheTime),
 	}
 	return txPoolConf
 }
