@@ -231,12 +231,19 @@ func txNumOfBlock(blockNum int64) int64 {
 	return txNum
 }
 
+var globalNonce = struct {
+	nonce uint64
+	mu    sync.Mutex
+}{nonce: 0}
 // sendTXs sends a batch of tx, batch size is given by parameter count.
 func sendTXs(count int) {
 	for index := 0; index < count; index++ {
+		globalNonce.mu.Lock()
 		reqData := fmt.Sprintf(
-			`{"jsonrpc":"2.0","method":"eth_sendTransaction","params":[{"from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b","to": "%s","gas": "0x6400","gasPrice": "0x1234","value": "0x%x"}],"id":1}`,
-			addressList[index%len(addressList)], index+rand.Intn(count))
+			`{"jsonrpc":"2.0","method":"eth_sendTransaction","params":[{"from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b","to": "%s","nonce": "0x%x", "gas": "0x6400","gasPrice": "0x1234","value": "0x%x"}],"id":1}`,
+			addressList[index%len(addressList)], globalNonce.nonce, index+rand.Intn(count))
+		globalNonce.nonce++
+		globalNonce.mu.Unlock()
 		doPost(reqData)
 	}
 }
