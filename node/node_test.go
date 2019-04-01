@@ -29,6 +29,7 @@ import (
 	p2pConfig "github.com/DSiSc/p2p/config"
 	"github.com/DSiSc/producer"
 	"github.com/DSiSc/syncer"
+	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/validator/tools/account"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -69,6 +70,9 @@ func TestNewNode(t *testing.T) {
 	})
 	monkey.Patch(InitLog, func(config.SysConfig, config.NodeConfig) {
 		return
+	})
+	monkey.Patch(txpool.NewTxPool, func(txpool.TxPoolConfig, types.EventCenter) txpool.TxsPool {
+		return &txpool.TxPool{}
 	})
 	monkey.Patch(gossipswitch.NewGossipSwitchByType, func(switchType gossipswitch.SwitchType, _ types.EventCenter, _ *swConfig.SwitchConfig) (*gossipswitch.GossipSwitch, error) {
 		if gossipswitch.TxSwitch == switchType {
@@ -163,6 +167,9 @@ func TestNode_Start(t *testing.T) {
 	assert := assert.New(t)
 	monkey.Patch(InitLog, func(config.SysConfig, config.NodeConfig) {
 		return
+	})
+	monkey.Patch(txpool.NewTxPool, func(txpool.TxPoolConfig, types.EventCenter) txpool.TxsPool {
+		return &txpool.TxPool{}
 	})
 	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
 		return log.Config{}
