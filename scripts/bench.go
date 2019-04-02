@@ -16,6 +16,29 @@ import (
 	"time"
 )
 
+var (
+	GlobalTestAccount  = "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"
+	GlobalNonceCounter = struct {
+		nonce uint64
+		mu    sync.Mutex
+	}{nonce: 0}
+)
+
+// init GlobalNonceCounter
+func initGlobalNonce() {
+	reqTemplateStr := `{"jsonrpc":"2.0","method":"eth_getTransactionCount","params":["%s","%s"],"id":1}`
+	pendingResp := doPost(fmt.Sprintf(reqTemplateStr, GlobalTestAccount, "pending"))
+	pendingNonce := uint64(hexstr2dec(pendingResp.Result))
+
+	latestResp := doPost(fmt.Sprintf(reqTemplateStr, GlobalTestAccount, "latest"))
+	latestNonce := uint64(hexstr2dec(latestResp.Result))
+	if pendingNonce > latestNonce {
+		GlobalNonceCounter.nonce = pendingNonce
+	} else {
+		GlobalNonceCounter.nonce = latestNonce
+	}
+}
+
 type RPCError struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -96,7 +119,6 @@ Examples:
 	} else {
 		endpoints = strings.Split(flagSet.Arg(0), ",")
 	}
-
 	//////////////////////////////////
 	// log configuration.
 	//////////////////////////////////
@@ -107,6 +129,11 @@ Examples:
 	} else {
 		log.SetGlobalLogLevel(log.InfoLevel)
 	}
+
+	//////////////////////////////////
+	// init global nonce.
+	//////////////////////////////////
+	initGlobalNonce()
 
 	//////////////////////////////////
 	// statistic and report.
@@ -231,19 +258,15 @@ func txNumOfBlock(blockNum int64) int64 {
 	return txNum
 }
 
-var globalNonce = struct {
-	nonce uint64
-	mu    sync.Mutex
-}{nonce: 0}
 // sendTXs sends a batch of tx, batch size is given by parameter count.
 func sendTXs(count int) {
 	for index := 0; index < count; index++ {
-		globalNonce.mu.Lock()
+		GlobalNonceCounter.mu.Lock()
 		reqData := fmt.Sprintf(
-			`{"jsonrpc":"2.0","method":"eth_sendTransaction","params":[{"from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b","to": "%s","nonce": "0x%x", "gas": "0x6400","gasPrice": "0x1234","value": "0x%x"}],"id":1}`,
-			addressList[index%len(addressList)], globalNonce.nonce, index+rand.Intn(count))
-		globalNonce.nonce++
-		globalNonce.mu.Unlock()
+			`{"jsonrpc":"2.0","method":"eth_sendTransaction","params":[{"from": "%s","to": "%s","nonce": "0x%x", "gas": "0x6400","gasPrice": "0x1234","value": "0x%x"}],"id":1}`,
+			GlobalTestAccount, addressList[index%len(addressList)], GlobalNonceCounter.nonce, index+rand.Intn(count))
+		GlobalNonceCounter.nonce++
+		GlobalNonceCounter.mu.Unlock()
 		doPost(reqData)
 	}
 }
