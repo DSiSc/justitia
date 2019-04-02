@@ -171,6 +171,12 @@ func ImportGenesisBlock() {
 		panic(fmt.Errorf("failed to create init-state block chain, as: %v", err))
 	}
 
+	currentBlock := chain.GetCurrentBlock()
+	if currentBlock != nil {
+		log.Info("found latest block with height %d from local database, will skip importing genesis block", currentBlock.Header.Height)
+		return
+	}
+
 	genesisBlock, err := GenerateGenesisBlock()
 	if err != nil {
 		panic(fmt.Errorf("get genesis block failed with error %s", err))
