@@ -209,15 +209,11 @@ func NewNode(args config.SysConfig) (NodesService, error) {
 		if !exits {
 			panic("node type is consensus, while not found it by contract called")
 		}
-		participate, err := node.participates.GetParticipates()
-		if err != nil {
-			panic(fmt.Sprintf("get participates failed with error %s", err))
-		}
-		_, master, err := node.role.RoleAssignments(participate)
+		_, master, err := node.role.RoleAssignments(participates)
 		if nil != err {
 			panic(fmt.Sprintf("Role assignments failed with err %v.", err))
 		}
-		node.consensus.Initialization(node.config.Account, master, participate, node.eventCenter, false)
+		node.consensus.Initialization(node.config.Account, master, participates, node.eventCenter, false)
 	}
 	node.eventsRegister()
 	return node, nil
