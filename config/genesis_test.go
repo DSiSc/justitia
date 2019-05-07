@@ -85,3 +85,35 @@ func TestImportGenesisBlockNoBlockInDB(t *testing.T) {
 	})
 	ImportGenesisBlock()
 }
+
+func TestGetChainIdFromConfigFailed(t *testing.T)  {
+	assert := assert.New(t)
+	monkey.Patch(genesisFilePath, func() string {
+		return "InvalidPath"
+	})
+	chainId, err := GetChainIdFromConfig()
+
+	assert.NotNil(err)
+	assert.Equal(uint64(0), chainId)
+
+	monkey.UnpatchAll()
+}
+
+func TestGetChainIdFromConfigDefault(t *testing.T)  {
+	assert := assert.New(t)
+	monkey.Patch(genesisFilePath, func() string {
+		return ""
+	})
+	chainId, err := GetChainIdFromConfig()
+	assert.Nil(err)
+	assert.Equal(uint64(0), chainId)
+	monkey.UnpatchAll()
+}
+
+func TestGetChainIdFromConfig(t *testing.T)  {
+	assert := assert.New(t)
+	_, err := GetChainIdFromConfig()
+
+	assert.Nil(err)
+	monkey.UnpatchAll()
+}
