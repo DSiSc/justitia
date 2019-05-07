@@ -310,6 +310,7 @@ func (instance *Node) NextRound(msgType common.MsgType) {
 		log.Debug("get participate %v and master %v.",
 			consensusResult.Participate, consensusResult.Master.Extension.Id)
 		if common.MsgBlockCommitSuccess == msgType {
+			//TODO: increase time spent
 			time.Sleep(time.Duration(instance.config.BlockInterval) * time.Millisecond)
 		}
 		instance.blockFactory(consensusResult.Master, consensusResult.Participate)

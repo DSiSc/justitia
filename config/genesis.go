@@ -213,3 +213,29 @@ func ImportGenesisBlock() {
 		panic("import genesis block failed.")
 	}
 }
+
+func GetChainIdFromConfig() (uint64, error) {
+	var genesisPath = genesisFilePath()
+	if InvalidPath == genesisPath {
+		log.Info("GenesisPath is invalid, return the default chainId")
+		return 0, nil
+	}
+
+	//Open genesisFile by the path
+	file, err := os.Open(genesisPath)
+	if err != nil {
+		log.Error("Failed to open genesis file, as: %v", err)
+		return 0, fmt.Errorf("Failed to open genesis file, as: %v ", err)
+	}
+	defer file.Close()
+
+	//Decode the file to genesis
+	genesis := new(GenesisBlockConfig)
+	if err := json.NewDecoder(file).Decode(genesis); err != nil {
+		log.Error("Failed to parse genesis file, as: %v", err)
+		return 0, fmt.Errorf("Failed to parse genesis file, as: %v ", err)
+	}
+	chainId := genesis.Block.Header.ChainID
+
+	return chainId, nil
+}
