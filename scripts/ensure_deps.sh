@@ -1,10 +1,12 @@
 #!/bin/bash
 
+GOPATH=${GOPATH:-~/go}
 RELEASE=${RELEASE:-master}
 
 # Change directory to project root folder
 PROJ_FOLDER=$(cd "$(dirname "$0")/..";pwd)
 cd ${PROJ_FOLDER}
+git checkout ${RELEASE} &> /dev/null
 
 if [[ ! -f "release-notes/${RELEASE}.txt" ]]; then
   echo "[ERROR] we don't have release ${RELEASE}, please confirm."
@@ -48,6 +50,7 @@ for dep in ${DEPS}; do
     cd ${GOPATH}/src/${dep_repo}
 
     git fetch origin > /dev/null
+    git fetch origin -t > /dev/null
 
     # Try checkout to ${dep_ver}
     git checkout ${dep_ver} &> /dev/null && (git pull &> /dev/null | true)
@@ -63,9 +66,7 @@ for dep in ${DEPS}; do
 #   echo "[INFO] ${dep_repo} is now on [${dep_ver}]"
     git log -n 1 --pretty=oneline
   else
-    echo "[WARNING] ${GOPATH}/src/${dep_repo} not exist, do nothing, please check release-notes/$RELEASE.txt."
+    echo "[WARNING] ${GOPATH}/src/${dep_repo} not exist, try to get it."
+    go get ${dep_repo}
   fi
 done
-
-cd ${PROJ_FOLDER}
-git checkout ${RELEASE}

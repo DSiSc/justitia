@@ -16,3 +16,4 @@ github.com/DSiSc/validator:master
 github.com/DSiSc/crypto-suite:master
 github.com/DSiSc/p2p:master
 github.com/DSiSc/syncer:master
+github.com/DSiSc/contractsManage:master

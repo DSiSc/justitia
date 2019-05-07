@@ -1,0 +1,18 @@
+# Multi-nodes block chain network with FBFT consensus algorithm and P2P support.
+
+# Dependencies:
+github.com/DSiSc/apigateway:v1.0.0
+github.com/DSiSc/blockchain:v1.0.0
+github.com/DSiSc/blockstore:v1.0.0
+github.com/DSiSc/craft:v1.0.0
+github.com/DSiSc/evm-NG:v1.0.0
+github.com/DSiSc/galaxy:v1.0.0
+github.com/DSiSc/gossipswitch:v1.0.0
+github.com/DSiSc/producer:v1.0.0
+github.com/DSiSc/statedb-NG:v1.0.0
+github.com/DSiSc/txpool:v1.0.0
+github.com/DSiSc/validator:v1.0.0
+github.com/DSiSc/crypto-suite:v1.0.0
+github.com/DSiSc/p2p:v1.0.0
+github.com/DSiSc/syncer:v1.0.0
+github.com/DSiSc/contractsManage:v1.0.0
