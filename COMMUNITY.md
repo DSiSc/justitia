@@ -11,31 +11,19 @@ Every week, we have an online meeting where you can discuss not only project-rel
 ### Wiki Pages
 Each project and working group has its own wiki page. Wiki pages are a secondary source of information. They hold information that is subject to more change than the info provided in the project’s documentation i.e. meeting agendas, team members, etc.
 
+### Etherpad
+We use `Etherpad` as our daily documentation tools, and you can share the documents, blogs, and articles with others in this `Pad`[Etherpad Address](https://etherpad.net/p/Justitia).
+
 ## Governance
 The Justitia community has a few different roles for governance, leadership, and community participation. Each operates have different duty but being aware of each of them is useful.
 
 ### Roles
 
-#### Active User Contributor(AUC)
-Individual Members who have contributed to Justitia project. AUCs is crucial for Justitia and their participation is highly encouraged.
+#### Individual Committer
+Individual Members who have contributed to Justitia project.  Individual Committer is crucial for Justitia and their participation is highly encouraged.
 
-#### Active Technical Contributor(ATC)
-Individual Members who have contributed to Justitia project over the last two 6-month release cycles are automatically considered as ATCs.
-
-In specific cases you can apply for an exception to become an ATC, for further information please see the relevant section of the Technical Committee Charter.
-
-#### Active Project Contributor(APC)
-If you have the ATC status, in the Justitia project where you contributed over the last two 6-month release cycles you are considered to be an Active Project Contributor.
-
-Only APCs can participate in the election process to vote for the next PTL of the team.
-
-#### Project Team Lead (PTL)
-Justitia have a Project Team Lead. She/He coordinate the day to day operation of the project, resolve technical disputes within the project, and operate as the spokesperson and ambassador for the project.
-    
-Project Team Leads are elected for each release cycle by Active Project Contributors: individuals who have contributed to the project in the last two release cycles.
-    
 #### Core Reviewer
-Justitia projects have a project team consisting of core reviewers and contributors.
+Justitia projects have a project team consisting of core reviewers.
 
 Core reviewers are responsible for:
 
@@ -47,22 +35,41 @@ Reviewing changes and approving them when it meets the design and coding or docu
 
 Core reviewers have rights that blocking or approving a commit.
 
-New core reviewers are elected by voting from the members of the core team of the project.
+#### Project Leader
+Justitia have a Project Leader. She/He coordinate the day to day operation of the project, resolve technical disputes within the project, and operate as the spokesperson and ambassador for the project.
 
 ## Releases
-Justitia release a version every three month. For each version, PTL decides which features and patches will be released. 
+Justitia release a version every three months. For each version, Project Leader decides which features and patches will be released. 
 
 ### Schedule and Planning
 The three-month cycle is divided into three phases.
 
-For the first phase: PTL decide which features and patches will be released and publish the plan to wiki page. 
+- For the first phase: 
+    1. Project Leader decide which features and patches will be released and publish the plan to wiki page. 
 
-For the second phase: Contributor develop the scheduled features and patches and commit the new code to repo.
+- For the second phase: 
+    1. Contributor develop the scheduled features and patches and commit the new code to repo.
 
-For the third phase: One week before the release version, we will focus on testing and stop merging any commit except the bugfix.
+- For the third phase:
+    1. Two weeks before the release version, we will focus on testing and stop merging any commit except the bugfix.
+    2. We will create a new tag for a batch of bugs, and these tags named in the format `{VersionName}.CR{Number}`(e.g. V1.0.0.CR1, V1.0.0.CR2...)
+    3. If there is no high impact bugs, we will creates new tag with the annotate `{VersionName}` for each project(include sub-project) independently.
+    
+### Stable Branch
+Once a three-month development cycle is completed, the code for that release is branched, in git, to a stable branch.
 
-### Tags
-Once a 3-month development cycle is completed the code for that release is marked to a new release tag. When release a version, PTL creates new tag with the same annotate for each project(include sub-project) independently.
+Stable branches are kept as a safe source of fixes for high impact bugs and security issues which have been fixed, on master, since the release occurred. Given the stable nature of these branches, backports to stable branches undergo additional scrutiny when they are proposed. Proposed changes should:
+
+- Have a low risk of introducing a regression
+
+- Have a user visible benefit
+
+- Be self contained
+
+- Be included in master and backported to all releases between master and the stable branch in question
+
+Stable Branches are maintained until a new version was released.
+
 
 ### Version Name
 We use `X.Y.Z` as our version name format:

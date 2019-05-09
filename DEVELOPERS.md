@@ -4,7 +4,6 @@
 * [Running Tests](#tests)
 * [Coding Rules](#rules)
 * [Commit Message Guidelines](#commits)
-* [Writing Documentation](#documentation)
 
 ## <a name="setup"> Development Setup
 
@@ -69,7 +68,7 @@ To ensure consistency throughout the source code, keep these rules in mind as yo
 * All public API methods **must be documented**
 * All code **must be `gofmt`ed**
 * Code coverage for pull request  **must exceed 60%**
-* Authors **should avoid common mistakes** explained in the [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments) page
+* Authors **should avoid common mistakes** explained in the [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments) page, you can use `Golint` to help check code.
 
 ## <a name="rules"></a> Contribute Process
 
@@ -87,15 +86,9 @@ To contribute the code, you can follow the process bellow:
       # commit new feature
       git add xxx
       git commit -m 'commit comment'
-      git push --set-upstream origin feature-xxx 
+      git push --set-upstream origin feature-xxx
       ```
-      (master)$: git checkout -b feature-xxx            # 从master建立特性分支
-      (feature-xxx)$: blabla                         # 开发
-      (feature-xxx)$: git add xxx
-      (feature-xxx)$: git commit -m 'commit comment'
-      (feature-xxx)$: git push --set-upstream origin feature-xxx 
-      
-    - create pull request on [Home Page](https://github.com/DSiSc/justitia)
+    - create pull request to master branch on [Home Page](https://github.com/DSiSc/justitia)
 
 - Bug Fix
     - develop locally
@@ -111,7 +104,7 @@ To contribute the code, you can follow the process bellow:
       git commit -m 'commit comment'
       git push --set-upstream origin bugfix-xxx  
       ```
-    - create pull request on [Home Page](https://github.com/DSiSc/justitia)
+    - create pull request to master branch on [Home Page](https://github.com/DSiSc/justitia)
 
 ## <a name="commits"></a> Git Commit Guidelines
 
