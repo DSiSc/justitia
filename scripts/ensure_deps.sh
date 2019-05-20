@@ -64,7 +64,7 @@ for dep in ${DEPS}; do
       fi
     fi
 #   echo "[INFO] ${dep_repo} is now on [${dep_ver}]"
-    git log -n 1 --pretty=oneline
+    echo Commit on $(git log -n 1 --pretty=oneline)
   else
     echo "[WARNING] ${GOPATH}/src/${dep_repo} not exist, try to get it."
     go get ${dep_repo}
