@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/DSiSc/apigateway"
 	rpc "github.com/DSiSc/apigateway/rpc/core"
-	"github.com/DSiSc/blockchain"
 	craftConfig "github.com/DSiSc/craft/config"
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/monitor"
@@ -26,6 +25,7 @@ import (
 	"github.com/DSiSc/justitia/tools/events"
 	"github.com/DSiSc/p2p"
 	"github.com/DSiSc/producer"
+	"github.com/DSiSc/repository"
 	"github.com/DSiSc/syncer"
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/validator"
@@ -124,10 +124,10 @@ func NewNode(args config.SysConfig) (NodesService, error) {
 		log.Error("Init block switch failed.")
 		return nil, fmt.Errorf("blkSwitch init failed")
 	}
-	err = blockchain.InitBlockChain(nodeConf.BlockChainConf, eventsCenter)
+	err = repository.InitRepository(nodeConf.RepositoryConf, eventsCenter)
 	if err != nil {
 		log.Error("Init block chain failed.")
-		return nil, fmt.Errorf("blockchain init failed")
+		return nil, fmt.Errorf("Repository init failed")
 	}
 	config.ImportGenesisBlock()
 	blockSyncerP2P, err := p2p.NewP2P(nodeConf.P2PConf[config.BlockSyncerP2P], eventsCenter)

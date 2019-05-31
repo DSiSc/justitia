@@ -2,11 +2,11 @@ package config
 
 import (
 	"errors"
-	"github.com/DSiSc/blockchain"
 	"github.com/DSiSc/craft/types"
 	"github.com/DSiSc/justitia/compiler"
 	"github.com/DSiSc/justitia/tools"
 	"github.com/DSiSc/monkey"
+	"github.com/DSiSc/repository"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
@@ -48,11 +48,11 @@ func TestImportGenesisBlockExistBlockInDB(t *testing.T) {
 	monkey.Patch(tools.PathExists, func(string) bool {
 		return false
 	})
-	chain := &blockchain.BlockChain{}
-	monkey.Patch(blockchain.NewLatestStateBlockChain, func() (*blockchain.BlockChain, error) {
+	chain := &repository.Repository{}
+	monkey.Patch(repository.NewLatestStateRepository, func() (*repository.Repository, error) {
 		return chain, nil
 	})
-	monkey.PatchInstanceMethod(reflect.TypeOf(chain), "GetCurrentBlock", func(*blockchain.BlockChain) *types.Block {
+	monkey.PatchInstanceMethod(reflect.TypeOf(chain), "GetCurrentBlock", func(*repository.Repository) *types.Block {
 		return &types.Block{
 			Header: &types.Header{
 				Height: 1,
@@ -73,11 +73,11 @@ func TestImportGenesisBlockNoBlockInDB(t *testing.T) {
 	monkey.Patch(tools.PathExists, func(string) bool {
 		return false
 	})
-	chain := &blockchain.BlockChain{}
-	monkey.Patch(blockchain.NewLatestStateBlockChain, func() (*blockchain.BlockChain, error) {
+	chain := &repository.Repository{}
+	monkey.Patch(repository.NewLatestStateRepository, func() (*repository.Repository, error) {
 		return chain, nil
 	})
-	monkey.PatchInstanceMethod(reflect.TypeOf(chain), "GetCurrentBlock", func(*blockchain.BlockChain) *types.Block {
+	monkey.PatchInstanceMethod(reflect.TypeOf(chain), "GetCurrentBlock", func(*repository.Repository) *types.Block {
 		return nil
 	})
 	monkey.Patch(GenerateGenesisBlock, func() (*GenesisBlock, error) {
@@ -86,7 +86,7 @@ func TestImportGenesisBlockNoBlockInDB(t *testing.T) {
 	ImportGenesisBlock()
 }
 
-func TestGetChainIdFromConfigFailed(t *testing.T)  {
+func TestGetChainIdFromConfigFailed(t *testing.T) {
 	assert := assert.New(t)
 	monkey.Patch(genesisFilePath, func() string {
 		return "InvalidPath"
@@ -99,7 +99,7 @@ func TestGetChainIdFromConfigFailed(t *testing.T)  {
 	monkey.UnpatchAll()
 }
 
-func TestGetChainIdFromConfigDefault(t *testing.T)  {
+func TestGetChainIdFromConfigDefault(t *testing.T) {
 	assert := assert.New(t)
 	monkey.Patch(genesisFilePath, func() string {
 		return ""
@@ -110,7 +110,7 @@ func TestGetChainIdFromConfigDefault(t *testing.T)  {
 	monkey.UnpatchAll()
 }
 
-func TestGetChainIdFromConfig(t *testing.T)  {
+func TestGetChainIdFromConfig(t *testing.T) {
 	assert := assert.New(t)
 	_, err := GetChainIdFromConfig()
 

@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	types2 "github.com/DSiSc/apigateway/core/types"
-	"github.com/DSiSc/blockchain"
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/types"
 	"github.com/DSiSc/evm-NG"
 	justitiac "github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/justitia/compiler"
 	"github.com/DSiSc/justitia/tools"
+	"github.com/DSiSc/repository"
 	"github.com/DSiSc/validator/worker"
 	"github.com/DSiSc/validator/worker/common"
 	"math"
@@ -166,7 +166,7 @@ func buildDefaultGenesis() (*GenesisBlock, error) {
 }
 
 func ImportGenesisBlock() {
-	chain, err := blockchain.NewLatestStateBlockChain()
+	chain, err := repository.NewLatestStateRepository()
 	if err != nil {
 		panic(fmt.Errorf("failed to create init-state block chain, as: %v", err))
 	}

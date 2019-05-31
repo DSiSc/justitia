@@ -44,7 +44,7 @@ func main() {
 	flagSet.StringVar(&statisticsServer, "server", "localhost:8080", "statistics server address, default localhost:8080")
 	flagSet.IntVar(&nodeCount, "nodes", 20, "p2p node count")
 	flagSet.Usage = func() {
-		fmt.Println(`Justitia blockchain tx propagator test client.
+		fmt.Println(`Justitia Repository tx propagator test client.
 Usage:
 	block-propagator-test [-server localhost:8080 -nodes 1 ]
 

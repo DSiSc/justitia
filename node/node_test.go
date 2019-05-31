@@ -3,8 +3,6 @@ package node
 import (
 	"fmt"
 	"github.com/DSiSc/apigateway"
-	"github.com/DSiSc/blockchain"
-	blockChainConfig "github.com/DSiSc/blockchain/config"
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/types"
 	"github.com/DSiSc/galaxy"
@@ -28,6 +26,8 @@ import (
 	"github.com/DSiSc/p2p"
 	p2pConfig "github.com/DSiSc/p2p/config"
 	"github.com/DSiSc/producer"
+	"github.com/DSiSc/repository"
+	repositoryConfig "github.com/DSiSc/repository/config"
 	"github.com/DSiSc/syncer"
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/validator/tools/account"
@@ -93,15 +93,15 @@ func TestNewNode(t *testing.T) {
 	monkey.PatchInstanceMethod(reflect.TypeOf(op), "BindToPort", func(_ *port.OutPort, _ port.OutPutFunc) error {
 		return nil
 	})
-	monkey.Patch(blockchain.InitBlockChain, func(blockChainConfig.BlockChainConfig, types.EventCenter) error {
-		return fmt.Errorf("mock blockchain error")
+	monkey.Patch(repository.InitRepository, func(repositoryConfig.RepositoryConfig, types.EventCenter) error {
+		return fmt.Errorf("mock Repository error")
 	})
 	service, err = NewNode(defaultConf)
 	assert.NotNil(err)
 	assert.Nil(service)
-	assert.Equal(err, fmt.Errorf("blockchain init failed"))
+	assert.Equal(err, fmt.Errorf("Repository init failed"))
 
-	monkey.Patch(blockchain.InitBlockChain, func(blockChainConfig.BlockChainConfig, types.EventCenter) error {
+	monkey.Patch(repository.InitRepository, func(repositoryConfig.RepositoryConfig, types.EventCenter) error {
 		return nil
 	})
 	monkey.Patch(p2p.NewP2P, func(*p2pConfig.P2PConfig, types.EventCenter) (*p2p.P2P, error) {
@@ -152,7 +152,7 @@ func TestNewNode(t *testing.T) {
 	event := nodeService.eventCenter.(*events.Event)
 	assert.Equal(1, len(event.Subscribers))
 	assert.NotNil(service)
-	monkey.Unpatch(blockchain.InitBlockChain)
+	monkey.Unpatch(repository.InitRepository)
 	monkey.UnpatchInstanceMethod(reflect.TypeOf(op), "BindToPort")
 	monkey.Unpatch(p2p.NewP2P)
 	monkey.Unpatch(syncer.NewBlockSyncer)
@@ -174,7 +174,7 @@ func TestNode_Start(t *testing.T) {
 	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
 		return log.Config{}
 	})
-	monkey.Patch(blockchain.InitBlockChain, func(blockChainConfig.BlockChainConfig, types.EventCenter) error {
+	monkey.Patch(repository.InitRepository, func(repositoryConfig.RepositoryConfig, types.EventCenter) error {
 		return nil
 	})
 	monkey.Patch(syncer.NewBlockSyncer, func(p2p.P2PAPI, chan<- interface{}, types.EventCenter) (*syncer.BlockSyncer, error) {
@@ -318,7 +318,7 @@ func TestNode_Round(t *testing.T) {
 	monkey.Patch(InitLog, func(config.SysConfig, config.NodeConfig) {
 		return
 	})
-	monkey.Patch(blockchain.InitBlockChain, func(blockChainConfig.BlockChainConfig, types.EventCenter) error {
+	monkey.Patch(repository.InitRepository, func(repositoryConfig.RepositoryConfig, types.EventCenter) error {
 		return nil
 	})
 	monkey.Patch(config.ImportGenesisBlock, func() {

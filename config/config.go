@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	blockchainConfig "github.com/DSiSc/blockchain/config"
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/monitor"
 	consensusConfig "github.com/DSiSc/galaxy/consensus/config"
@@ -13,6 +12,7 @@ import (
 	"github.com/DSiSc/justitia/tools"
 	p2pConf "github.com/DSiSc/p2p/config"
 	producerConfig "github.com/DSiSc/producer/config"
+	repositoryConfig "github.com/DSiSc/repository/config"
 	"github.com/DSiSc/txpool"
 	"github.com/DSiSc/validator/tools/account"
 	"github.com/spf13/viper"
@@ -49,9 +49,9 @@ const (
 	NodeId      = "general.node.id"
 	NodeUrl     = "general.node.url"
 	// block chain
-	BlockChainPlugin    = "general.blockchain.plugin"
-	BlockChainStatePath = "general.blockchain.statePath"
-	BlockChainDataPath  = "general.blockchain.dataPath"
+	RepositoryPlugin    = "general.repository.plugin"
+	RepositoryStatePath = "general.repository.statePath"
+	RepositoryDataPath  = "general.repository.dataPath"
 	// api gateway
 	ApiGatewayAddr = "general.apigateway"
 	// Default parameter for solo block producer
@@ -142,8 +142,8 @@ type NodeConfig struct {
 	RoleConf roleConfig.RoleConfig
 	// consensus
 	ConsensusConf consensusConfig.ConsensusConfig
-	// BlockChainConfig
-	BlockChainConf blockchainConfig.BlockChainConfig
+	// repositoryConfig
+	RepositoryConf repositoryConfig.RepositoryConfig
 	// Block Produce Interval
 	BlockInterval int64
 	//algorithm config
@@ -204,7 +204,7 @@ func NewNodeConfig() NodeConfig {
 	participatesConf := NewParticipateConf(config)
 	roleConf := NewRoleConf(config)
 	consensusConf := NewConsensusConf(config)
-	blockChainConf := NewBlockChainConf(config)
+	RepositoryConf := NewRepositoryConf(config)
 	blockIntervalTime := GetBlockProducerInterval(config)
 	prometheusConf := GetPrometheusConf(config)
 	expvarConf := GetExpvarConf(config)
@@ -222,7 +222,7 @@ func NewNodeConfig() NodeConfig {
 		ParticipatesConf: participatesConf,
 		RoleConf:         roleConf,
 		ConsensusConf:    consensusConf,
-		BlockChainConf:   blockChainConf,
+		RepositoryConf:   RepositoryConf,
 		BlockInterval:    blockIntervalTime,
 		AlgorithmConf:    algorithmConf,
 		PrometheusConf:   prometheusConf,
@@ -294,16 +294,16 @@ func NewConsensusConf(conf *viper.Viper) consensusConfig.ConsensusConfig {
 	}
 }
 
-func NewBlockChainConf(conf *viper.Viper) blockchainConfig.BlockChainConfig {
-	policy := conf.GetString(BlockChainPlugin)
-	dataPath := conf.GetString(BlockChainDataPath)
-	statePath := conf.GetString(BlockChainStatePath)
-	blockChainConf := blockchainConfig.BlockChainConfig{
+func NewRepositoryConf(conf *viper.Viper) repositoryConfig.RepositoryConfig {
+	policy := conf.GetString(RepositoryPlugin)
+	dataPath := conf.GetString(RepositoryDataPath)
+	statePath := conf.GetString(RepositoryStatePath)
+	RepositoryConf := repositoryConfig.RepositoryConfig{
 		PluginName:    policy,
 		StateDataPath: statePath,
 		BlockDataPath: dataPath,
 	}
-	return blockChainConf
+	return RepositoryConf
 }
 
 func GetApiGatewayTcpAddr(conf *viper.Viper) string {

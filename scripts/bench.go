@@ -79,7 +79,7 @@ func main() {
 	flagSet.UintVar(&blockEnd, "e", 1, "The number of ending statistics.")
 	flagSet.StringVar(&filePath, "f", "/var/log/justitia/justitia.log", "The absolute path of statistic file.")
 	flagSet.Usage = func() {
-		fmt.Println(`Justitia blockchain benchmarking tool.
+		fmt.Println(`Justitia Repository benchmarking tool.
 
 Usage:
     Send TXs:  go run bench.go [-t 60] [-r 200] [-p 47768] [-R] [-v] [host1,host2,host3,host4]
