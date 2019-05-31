@@ -1,7 +1,7 @@
 {
   "Block": {
     "Header": {
-      "chainId": 111
+      "chainId": 0
     }
   },
   "GenesisAccounts": [
