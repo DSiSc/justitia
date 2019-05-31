@@ -450,15 +450,19 @@ func GetSwitchConf(conf *viper.Viper) map[string]*swConf.SwitchConfig {
 
 func getTxSwitchConf(conf *viper.Viper) *swConf.SwitchConfig {
 	enableSignVerify := conf.GetBool(TxSwitchSignatureVerifySwitch)
+	chainId, _ := GetChainIdFromConfig()
 	return &swConf.SwitchConfig{
 		VerifySignature: enableSignVerify,
+		ChainID:         chainId,
 	}
 }
 
 func getBlockSwitchConf(conf *viper.Viper) *swConf.SwitchConfig {
 	enableSignVerify := conf.GetBool(BlockSwitchSignatureVerifySwitch)
+	chainId, _ := GetChainIdFromConfig()
 	return &swConf.SwitchConfig{
 		VerifySignature: enableSignVerify,
+		ChainID:         chainId,
 	}
 }
 
@@ -472,7 +476,9 @@ func getNodeType(conf *viper.Viper) common.NodeType {
 
 func GetProducerConf(conf *viper.Viper) producerConfig.ProducerConfig {
 	enableSignVerify := conf.GetBool(ProducerSignatureVerifySwitch)
+	chainId, _ := GetChainIdFromConfig()
 	return producerConfig.ProducerConfig{
 		EnableSignatureVerify: enableSignVerify,
+		ChainId:               chainId,
 	}
 }
