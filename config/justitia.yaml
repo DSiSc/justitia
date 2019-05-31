@@ -24,7 +24,7 @@ general:
   # Block chain setting
   # Operational plugin: memorydb or leveldb
   # When leveldb is choose, define statepath and datapath in absolute path
-  blockchain:
+  repository:
     plugin: memorydb
     statepath: /var/lib/justitia/state
     datapath: /var/lib/justitia/block
