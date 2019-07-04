@@ -3,7 +3,7 @@
 
 # Dependencies are as follows:
 github.com/DSiSc/apigateway:master
-github.com/DSiSc/blockchain:master
+github.com/DSiSc/repository:master
 github.com/DSiSc/blockstore:master
 github.com/DSiSc/craft:master
 github.com/DSiSc/evm-NG:master
