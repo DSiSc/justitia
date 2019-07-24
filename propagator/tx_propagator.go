@@ -2,46 +2,46 @@ package propagator
 
 import (
 	"errors"
-	"fmt"
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/types"
-	"github.com/DSiSc/gossipswitch/port"
 	"github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/p2p"
 	"github.com/DSiSc/p2p/message"
-	"reflect"
+	"github.com/DSiSc/txpool"
 	"sync"
 )
 
 //TxPropagator transaction message propagator
 type TxPropagator struct {
-	p2p      p2p.P2PAPI
-	txOut    chan<- interface{}
-	quitChan chan interface{}
-	isRuning int32
-	lock     sync.Mutex
+	p2p         p2p.P2PAPI
+	txOut       chan<- interface{}
+	quitChan    chan interface{}
+	isRuning    int32
+	lock        sync.Mutex
+	eventCenter types.EventCenter
+	subscribers map[types.EventType]types.Subscriber
 }
 
 // NewBlockPropagator create a new NewBlockPropagator instance.
-func NewTxPropagator(p2p p2p.P2PAPI, txOut chan<- interface{}) (*TxPropagator, error) {
+func NewTxPropagator(p2p p2p.P2PAPI, txOut chan<- interface{}, eventCenter types.EventCenter) (*TxPropagator, error) {
 	return &TxPropagator{
-		p2p:      p2p,
-		txOut:    txOut,
-		quitChan: make(chan interface{}),
-		isRuning: 0,
+		p2p:         p2p,
+		txOut:       txOut,
+		quitChan:    make(chan interface{}),
+		isRuning:    0,
+		eventCenter: eventCenter,
+		subscribers: make(map[types.EventType]types.Subscriber),
 	}, nil
 }
 
-// TxSwitchOutPutFunc get a OutPutFunc that can be bound to gossip switch
-func (tp *TxPropagator) TxSwitchOutPutFunc() port.OutPutFunc {
-	return func(msg interface{}) error {
-		switch msg.(type) {
-		case *types.Transaction:
-			tp.broadCastTx(msg.(*types.Transaction))
-		default:
-			return fmt.Errorf("unknown transaction message, message type: %v", reflect.TypeOf(msg))
-		}
-		return nil
+// BlockEventFunc get a EventFunc that can be bound to event center
+func (tp *TxPropagator) TxEventFunc(event interface{}) {
+	switch event.(type) {
+	case types.Hash:
+		tx := txpool.GetTxByHash(event.(types.Hash))
+		tp.broadCastTx(tx)
+	default:
+		log.Warn("received a unknown transaction event")
 	}
 }
 
@@ -62,6 +62,9 @@ func (tp *TxPropagator) Start() error {
 		return errors.New("transaction propagator already started")
 	}
 	tp.isRuning = 1
+
+	tp.subscribers[types.EventAddTxToTxPool] = tp.eventCenter.Subscribe(types.EventAddTxToTxPool, tp.TxEventFunc)
+
 	go tp.recvHandler()
 	return nil
 }
@@ -75,6 +78,10 @@ func (tp *TxPropagator) Stop() {
 	}
 	tp.isRuning = 0
 	close(tp.quitChan)
+	for eventType, subscriber := range tp.subscribers {
+		delete(tp.subscribers, eventType)
+		tp.eventCenter.UnSubscribe(eventType, subscriber)
+	}
 }
 
 // receive handler will receive block from p2p, and send the block to gossip switch
