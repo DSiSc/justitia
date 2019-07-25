@@ -219,13 +219,15 @@ func NewNode(args config.SysConfig) (NodesService, error) {
 }
 
 func (instance *Node) eventsRegister() {
-	instance.eventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
+	txDelEventFunc := func(v interface{}) {
 		if nil != v {
 			block := v.(*types.Block)
 			log.Debug("begin delete txs after block %d committed success.", block.Header.Height)
 			instance.txpool.DelTxs(block.Transactions)
 		}
-	})
+	}
+	instance.eventCenter.Subscribe(types.EventBlockCommitted, txDelEventFunc)
+	instance.eventCenter.Subscribe(types.EventBlockWritten, txDelEventFunc)
 	if common.ConsensusNode == instance.config.NodeType {
 		instance.eventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
 			instance.msgChannel <- common.MsgBlockCommitSuccess
