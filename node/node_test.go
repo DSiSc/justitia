@@ -150,7 +150,7 @@ func TestNewNode(t *testing.T) {
 	service, err = NewNode(defaultConf)
 	nodeService := service.(*Node)
 	event := nodeService.eventCenter.(*events.Event)
-	assert.Equal(1, len(event.Subscribers))
+	assert.Equal(2, len(event.Subscribers))
 	assert.NotNil(service)
 	monkey.Unpatch(repository.InitRepository)
 	monkey.UnpatchInstanceMethod(reflect.TypeOf(op), "BindToPort")
