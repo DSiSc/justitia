@@ -155,12 +155,11 @@ func NewNode(args config.SysConfig) (NodesService, error) {
 		log.Error("Init tx p2p failed.")
 		return nil, fmt.Errorf("init tx p2p failed")
 	}
-	txPropagator, err := propagator.NewTxPropagator(txP2P, txSwitch.InPort(port.RemoteInPortId).Channel())
+	txPropagator, err := propagator.NewTxPropagator(txP2P, txSwitch.InPort(port.RemoteInPortId).Channel(), eventsCenter)
 	if err != nil {
 		log.Error("Init tx propagator failed.")
 		return nil, fmt.Errorf("init tx propagator failed")
 	}
-	txSwitch.OutPort(port.RemoteOutPortId).BindToPort(txPropagator.TxSwitchOutPutFunc())
 	node := &Node{
 		config:          nodeConf,
 		txpool:          pool,

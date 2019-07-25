@@ -1,19 +1,23 @@
 package propagator
 
 import (
+	"errors"
 	"github.com/DSiSc/craft/types"
+	"github.com/DSiSc/justitia/tools/events"
 	"github.com/DSiSc/monkey"
 	"github.com/DSiSc/p2p"
 	"github.com/DSiSc/p2p/message"
+	"github.com/DSiSc/txpool"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestNewTxPropagator(t *testing.T) {
 	assert := assert.New(t)
 	txOut := make(chan interface{})
-	tp, err := NewTxPropagator(mockP2P(), txOut)
+	tp, err := NewTxPropagator(mockP2P(), txOut, events.NewEvent())
 	assert.Nil(err)
 	assert.NotNil(tp)
 }
@@ -21,7 +25,7 @@ func TestNewTxPropagator(t *testing.T) {
 func TestTxPropagator_Start(t *testing.T) {
 	assert := assert.New(t)
 	txOut := make(chan interface{})
-	tp, err := NewTxPropagator(mockP2P(), txOut)
+	tp, err := NewTxPropagator(mockP2P(), txOut, events.NewEvent())
 	assert.Nil(err)
 	assert.NotNil(tp)
 	err = tp.Start()
@@ -40,7 +44,7 @@ func TestTxPropagator_RecvTx(t *testing.T) {
 		return msgChan
 	})
 
-	tp, err := NewTxPropagator(p2pN, txOut)
+	tp, err := NewTxPropagator(p2pN, txOut, events.NewEvent())
 	assert.Nil(err)
 	assert.NotNil(tp)
 	err = tp.Start()
@@ -62,26 +66,10 @@ func TestTxPropagator_RecvTx(t *testing.T) {
 	tp.Stop()
 }
 
-func TestTxPropagator_TxSwitchOutPutFunc(t *testing.T) {
-	assert := assert.New(t)
-	txOut := make(chan interface{})
-	tp, err := NewTxPropagator(mockP2P(), txOut)
-	assert.Nil(err)
-	assert.NotNil(tp)
-	err = tp.Start()
-	assert.Nil(err)
-	assert.Equal(int32(1), tp.isRuning)
-
-	outFunc := tp.TxSwitchOutPutFunc()
-	outFunc(&types.Transaction{})
-	outFunc(&types.Block{})
-	tp.Stop()
-}
-
 func TestTxPropagator_Stop(t *testing.T) {
 	assert := assert.New(t)
 	txOut := make(chan interface{})
-	tp, err := NewTxPropagator(mockP2P(), txOut)
+	tp, err := NewTxPropagator(mockP2P(), txOut, events.NewEvent())
 	assert.Nil(err)
 	assert.NotNil(tp)
 	err = tp.Start()
@@ -89,4 +77,39 @@ func TestTxPropagator_Stop(t *testing.T) {
 	assert.Equal(int32(1), tp.isRuning)
 	tp.Stop()
 	assert.Equal(int32(0), tp.isRuning)
+}
+
+func TestTxPropagator_TxEventFunc(t *testing.T) {
+	assert := assert.New(t)
+	defer monkey.UnpatchAll()
+	msgChan := make(chan *p2p.InternalMsg)
+	p2pN := mockP2P()
+	monkey.PatchInstanceMethod(reflect.TypeOf(p2pN), "MessageChan", func(this *p2p.P2P) <-chan *p2p.InternalMsg {
+		return msgChan
+	})
+	broadcastChan := make(chan message.Message)
+	monkey.PatchInstanceMethod(reflect.TypeOf(p2pN), "BroadCast", func(this *p2p.P2P, msg message.Message) {
+		broadcastChan <- msg
+	})
+	monkey.Patch(txpool.GetTxByHash, func(hash types.Hash) *types.Transaction {
+		return &types.Transaction{}
+	})
+	txOut := make(chan interface{})
+	tp, err := NewTxPropagator(p2pN, txOut, events.NewEvent())
+	assert.Nil(err)
+	assert.NotNil(tp)
+	err = tp.Start()
+	assert.Nil(err)
+	assert.Equal(int32(1), tp.isRuning)
+
+	txHash := types.Hash{}
+	tp.eventCenter.Notify(types.EventAddTxToTxPool, txHash)
+
+	tk := time.NewTicker(100 * time.Second)
+	select {
+	case <-broadcastChan:
+	case <-tk.C:
+		assert.Nil(errors.New("failed to broadcast tx msg"))
+	}
+	tp.Stop()
 }
