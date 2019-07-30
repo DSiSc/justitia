@@ -131,6 +131,8 @@ func SystemContractType(contractType string) types.ContractType {
 		contract = types.WhiteListContractType
 	} else if contractType == types.JustitiaMetaData {
 		contract = types.MetaDataContractType
+	} else if contractType == types.JustitiaCrossFundsPool {
+		contract = types.CrossFundsPoolContractType
 	}
 	return contract
 }

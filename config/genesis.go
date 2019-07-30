@@ -11,6 +11,7 @@ import (
 	"github.com/DSiSc/justitia/compiler"
 	"github.com/DSiSc/justitia/tools"
 	"github.com/DSiSc/repository"
+	"github.com/DSiSc/statedb-NG/util"
 	"github.com/DSiSc/validator/worker"
 	"github.com/DSiSc/validator/worker/common"
 	"math"
@@ -86,7 +87,7 @@ func (genesis *GenesisBlock) addTxToGenesisBlock() {
 	var nonce uint64
 	for _, key := range genesis.GenesisAccounts {
 		if 0 != len(key.Code) {
-			tx := types2.NewTransaction(nonce, nil, big.NewInt(0), uint64(0), big.NewInt(0), key.Code, types2.Address{})
+			tx := types2.NewTransaction(nonce, nil, key.Balance, uint64(0), big.NewInt(0), key.Code, types2.Address{})
 			genesis.Block.Transactions = append(genesis.Block.Transactions, tx)
 			nonce++
 		}
@@ -196,12 +197,19 @@ func ImportGenesisBlock() {
 		}
 	}
 	// execute transaction
-	for _, tx := range genesisBlock.Block.Transactions {
+	for index, tx := range genesisBlock.Block.Transactions {
 		context := evm.NewEVMContext(*tx, genesisBlock.Block.Header, chain, types.Address{})
 		evmEnv := evm.NewEVM(context, chain)
-		_, _, _, err, _ := worker.ApplyTransaction(evmEnv, tx, new(common.GasPool))
+		_, _, _, err, addr := worker.ApplyTransaction(evmEnv, tx, new(common.GasPool))
+		log.Info("the address is: ", util.AddressToHex(addr))
+		log.Info("err = ", err)
 		if err != nil {
 			panic("apply transaction failed")
+		}
+
+		//TODO: optimize
+		if index == 4 {
+			chain.SetBalance(addr, big.NewInt(1000000))
 		}
 	}
 	// update block header hash
