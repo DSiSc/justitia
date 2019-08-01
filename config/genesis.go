@@ -10,7 +10,6 @@ import (
 	"github.com/DSiSc/justitia/compiler"
 	"github.com/DSiSc/justitia/tools"
 	"github.com/DSiSc/repository"
-	"github.com/DSiSc/statedb-NG/util"
 	"github.com/DSiSc/validator/worker"
 	"github.com/DSiSc/validator/worker/common"
 	"math"
@@ -197,7 +196,7 @@ func ImportGenesisBlock() {
 	}
 	// execute transaction
 	for index, tx := range genesisBlock.Block.Transactions {
-		_, _, _, err, _ := worker.ApplyTransaction(genesisBlock.Block.Header.Coinbase, genesisBlock.Block.Header, chain, tx, new(common.GasPool))
+		_, _, _, err, addr := worker.ApplyTransaction(genesisBlock.Block.Header.Coinbase, genesisBlock.Block.Header, chain, tx, new(common.GasPool))
 		if err != nil {
 			panic("apply transaction failed")
 		}
