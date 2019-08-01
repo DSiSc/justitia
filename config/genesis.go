@@ -241,3 +241,4 @@ func GetChainIdFromConfig() (uint64, error) {
 
 	return chainId, nil
 }
+
