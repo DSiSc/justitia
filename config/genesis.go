@@ -6,7 +6,6 @@ import (
 	types2 "github.com/DSiSc/apigateway/core/types"
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/types"
-	"github.com/DSiSc/evm-NG"
 	justitiac "github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/justitia/compiler"
 	"github.com/DSiSc/justitia/tools"
@@ -198,11 +197,7 @@ func ImportGenesisBlock() {
 	}
 	// execute transaction
 	for index, tx := range genesisBlock.Block.Transactions {
-		context := evm.NewEVMContext(*tx, genesisBlock.Block.Header, chain, types.Address{})
-		evmEnv := evm.NewEVM(context, chain)
-		_, _, _, err, addr := worker.ApplyTransaction(evmEnv, tx, new(common.GasPool))
-		log.Info("the address is: ", util.AddressToHex(addr))
-		log.Info("err = ", err)
+		_, _, _, err, _ := worker.ApplyTransaction(genesisBlock.Block.Header.Coinbase, genesisBlock.Block.Header, chain, tx, new(common.GasPool))
 		if err != nil {
 			panic("apply transaction failed")
 		}

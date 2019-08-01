@@ -155,12 +155,11 @@ func NewNode(args config.SysConfig) (NodesService, error) {
 		log.Error("Init tx p2p failed.")
 		return nil, fmt.Errorf("init tx p2p failed")
 	}
-	txPropagator, err := propagator.NewTxPropagator(txP2P, txSwitch.InPort(port.RemoteInPortId).Channel())
+	txPropagator, err := propagator.NewTxPropagator(txP2P, txSwitch.InPort(port.RemoteInPortId).Channel(), eventsCenter)
 	if err != nil {
 		log.Error("Init tx propagator failed.")
 		return nil, fmt.Errorf("init tx propagator failed")
 	}
-	txSwitch.OutPort(port.RemoteOutPortId).BindToPort(txPropagator.TxSwitchOutPutFunc())
 	node := &Node{
 		config:          nodeConf,
 		txpool:          pool,
@@ -220,13 +219,15 @@ func NewNode(args config.SysConfig) (NodesService, error) {
 }
 
 func (instance *Node) eventsRegister() {
-	instance.eventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
+	txDelEventFunc := func(v interface{}) {
 		if nil != v {
 			block := v.(*types.Block)
 			log.Debug("begin delete txs after block %d committed success.", block.Header.Height)
 			instance.txpool.DelTxs(block.Transactions)
 		}
-	})
+	}
+	instance.eventCenter.Subscribe(types.EventBlockCommitted, txDelEventFunc)
+	instance.eventCenter.Subscribe(types.EventBlockWritten, txDelEventFunc)
 	if common.ConsensusNode == instance.config.NodeType {
 		instance.eventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
 			instance.msgChannel <- common.MsgBlockCommitSuccess
