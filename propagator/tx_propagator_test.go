@@ -102,10 +102,10 @@ func TestTxPropagator_TxEventFunc(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(int32(1), tp.isRuning)
 
-	txHash := types.Hash{}
-	tp.eventCenter.Notify(types.EventAddTxToTxPool, txHash)
+	tx := &types.Transaction{}
+	tp.eventCenter.Notify(types.EventAddTxToTxPool, tx)
 
-	tk := time.NewTicker(100 * time.Second)
+	tk := time.NewTicker(time.Second)
 	select {
 	case <-broadcastChan:
 	case <-tk.C:

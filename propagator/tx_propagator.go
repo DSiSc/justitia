@@ -7,7 +7,6 @@ import (
 	"github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/p2p"
 	"github.com/DSiSc/p2p/message"
-	"github.com/DSiSc/txpool"
 	"sync"
 )
 
@@ -37,9 +36,8 @@ func NewTxPropagator(p2p p2p.P2PAPI, txOut chan<- interface{}, eventCenter types
 // BlockEventFunc get a EventFunc that can be bound to event center
 func (tp *TxPropagator) TxEventFunc(event interface{}) {
 	switch event.(type) {
-	case types.Hash:
-		tx := txpool.GetTxByHash(event.(types.Hash))
-		tp.broadCastTx(tx)
+	case *types.Transaction:
+		tp.broadCastTx(event.(*types.Transaction))
 	default:
 		log.Warn("received a unknown transaction event")
 	}
