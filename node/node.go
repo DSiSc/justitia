@@ -230,25 +230,25 @@ func (instance *Node) eventsRegister() {
 	instance.eventCenter.Subscribe(types.EventBlockWritten, txDelEventFunc)
 	if common.ConsensusNode == instance.config.NodeType {
 		instance.eventCenter.Subscribe(types.EventBlockCommitted, func(v interface{}) {
-			instance.msgChannel <- common.MsgBlockCommitSuccess
+			instance.sendMsgInternal(common.MsgBlockCommitSuccess)
 		})
 		instance.eventCenter.Subscribe(types.EventBlockVerifyFailed, func(v interface{}) {
-			instance.msgChannel <- common.MsgBlockVerifyFailed
+			instance.sendMsgInternal(common.MsgBlockVerifyFailed)
 		})
 		instance.eventCenter.Subscribe(types.EventBlockCommitFailed, func(v interface{}) {
-			instance.msgChannel <- common.MsgBlockCommitFailed
+			instance.sendMsgInternal(common.MsgBlockCommitFailed)
 		})
 		instance.eventCenter.Subscribe(types.EventConsensusFailed, func(v interface{}) {
-			instance.msgChannel <- common.MsgToConsensusFailed
+			instance.sendMsgInternal(common.MsgToConsensusFailed)
 		})
 		instance.eventCenter.Subscribe(types.EventMasterChange, func(v interface{}) {
-			instance.msgChannel <- common.MsgChangeMaster
+			instance.sendMsgInternal(common.MsgChangeMaster)
 		})
 		instance.eventCenter.Subscribe(types.EventOnline, func(v interface{}) {
-			instance.msgChannel <- common.MsgOnline
+			instance.sendMsgInternal(common.MsgOnline)
 		})
 		instance.eventCenter.Subscribe(types.EventBlockWithoutTxs, func(v interface{}) {
-			instance.msgChannel <- common.MsgBlockWithoutTx
+			instance.sendMsgInternal(common.MsgBlockWithoutTx)
 		})
 	}
 }
@@ -258,9 +258,15 @@ func (instance *Node) eventUnregister() {
 }
 
 func (instance *Node) notify() {
-	go func() {
-		instance.msgChannel <- common.MsgRoundRunFailed
-	}()
+	instance.sendMsgInternal(common.MsgRoundRunFailed)
+}
+
+func (instance *Node) sendMsgInternal(msgType common.MsgType) {
+	select {
+	case instance.msgChannel <- msgType:
+	default:
+		log.Info("previous process have not finished")
+	}
 }
 
 func (instance *Node) blockFactory(master account.Account, participates []account.Account) {

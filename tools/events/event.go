@@ -4,16 +4,21 @@ import (
 	"errors"
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/types"
+	"github.com/ivpusic/grpool"
 	"sync"
 )
+
+const workerPoolSize = 100
 
 type Event struct {
 	m           sync.RWMutex
 	Subscribers map[types.EventType]map[types.Subscriber]types.EventFunc
+	pool        *grpool.Pool
 }
 
 func NewEvent() types.EventCenter {
 	return &Event{
+		pool:        grpool.NewPool(workerPoolSize, workerPoolSize/2),
 		Subscribers: make(map[types.EventType]map[types.Subscriber]types.EventFunc),
 	}
 }
@@ -69,7 +74,11 @@ func (e *Event) Notify(eventType types.EventType, value interface{}) (err error)
 	log.Info("Receive eventType is [%d].", eventType)
 
 	for _, event := range subs {
-		go e.NotifySubscriber(event, value)
+		ef := event
+		v := value
+		e.pool.JobQueue <- func() {
+			e.NotifySubscriber(ef, v)
+		}
 	}
 	return nil
 }
