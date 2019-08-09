@@ -10,6 +10,7 @@ import (
 	swConf "github.com/DSiSc/gossipswitch/config"
 	"github.com/DSiSc/justitia/common"
 	"github.com/DSiSc/justitia/tools"
+	"github.com/DSiSc/justitia/tools/events"
 	p2pConf "github.com/DSiSc/p2p/config"
 	producerConfig "github.com/DSiSc/producer/config"
 	repositoryConfig "github.com/DSiSc/repository/config"
@@ -73,6 +74,7 @@ const (
 	P2PDisableDNSSeed  = "DisableDNSSeed"
 	P2PDNSSeeds        = "DNSSeeds"
 	P2PService         = "Service"
+	P2PPoolSize        = "PoolSize"
 
 	// prometheus
 	PrometheusEnabled = "monitor.prometheus.enabled"
@@ -111,8 +113,13 @@ const (
 	// switch config
 	TxSwitxh                         = "tx_switch"
 	TxSwitchSignatureVerifySwitch    = "general.signature.txswitch"
+	TxSwitchPoolSize                 = "general.switch.tx.PoolSize"
 	BlockSwitch                      = "block_switch"
 	BlockSwitchSignatureVerifySwitch = "general.signature.blockswitch"
+	BlockSwitchPoolSize              = "general.switch.block.PoolSize"
+
+	//Event Center config
+	EventPoolSize = "general.event.poolsize"
 )
 
 type AlgorithmConfig struct {
@@ -163,6 +170,8 @@ type NodeConfig struct {
 	P2PConf map[string]*p2pConf.P2PConfig
 	//Switch config
 	SwitchConf map[string]*swConf.SwitchConfig
+	//Event Center Pool Config
+	EventConfig *events.EventConfig
 }
 
 type Config struct {
@@ -213,7 +222,7 @@ func NewNodeConfig() NodeConfig {
 	p2pConf := GetP2PConf(config)
 	producerConf := GetProducerConf(config)
 	switchConf := GetSwitchConf(config)
-
+	eventConf := GetEventConf(config)
 	return NodeConfig{
 		Account:          nodeAccount,
 		NodeType:         nodeType,
@@ -232,6 +241,7 @@ func NewNodeConfig() NodeConfig {
 		P2PConf:          p2pConf,
 		ProducerConf:     producerConf,
 		SwitchConf:       switchConf,
+		EventConfig:      eventConf,
 	}
 }
 
@@ -425,6 +435,7 @@ func getP2PConf(p2pType string, conf *viper.Viper) *p2pConf.P2PConfig {
 	disableDNSSeed := conf.GetBool(p2pType + "." + P2PDisableDNSSeed)
 	dnsSeeds := conf.GetString(p2pType + "." + P2PDNSSeeds)
 	service := conf.GetInt(p2pType + "." + P2PService)
+	poolSize := conf.GetInt(p2pType + "." + P2PPoolSize)
 	return &p2pConf.P2PConfig{
 		AddrBookFilePath: addrFile,
 		ListenAddress:    listenAddr,
@@ -438,6 +449,7 @@ func getP2PConf(p2pType string, conf *viper.Viper) *p2pConf.P2PConfig {
 		DisableDNSSeed:   disableDNSSeed,
 		DNSSeeds:         dnsSeeds,
 		Service:          p2pConf.ServiceFlag(service),
+		WorkerPoolSize:   poolSize,
 	}
 }
 
@@ -450,19 +462,23 @@ func GetSwitchConf(conf *viper.Viper) map[string]*swConf.SwitchConfig {
 
 func getTxSwitchConf(conf *viper.Viper) *swConf.SwitchConfig {
 	enableSignVerify := conf.GetBool(TxSwitchSignatureVerifySwitch)
+	poolSize := conf.GetInt(TxSwitchPoolSize)
 	chainId, _ := GetChainIdFromConfig()
 	return &swConf.SwitchConfig{
 		VerifySignature: enableSignVerify,
 		ChainID:         chainId,
+		WorkerPoolSize:  poolSize,
 	}
 }
 
 func getBlockSwitchConf(conf *viper.Viper) *swConf.SwitchConfig {
 	enableSignVerify := conf.GetBool(BlockSwitchSignatureVerifySwitch)
+	poolSize := conf.GetInt(BlockSwitchPoolSize)
 	chainId, _ := GetChainIdFromConfig()
 	return &swConf.SwitchConfig{
 		VerifySignature: enableSignVerify,
 		ChainID:         chainId,
+		WorkerPoolSize:  poolSize,
 	}
 }
 
@@ -480,5 +496,12 @@ func GetProducerConf(conf *viper.Viper) producerConfig.ProducerConfig {
 	return producerConfig.ProducerConfig{
 		EnableSignatureVerify: enableSignVerify,
 		ChainId:               chainId,
+	}
+}
+
+func GetEventConf(conf *viper.Viper) *events.EventConfig {
+	poolSize := conf.GetInt(BlockSwitchPoolSize)
+	return &events.EventConfig{
+		WorkerPoolSize: poolSize,
 	}
 }

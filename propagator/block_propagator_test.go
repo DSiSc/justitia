@@ -14,7 +14,8 @@ import (
 
 func mockP2P() *p2p.P2P {
 	config := &pconf.P2PConfig{
-		ListenAddress: "0.0.0.0:8080",
+		ListenAddress:  "0.0.0.0:8080",
+		WorkerPoolSize: 10,
 	}
 	p, _ := p2p.NewP2P(config, events.NewEvent())
 	return p
