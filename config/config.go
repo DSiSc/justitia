@@ -500,7 +500,7 @@ func GetProducerConf(conf *viper.Viper) producerConfig.ProducerConfig {
 }
 
 func GetEventConf(conf *viper.Viper) *events.EventConfig {
-	poolSize := conf.GetInt(BlockSwitchPoolSize)
+	poolSize := conf.GetInt(EventPoolSize)
 	return &events.EventConfig{
 		WorkerPoolSize: poolSize,
 	}
