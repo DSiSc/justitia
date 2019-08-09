@@ -8,7 +8,9 @@ import (
 	"sync"
 )
 
-const workerPoolSize = 100
+type EventConfig struct {
+	WorkerPoolSize int
+}
 
 type Event struct {
 	m           sync.RWMutex
@@ -16,9 +18,17 @@ type Event struct {
 	pool        *grpool.Pool
 }
 
+const defaultPoolSize = 100
+
 func NewEvent() types.EventCenter {
+	return NewEventWithConfig(&EventConfig{
+		WorkerPoolSize: defaultPoolSize,
+	})
+}
+
+func NewEventWithConfig(conf *EventConfig) types.EventCenter {
 	return &Event{
-		pool:        grpool.NewPool(workerPoolSize, workerPoolSize/2),
+		pool:        grpool.NewPool(conf.WorkerPoolSize, conf.WorkerPoolSize/10),
 		Subscribers: make(map[types.EventType]map[types.Subscriber]types.EventFunc),
 	}
 }
