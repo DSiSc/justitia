@@ -119,6 +119,7 @@ const (
 	MsgChangeMaster                      //  change master
 	MsgOnline                            //  node online
 	MsgBlockWithoutTx                    // block without transaction
+	MsgWaitTimeOut                       // wait produce new block time out
 )
 
 func SystemContractType(contractType string) types.ContractType {

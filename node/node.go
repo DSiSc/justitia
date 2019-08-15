@@ -258,15 +258,11 @@ func (instance *Node) eventUnregister() {
 }
 
 func (instance *Node) notify() {
-	instance.sendMsgInternal(common.MsgRoundRunFailed)
+	go instance.sendMsgInternal(common.MsgRoundRunFailed)
 }
 
 func (instance *Node) sendMsgInternal(msgType common.MsgType) {
-	select {
-	case instance.msgChannel <- msgType:
-	default:
-		log.Info("previous process have not finished")
-	}
+	instance.msgChannel <- msgType
 }
 
 func (instance *Node) blockFactory(master account.Account, participates []account.Account) {
@@ -361,8 +357,17 @@ func (instance *Node) OnlineWizard() {
 */
 func (instance *Node) mainLoop() {
 	instance.consensus.Online()
+	timer := time.NewTimer(time.Second)
 	for {
-		msg := <-instance.msgChannel
+		timer.Reset(time.Duration(instance.config.BlockInterval) * 2 * time.Millisecond)
+		var msg common.MsgType
+		select {
+		case msg = <-instance.msgChannel:
+		case <-timer.C:
+			msg = common.MsgWaitTimeOut
+			log.Info("wait for node to produce new block time out, will start a new round")
+		}
+
 		switch msg {
 		case common.MsgBlockCommitSuccess:
 			log.Info("Receive msg from switch is success.")
