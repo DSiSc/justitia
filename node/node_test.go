@@ -186,8 +186,12 @@ func TestNode_Start(t *testing.T) {
 	monkey.Patch(InitLog, func(config.SysConfig, config.NodeConfig) {
 		return
 	})
+	mockTxPool := &txpool.TxPool{}
+	monkey.PatchInstanceMethod(reflect.TypeOf(mockTxPool), "GetTxs", func(*txpool.TxPool) []*types.Transaction {
+		return make([]*types.Transaction, 0)
+	})
 	monkey.Patch(txpool.NewTxPool, func(txpool.TxPoolConfig, types.EventCenter) txpool.TxsPool {
-		return &txpool.TxPool{}
+		return mockTxPool
 	})
 	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
 		return log.Config{}
@@ -398,6 +402,13 @@ func TestNode_NextRound(t *testing.T) {
 		TimeoutToChangeView: int64(1000),
 	}
 	assert := assert.New(t)
+	mockTxPool := &txpool.TxPool{}
+	monkey.PatchInstanceMethod(reflect.TypeOf(mockTxPool), "GetTxs", func(*txpool.TxPool) []*types.Transaction {
+		return make([]*types.Transaction, 0)
+	})
+	monkey.Patch(txpool.NewTxPool, func(txpool.TxPoolConfig, types.EventCenter) txpool.TxsPool {
+		return mockTxPool
+	})
 	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
 		return log.Config{}
 	})
