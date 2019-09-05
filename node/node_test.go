@@ -63,18 +63,6 @@ func TestInitLog(t *testing.T) {
 	monkey.Unpatch(log.SetGlobalConfig)
 }
 
-var defaultLoadNodeConf = config.NewNodeConfig()
-
-func mockDefaultConfig() config.NodeConfig {
-	defaultLoadNodeConf.EventConfig.WorkerPoolSize = 10
-	defaultLoadNodeConf.SwitchConf[config.TxSwitxh].WorkerPoolSize = 10
-	defaultLoadNodeConf.SwitchConf[config.BlockSwitch].WorkerPoolSize = 10
-	defaultLoadNodeConf.P2PConf[config.BlockSyncerP2P].WorkerPoolSize = 10
-	defaultLoadNodeConf.P2PConf[config.TxP2P].WorkerPoolSize = 10
-	defaultLoadNodeConf.P2PConf[config.BlockP2P].WorkerPoolSize = 10
-	return defaultLoadNodeConf
-}
-
 func TestNewNode(t *testing.T) {
 	assert := assert.New(t)
 	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
@@ -94,9 +82,6 @@ func TestNewNode(t *testing.T) {
 	})
 	monkey.Patch(compiler.SolidityCompile, func(string) string {
 		return "608060405234801561001057600080fd5b506040805190810160405280600d81526020017f48656c6c6f2c20776f72"
-	})
-	monkey.Patch(config.NewNodeConfig, func() config.NodeConfig {
-		return mockDefaultConfig()
 	})
 	service, err := NewNode(defaultConf)
 	assert.NotNil(err)
@@ -124,9 +109,6 @@ func TestNewNode(t *testing.T) {
 	})
 	monkey.Patch(config.ImportGenesisBlock, func() {
 		return
-	})
-	monkey.Patch(config.NewNodeConfig, func() config.NodeConfig {
-		return mockDefaultConfig()
 	})
 	service, err = NewNode(defaultConf)
 	assert.NotNil(err)
@@ -186,8 +168,12 @@ func TestNode_Start(t *testing.T) {
 	monkey.Patch(InitLog, func(config.SysConfig, config.NodeConfig) {
 		return
 	})
+	mockTxPool := &txpool.TxPool{}
+	monkey.PatchInstanceMethod(reflect.TypeOf(mockTxPool), "GetTxs", func(*txpool.TxPool) []*types.Transaction {
+		return make([]*types.Transaction, 0)
+	})
 	monkey.Patch(txpool.NewTxPool, func(txpool.TxPoolConfig, types.EventCenter) txpool.TxsPool {
-		return &txpool.TxPool{}
+		return mockTxPool
 	})
 	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
 		return log.Config{}
@@ -200,9 +186,6 @@ func TestNode_Start(t *testing.T) {
 	})
 	monkey.Patch(compiler.SolidityCompile, func(string) string {
 		return "608060405234801561001057600080fd5b506040805190810160405280600d81526020017f48656c6c6f2c20776f72"
-	})
-	monkey.Patch(config.NewNodeConfig, func() config.NodeConfig {
-		return mockDefaultConfig()
 	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
@@ -348,9 +331,6 @@ func TestNode_Round(t *testing.T) {
 	monkey.Patch(compiler.SolidityCompile, func(string) string {
 		return "608060405234801561001057600080fd5b506040805190810160405280600d81526020017f48656c6c6f2c20776f72"
 	})
-	monkey.Patch(config.NewNodeConfig, func() config.NodeConfig {
-		return mockDefaultConfig()
-	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
 	assert.NotNil(service)
@@ -398,6 +378,13 @@ func TestNode_NextRound(t *testing.T) {
 		TimeoutToChangeView: int64(1000),
 	}
 	assert := assert.New(t)
+	mockTxPool := &txpool.TxPool{}
+	monkey.PatchInstanceMethod(reflect.TypeOf(mockTxPool), "GetTxs", func(*txpool.TxPool) []*types.Transaction {
+		return make([]*types.Transaction, 0)
+	})
+	monkey.Patch(txpool.NewTxPool, func(txpool.TxPoolConfig, types.EventCenter) txpool.TxsPool {
+		return mockTxPool
+	})
 	monkey.Patch(config.GetLogSetting, func(*viper.Viper) log.Config {
 		return log.Config{}
 	})
@@ -409,9 +396,6 @@ func TestNode_NextRound(t *testing.T) {
 	})
 	monkey.Patch(compiler.SolidityCompile, func(string) string {
 		return "608060405234801561001057600080fd5b506040805190810160405280600d81526020017f48656c6c6f2c20776f72"
-	})
-	monkey.Patch(config.NewNodeConfig, func() config.NodeConfig {
-		return mockDefaultConfig()
 	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
@@ -464,9 +448,6 @@ func TestNode_Wait(t *testing.T) {
 	monkey.Patch(compiler.SolidityCompile, func(string) string {
 		return "608060405234801561001057600080fd5b506040805190810160405280600d81526020017f48656c6c6f2c20776f72"
 	})
-	monkey.Patch(config.NewNodeConfig, func() config.NodeConfig {
-		return mockDefaultConfig()
-	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
 	node := service.(*Node)
@@ -490,9 +471,6 @@ func TestNewNode2(t *testing.T) {
 	})
 	monkey.Patch(compiler.SolidityCompile, func(string) string {
 		return "608060405234801561001057600080fd5b506040805190810160405280600d81526020017f48656c6c6f2c20776f72"
-	})
-	monkey.Patch(config.NewNodeConfig, func() config.NodeConfig {
-		return mockDefaultConfig()
 	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)
@@ -534,9 +512,6 @@ func TestNewNode3(t *testing.T) {
 	})
 	monkey.Patch(compiler.SolidityCompile, func(string) string {
 		return "608060405234801561001057600080fd5b506040805190810160405280600d81526020017f48656c6c6f2c20776f72"
-	})
-	monkey.Patch(config.NewNodeConfig, func() config.NodeConfig {
-		return mockDefaultConfig()
 	})
 	service, err := NewNode(defaultConf)
 	assert.Nil(err)

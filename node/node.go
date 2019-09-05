@@ -44,6 +44,8 @@ type NodesService interface {
 	Restart() error
 }
 
+const msgChannelCacheLimit = 5
+
 // node struct with all service
 type Node struct {
 	nodeWg          sync.WaitGroup
@@ -103,7 +105,7 @@ func NewNode(args config.SysConfig) (NodesService, error) {
 	nodeConf := config.NewNodeConfig()
 	InitLog(args, nodeConf)
 	craftConfig.GlobalConfig.Store(craftConfig.HashAlgName, nodeConf.AlgorithmConf.HashAlgorithm)
-	eventsCenter := events.NewEventWithConfig(nodeConf.EventConfig)
+	eventsCenter := events.NewEvent()
 	pool := txpool.NewTxPool(nodeConf.TxPoolConf, eventsCenter)
 	txSwitch, err := gossipswitch.NewGossipSwitchByType(gossipswitch.TxSwitch, eventsCenter, nodeConf.SwitchConf[config.TxSwitxh])
 	if err != nil {
@@ -166,7 +168,7 @@ func NewNode(args config.SysConfig) (NodesService, error) {
 		txSwitch:        txSwitch,
 		blockSwitch:     blkSwitch,
 		eventCenter:     eventsCenter,
-		msgChannel:      make(chan common.MsgType),
+		msgChannel:      make(chan common.MsgType, msgChannelCacheLimit),
 		serviceChannel:  make(chan interface{}),
 		blockSyncerP2P:  blockSyncerP2P,
 		blockSyncer:     blockSyncer,
@@ -262,7 +264,11 @@ func (instance *Node) notify() {
 }
 
 func (instance *Node) sendMsgInternal(msgType common.MsgType) {
-	instance.msgChannel <- msgType
+	select {
+	case instance.msgChannel <- msgType:
+	default:
+		log.Info("node block produce message channel have full, will ignore this message(type: %v)", msgType)
+	}
 }
 
 func (instance *Node) blockFactory(master account.Account, participates []account.Account) {
@@ -308,7 +314,7 @@ func (instance *Node) NextRound(msgType common.MsgType) {
 		consensusResult := instance.consensus.GetConsensusResult()
 		log.Debug("get participate %v and master %v.",
 			consensusResult.Participate, consensusResult.Master.Extension.Id)
-		if common.MsgBlockCommitSuccess == msgType {
+		if common.MsgBlockCommitSuccess == msgType || common.MsgChangeMaster == msgType {
 			//TODO: increase time spent
 			time.Sleep(time.Duration(instance.config.BlockInterval) * time.Millisecond)
 		}
@@ -357,17 +363,16 @@ func (instance *Node) OnlineWizard() {
 */
 func (instance *Node) mainLoop() {
 	instance.consensus.Online()
-	timer := time.NewTimer(time.Second)
 	for {
-		timer.Reset(time.Duration(instance.config.BlockInterval) * 2 * time.Millisecond)
+		timer := time.NewTimer(time.Duration(instance.config.BlockInterval) * 2 * time.Millisecond)
 		var msg common.MsgType
 		select {
 		case msg = <-instance.msgChannel:
 		case <-timer.C:
+			timer.Stop()
 			msg = common.MsgWaitTimeOut
 			log.Info("wait for node to produce new block time out, will start a new round")
 		}
-
 		switch msg {
 		case common.MsgBlockCommitSuccess:
 			log.Info("Receive msg from switch is success.")
@@ -393,9 +398,10 @@ func (instance *Node) mainLoop() {
 		case common.MsgBlockWithoutTx:
 			log.Info("Receive msg of block without transaction.")
 			instance.NextRound(common.MsgBlockCommitSuccess)
+		case common.MsgWaitTimeOut:
+			instance.NextRound(common.MsgWaitTimeOut)
 		case common.MsgNodeServiceStopped:
 			log.Warn("Stop node service.")
-			break
 		}
 	}
 }
