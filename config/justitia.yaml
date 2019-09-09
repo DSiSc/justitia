@@ -80,7 +80,6 @@ general:
       DebugServer:
       DebugAddr:
       Service: 2
-      PoolSize: 5000
     block:
       AddrBookFilePath: /var/log/justitia/block_address.json
       ListenAddress:  tcp://0.0.0.0:46661
@@ -91,7 +90,6 @@ general:
       DebugServer:
       DebugAddr:
       Service: 1
-      PoolSize: 5000
     tx:
       AddrBookFilePath: /var/log/justitia/tx_address.json
       ListenAddress:  tcp://0.0.0.0:46662
@@ -102,19 +100,6 @@ general:
       DebugServer:
       DebugAddr:
       Service: 0
-      PoolSize: 5000
-  # gossip switch config
-  # PoolSize: worker pool size of the switch
-  switch:
-    tx:
-      PoolSize: 3000
-    block:
-      PoolSize: 3000
-
-  # event center config
-  # PoolSize: worker pool size of the event center
-  event:
-    poolsize: 5000
 
 ################################################################################
 #
