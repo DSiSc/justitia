@@ -53,9 +53,9 @@ general:
     enableEmptyBlock: false
     localSignatureVerify: false
     syncSignatureVerify: false
-    timeoutToWaitCommit: 5000
+    timeoutToWaitCommit: 60000
     timeoutToViewChange: 30000
-    timeoutToCollectResponse: 5000
+    timeoutToCollectResponse: 50000
 
   # Block produce interval for solo mode in Millisecond
   BlockProducedInterval: 2000
